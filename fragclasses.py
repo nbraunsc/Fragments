@@ -140,70 +140,66 @@ class Molecule():
         for x in range(0, len(self.molchart)):
             for y in range(0, len(self.molchart)):
                 if self.molchart[x][y] <= deg and self.molchart[x][y] != 0:
-                    self.frag.append([x])
-                    self.frag[-1].append(y)
-        
+                    if x not in self.frag:
+                        self.frag.append([x])
+                        self.frag[-1].append(y)
+                
         for z in range(0, len(self.frag)):
             for w in range(0, len(self.frag)):
                 if z == w:
                     continue
                 if self.frag[z][0] == self.frag[w][0]:
                     self.frag[z].extend(self.frag[w][:])    #combines all prims with frag connectivity <= eta, list of lists
-        
+
         for i in range(0, len(self.frag)): 
             self.frag[i] = set(self.frag[i])    #makes into a list of sets
-        
-        for k in range(0, len(self.frag)):
-            if self.frag[k] in self.frag:
-                continue
-            self.frag.append(self.frag[k])
-                   
-    def remove_frags(self):                         ######################## THIS PART IS A PROBLEM ##########################
-        for i in range(0, len(self.frag)):
+    
+    def remove_frags(self): #only appends unique frags
+        for i in self.frag:
             add = True
-            for j in range(0, len(self.frag)):
-                if self.frag[i].issubset(self.frag[j]) and i != j:
+            for j in self.frag:
+                if i.issubset(j) and i != j:
                     add = False
             
-            if add == True;
-                self.uniquefrags.append(self.frag[i])   #####################################################################
+            if add == True:
+                if i not in self.uniquefrags:
+                    self.uniquefrags.append(i)   
 
-        
-    def frag_conn(self):        #finds union of frags
+    def frag_conn(self):  #finds union of frags
         for i in range(0, len(self.uniquefrags)):
-            add = True
-            for j in range(i+1, len(self.uniquefrags)):
-                if self.uniquefrags[i].isdisjoint(self.uniquefrags[j]):
-                    add = False
-                if add == True:
-                    self.fragconn.append(self.uniquefrags[i].intersection(self.uniquefrags[j]))
-
+            for j in range(0, len(self.uniquefrags)):
+                if i == j or self.uniquefrags[i].isdisjoint(self.uniquefrags[j]):
+                    continue
+                x = self.uniquefrags[i].intersection(self.uniquefrags[j])
+                if x not in self.fragconn:
+                    self.fragconn.append(x)
+    
     def add_links(self):
+        prims = self.prims
+        for i in range(0, len(prims)):
+            prims[i] = set(prims[i])
 
-    #def make_fragxyz(self):
-        #atomlist = []
-        #for frag in range(0, len(self.uniquefrags)):
-            #self.uniquefrags[frag] = list(self.uniquefrags[frag])
-
-        #for i in range(0, len(self.uniquefrags)):   #makes new list for each fragment
-            #self.fragxyzi = []
-
-        #for frag in self.uniquefrags:   #adding coordinates to list of lists
-            #for prim in frag:
-                #for i in self.prims:
-                    #for atom in i:
-                        #atomlist[frag][-1].append([self.prims[prim]])
+        for frag in self.uniquefrags:
+            for prim in frag:
+                for x in range(0, len(prims)):
+                    if self.molchart[prim][x] == 1 and x not in frag:
+                        atom = prims[prim].intersection(prims[x])
+                        print(atom)
                 
+
+
 
 if __name__ == "__main__":
     carbonyl = Molecule()
-    carbonyl.parse_cml("aspirin.cml")
+    carbonyl.parse_cml("/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.cml")
     carbonyl.get_prims()
     carbonyl.prim_conn()
     carbonyl.get_molmatrix(10, 2)
-    carbonyl.get_frag(2)
-    print(carbonyl.frag)
+    carbonyl.get_frag(1)
     carbonyl.remove_frags()
-    print(carbonyl.uniquefrags)
-
+    carbonyl.frag_conn()
+    carbonyl.add_links()
+    print(carbonyl.molchart)
+    print(carbonyl.uniquefrags) 
+    print(carbonyl.fragconn)
 
