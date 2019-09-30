@@ -89,7 +89,7 @@ class Molecule():
         self.prims = set(self.prims)
     
     #if spot in A is non zero add 1 to primchart in row and column of prim1 and prim2 
-    def prim_conn(self):
+    def get_primchart(self):
         self.prims = list(self.prims)
         self.primsleng = len(self.prims)
         self.primchart = np.zeros( (self.primsleng,self.primsleng))
@@ -175,17 +175,17 @@ class Molecule():
                     self.fragconn.append(x)
     
     def add_links(self):
-        prims = self.prims
-        for i in range(0, len(prims)):
-            prims[i] = set(prims[i])
+        for frag in range(0, len(self.uniquefrags)):
+            for prim in self.uniquefrags[frag]:
+                for prim2 in range(0, len(self.prims)):
+                    if self.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
+                        print(prim2)
 
-        for frag in self.uniquefrags:
-            for prim in frag:
-                for x in range(0, len(prims)):
-                    if self.molchart[prim][x] == 1 and x not in frag:
-                        atom = prims[prim].intersection(prims[x])
-                        print(atom)
-                
+###### need to add for atoms in prim and for atoms in prim2, which atoms have 1 in the self.A chart ####
+# this will let me find the bond that was broken when making fragments
+# find norm and vector between those connecting atoms
+# of atom in prim, find cov_rad, do the ratio thing between a normal c-h bond and cov_rad, add H link along that vector at that distance ratio
+# do this for fragments and fragment intersestions
 
 
 
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     carbonyl = Molecule()
     carbonyl.parse_cml("/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.cml")
     carbonyl.get_prims()
-    carbonyl.prim_conn()
+    carbonyl.get_primchart()
     carbonyl.get_molmatrix(10, 2)
     carbonyl.get_frag(1)
     carbonyl.remove_frags()
@@ -201,5 +201,4 @@ if __name__ == "__main__":
     carbonyl.add_links()
     print(carbonyl.molchart)
     print(carbonyl.uniquefrags) 
-    print(carbonyl.fragconn)
 
