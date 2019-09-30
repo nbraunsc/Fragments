@@ -175,14 +175,21 @@ class Molecule():
                     self.fragconn.append(x)
     
     def add_links(self):
+        linkatoms = []
         for frag in range(0, len(self.uniquefrags)):
             for prim in self.uniquefrags[frag]:
                 for prim2 in range(0, len(self.prims)):
                     if self.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
-                        print(prim2)
-
-###### need to add for atoms in prim and for atoms in prim2, which atoms have 1 in the self.A chart ####
-# this will let me find the bond that was broken when making fragments
+                        for i in self.prims[prim]:
+                            for j in self.prims[prim2]:
+                                if self.A[i][j] == 1:
+                                    linkatoms.append([i])
+                                    linkatoms[-1].append(j)
+       
+       for i in range(0, len(linkatoms)):
+            linkatoms[i] = sorted(set(linkatoms[i]))
+        
+                        
 # find norm and vector between those connecting atoms
 # of atom in prim, find cov_rad, do the ratio thing between a normal c-h bond and cov_rad, add H link along that vector at that distance ratio
 # do this for fragments and fragment intersestions
