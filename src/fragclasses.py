@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from cov_rad.py import *
+#from cov_rad.py import *
 
 class Molecule():
     def __init__(self):
@@ -31,7 +31,8 @@ class Molecule():
         self.uniquefrags = []
         self.fragconn = []
         self.linkatoms = []
-
+        
+        self.atoms = {}
 
     def parse_cml(self, filename):
         self.filename = filename
@@ -202,9 +203,9 @@ class Molecule():
                 if i not in self.linkatoms:
                     self.linkatoms.append(i)
         
-        for pair in self.linkatoms:
-            for atom in pair:
-                if 
+#        for pair in self.linkatoms:
+#            for atom in pair:
+#                if 
                        
         
 # find norm and vector between those connecting atoms
@@ -215,7 +216,7 @@ class Molecule():
 
 if __name__ == "__main__":
     carbonyl = Molecule()
-    carbonyl.parse_cml("/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.cml")
+    carbonyl.parse_cml("./inputs/aspirin.cml")
     carbonyl.get_prims()
     carbonyl.get_primchart()
     carbonyl.get_molmatrix(10, 2)
