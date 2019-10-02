@@ -3,6 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
+from cov_rad.py import *
 
 class Molecule():
     def __init__(self):
@@ -29,6 +30,8 @@ class Molecule():
         #unqiue fragments
         self.uniquefrags = []
         self.fragconn = []
+        self.linkatoms = []
+
 
     def parse_cml(self, filename):
         self.filename = filename
@@ -186,10 +189,24 @@ class Molecule():
                                     linkatoms.append([i])
                                     linkatoms[-1].append(j)
        
-       for i in range(0, len(linkatoms)):
+        for i in range(0, len(linkatoms)):
             linkatoms[i] = sorted(set(linkatoms[i]))
+            linkatoms[i] = set(linkatoms[i])
         
-                        
+        for i in linkatoms:
+            add = True
+            for j in linkatoms:
+                if i.issubset(j) and i != j:
+                    add = False
+            if add == True:
+                if i not in self.linkatoms:
+                    self.linkatoms.append(i)
+        
+        for pair in self.linkatoms:
+            for atom in pair:
+                if 
+                       
+        
 # find norm and vector between those connecting atoms
 # of atom in prim, find cov_rad, do the ratio thing between a normal c-h bond and cov_rad, add H link along that vector at that distance ratio
 # do this for fragments and fragment intersestions
