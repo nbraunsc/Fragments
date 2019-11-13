@@ -5,6 +5,8 @@ from sys import argv
 import xml.etree.ElementTree as ET
 #from cov_rad.py import *
 
+from Fragment import *
+
 class Molecule():
     def __init__(self):
         #number of atoms
@@ -130,12 +132,12 @@ class Molecule():
         if i < eta:     #recursive part of function
             i = i+1
             self.build_molmatrix(eta, i)
-    
+
+
+
 class Fragmentation():
     def __init__(self, molecule):
         self.frag = []
-        #unqiue fragments
-        self.uniquefrags = []
         #layer two of frags
         self.fragconn = []
         self.molecule = molecule
@@ -157,9 +159,18 @@ class Fragmentation():
 
         for i in range(0, len(self.frag)): 
             self.frag[i] = set(self.frag[i])    #makes into a list of sets
-    
+        
+        # Now get list of unique frags
+        self.compress_frags()
+        for fi in self.frag:
+            fragi = Fragment(prims=fi)
+            print(fragi)
+
+        exit()
+
     def compress_frags(self): #takes full list of frags, compresses to unique frags
         sign = 1
+        uniquefrags = []
         for i in self.frag:
             add = True
             for j in self.frag:
@@ -167,49 +178,51 @@ class Fragmentation():
                     add = False
            
             if add == True:
-                if i not in self.uniquefrags:
-                    self.uniquefrags.append(i)   
-        print(self.uniquefrags)
-    
+                if i not in uniquefrags:
+                    uniquefrags.append(i)   
+        self.frag = uniquefrags
+   
+
     def build_frags2(self):  #builds second layer of frags/frag intersections
         sign = -1
-        for fi in range(0, len(self.uniquefrags)):
-            for fj in range(0, len(self.uniquefrags)):
+        for fi in range(0, len(self.frags)):
+            for fj in range(0, len(self.frags)):
                 if fi < fj:
-                    inter = self.uniquefrags[fi].intersection(self.uniquefrags[fj])
+                    inter = self.frags[fi].intersection(self.frags[fj])
                     self.fragconn.append(inter)
-        print(self.fragconn)
-
-class Fragment():
-    def __init__(self, molecule, fragmentation):
-        self.molecule = molecule
-        self.fragmentation = fragmentation
 
 
-    def add_links(self):
-        linkatoms = []
-        for frag in range(0, len(self.uniquefrags)):
-            for prim in self.uniquefrags[frag]:
-                for prim2 in range(0, len(self.prims)):
-                    if self.molecule.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
-                        for i in self.molecule.prims[prim]:
-                            for j in self.molecule.prims[prim2]:
-                                if self.molecule.A[i][j] == 1:
-                                    linkatoms.append([i])
-                                    linkatoms[-1].append(j)
-       
-        for i in range(0, len(linkatoms)):
-            linkatoms[i] = sorted(set(linkatoms[i]))
-            linkatoms[i] = set(linkatoms[i])
-        
-        for i in linkatoms:
-            add = True
-            for j in linkatoms:
-                if i.issubset(j) and i != j:
-                    add = False
-            if add == True:
-                if i not in self.linkatoms:
-                    self.linkatoms.append(i)
+
+#class Fragment():
+#    def __init__(self, molecule, fragmentation):
+#        self.molecule = molecule
+#        self.fragmentation = fragmentation
+#
+#
+#    def add_links(self):
+#        linkatoms = []
+#        for frag in range(0, len(self.uniquefrags)):
+#            for prim in self.uniquefrags[frag]:
+#                for prim2 in range(0, len(self.prims)):
+#                    if self.molecule.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
+#                        for i in self.molecule.prims[prim]:
+#                            for j in self.molecule.prims[prim2]:
+#                                if self.molecule.A[i][j] == 1:
+#                                    linkatoms.append([i])
+#                                    linkatoms[-1].append(j)
+#       
+#        for i in range(0, len(linkatoms)):
+#            linkatoms[i] = sorted(set(linkatoms[i]))
+#            linkatoms[i] = set(linkatoms[i])
+#        
+#        for i in linkatoms:
+#            add = True
+#            for j in linkatoms:
+#                if i.issubset(j) and i != j:
+#                    add = False
+#            if add == True:
+#                if i not in self.linkatoms:
+#                    self.linkatoms.append(i)
 
 #       for pair in self.linkatoms:
 #            for atom in pair:
@@ -231,5 +244,4 @@ if __name__ == "__main__":
 
     frag = Fragmentation(aspirin)
     frag.build_frags(1)
-    frag.compress_frags()
     frag.build_frags2()
