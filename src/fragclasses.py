@@ -133,13 +133,11 @@ class Molecule():
     
 class Fragmentation():
     def __init__(self, molecule):
-        #first set of frags
         self.frag = []
         #unqiue fragments
         self.uniquefrags = []
+        #layer two of frags
         self.fragconn = []
-        self.linkatoms = []
-        self.atoms = {}
         self.molecule = molecule
 
     def build_frags(self, deg):    #deg is the degree of fragments wanted
@@ -174,15 +172,11 @@ class Fragmentation():
         print(self.uniquefrags)
     
     def build_frags2(self):  #builds second layer of frags/frag intersections
-        fragdict = {}
         sign = -1
         for fi in range(0, len(self.uniquefrags)):
             for fj in range(0, len(self.uniquefrags)):
-                if fi == fj or self.uniquefrags[fi].isdisjoint(self.uniquefrags[fj]):
-                    continue
-                inter = self.uniquefrags[fi].intersection(self.uniquefrags[fj])
-                fij = (inter, sign)
-                if inter not in self.fragconn:
+                if fi < fj:
+                    inter = self.uniquefrags[fi].intersection(self.uniquefrags[fj])
                     self.fragconn.append(inter)
         print(self.fragconn)
 
