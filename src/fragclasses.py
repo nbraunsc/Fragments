@@ -25,14 +25,6 @@ class Molecule():
         self.primchart = []
         #higher order prim conn chart
         self.molchart = []
-        #first set of frags
-        self.frag = []
-        #unqiue fragments
-        self.uniquefrags = []
-        self.fragconn = []
-        self.linkatoms = []
-        
-        self.atoms = {}
 
     def parse_cml(self, filename):
         self.filename = filename
@@ -73,8 +65,7 @@ class Molecule():
             self.A[x][y] = z
             self.A[y][x] = z
             
-    #makes list of list with primatives, have some repeating primiatives
-    def get_prims(self):
+    def build_prims(self):
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
                 self.prims.append([i])
@@ -93,7 +84,7 @@ class Molecule():
         self.prims = set(self.prims)
     
     #if spot in A is non zero add 1 to primchart in row and column of prim1 and prim2 
-    def get_primchart(self):
+    def build_primchart(self):
         self.prims = list(self.prims)
         self.primsleng = len(self.prims)
         self.primchart = np.zeros( (self.primsleng,self.primsleng))
@@ -107,7 +98,7 @@ class Molecule():
                             self.primchart[prim1][prim2] = 1
                             self.primchart[prim2][prim1] = 1
     
-    def get_molmatrix(self, eta, i):    #i must 2 to start
+    def build_molmatrix(self, eta, i):    #i must 2 to start
         if i == 2:
             self.molchart = self.primchart.dot(self.primchart)
             np.fill_diagonal(self.molchart, 0)
@@ -138,12 +129,23 @@ class Molecule():
 
         if i < eta:     #recursive part of function
             i = i+1
-            self.get_molmatrix(eta, i)
+            self.build_molmatrix(eta, i)
     
-    def get_frag(self, deg):    #deg is the degree of fragments wanted
-        for x in range(0, len(self.molchart)):
-            for y in range(0, len(self.molchart)):
-                if self.molchart[x][y] <= deg and self.molchart[x][y] != 0:
+class Fragmentation():
+    def __init__(self, molecule):
+        #first set of frags
+        self.frag = []
+        #unqiue fragments
+        self.uniquefrags = []
+        self.fragconn = []
+        self.linkatoms = []
+        self.atoms = {}
+        self.molecule = molecule
+
+    def build_frags(self, deg):    #deg is the degree of fragments wanted
+        for x in range(0, len(self.molecule.molchart)):
+            for y in range(0, len(self.molecule.molchart)):
+                if self.molecule.molchart[x][y] <= deg and self.molecule.molchart[x][y] != 0:
                     if x not in self.frag:
                         self.frag.append([x])
                         self.frag[-1].append(y)
@@ -158,35 +160,47 @@ class Molecule():
         for i in range(0, len(self.frag)): 
             self.frag[i] = set(self.frag[i])    #makes into a list of sets
     
-    def remove_frags(self): #only appends unique frags
+    def compress_frags(self): #takes full list of frags, compresses to unique frags
+        sign = 1
         for i in self.frag:
             add = True
             for j in self.frag:
                 if i.issubset(j) and i != j:
                     add = False
-            
+           
             if add == True:
                 if i not in self.uniquefrags:
                     self.uniquefrags.append(i)   
-
-    def frag_conn(self):  #finds union of frags
-        for i in range(0, len(self.uniquefrags)):
-            for j in range(0, len(self.uniquefrags)):
-                if i == j or self.uniquefrags[i].isdisjoint(self.uniquefrags[j]):
-                    continue
-                x = self.uniquefrags[i].intersection(self.uniquefrags[j])
-                if x not in self.fragconn:
-                    self.fragconn.append(x)
+        print(self.uniquefrags)
     
+    def build_frags2(self):  #builds second layer of frags/frag intersections
+        fragdict = {}
+        sign = -1
+        for fi in range(0, len(self.uniquefrags)):
+            for fj in range(0, len(self.uniquefrags)):
+                if fi == fj or self.uniquefrags[fi].isdisjoint(self.uniquefrags[fj]):
+                    continue
+                inter = self.uniquefrags[fi].intersection(self.uniquefrags[fj])
+                fij = (inter, sign)
+                if inter not in self.fragconn:
+                    self.fragconn.append(inter)
+        print(self.fragconn)
+
+class Fragment():
+    def __init__(self, molecule, fragmentation):
+        self.molecule = molecule
+        self.fragmentation = fragmentation
+
+
     def add_links(self):
         linkatoms = []
         for frag in range(0, len(self.uniquefrags)):
             for prim in self.uniquefrags[frag]:
                 for prim2 in range(0, len(self.prims)):
-                    if self.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
-                        for i in self.prims[prim]:
-                            for j in self.prims[prim2]:
-                                if self.A[i][j] == 1:
+                    if self.molecule.molchart[prim][prim2] == 1 and prim2 not in self.uniquefrags[frag]:
+                        for i in self.molecule.prims[prim]:
+                            for j in self.molecule.prims[prim2]:
+                                if self.molecule.A[i][j] == 1:
                                     linkatoms.append([i])
                                     linkatoms[-1].append(j)
        
@@ -202,11 +216,11 @@ class Molecule():
             if add == True:
                 if i not in self.linkatoms:
                     self.linkatoms.append(i)
-        
-#        for pair in self.linkatoms:
+
+#       for pair in self.linkatoms:
 #            for atom in pair:
 #                if 
-                       
+#                       
         
 # find norm and vector between those connecting atoms
 # of atom in prim, find cov_rad, do the ratio thing between a normal c-h bond and cov_rad, add H link along that vector at that distance ratio
@@ -215,15 +229,13 @@ class Molecule():
 
 
 if __name__ == "__main__":
-    carbonyl = Molecule()
-    carbonyl.parse_cml("./inputs/aspirin.cml")
-    carbonyl.get_prims()
-    carbonyl.get_primchart()
-    carbonyl.get_molmatrix(10, 2)
-    carbonyl.get_frag(1)
-    carbonyl.remove_frags()
-    carbonyl.frag_conn()
-    carbonyl.add_links()
-    print(carbonyl.molchart)
-    print(carbonyl.uniquefrags) 
+    aspirin = Molecule()
+    aspirin.parse_cml("../inputs/aspirin.cml")
+    aspirin.build_prims()
+    aspirin.build_primchart()
+    aspirin.build_molmatrix(10, 2)
 
+    frag = Fragmentation(aspirin)
+    frag.build_frags(1)
+    frag.compress_frags()
+    frag.build_frags2()
