@@ -8,10 +8,13 @@ from Fragment import *
 
 class Molecule():
     """
-    Class to sort through cml of input molecule, attributes that will not change per molecule
+    Class to sort through cml input of molecule, compute attributes that will not change for molecule
     :makes into xyz format
     :builds primatives
     :builds connectivity charts of atom-atom and prim-prim
+    :need to specify following: 
+        :parse_cml(filename)
+        :build_molmatrix(i, 2) where i is the largest fragment degree wanted
     """
 
     def __init__(self):
@@ -147,6 +150,8 @@ class Molecule():
 class Fragmentation():
     """
     Class to do the building of molecular fragments, no inclusion-exclsuions part here
+    :need to specify following;
+        :build_frags(deg) degree of monomers wanted
     """
     def __init__(self, molecule):
         self.frag = []
@@ -171,7 +176,7 @@ class Fragmentation():
         for i in range(0, len(self.frag)): 
             self.frag[i] = set(self.frag[i])    #makes into a list of sets
         
-        # Now get list of unique frags, runnig compress function
+        # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
         for fi in self.frag:
             fragi = Fragment(prims=fi)
@@ -191,7 +196,7 @@ class Fragmentation():
                 if i not in uniquefrags:
                     uniquefrags.append(i)   
         self.frag = uniquefrags
-
+    
 
 
 if __name__ == "__main__":
@@ -201,4 +206,4 @@ if __name__ == "__main__":
 
     frag = Fragmentation(aspirin)
     frag.build_frags(1)
-    frag.run_pie(frag.frag)
+    run_pie(frag.frag)
