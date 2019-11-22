@@ -3,7 +3,8 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from tools import *
+#from tools import *
+from toolspractice import *
 from Fragment import *
 
 class Molecule():
@@ -206,4 +207,4 @@ if __name__ == "__main__":
 
     frag = Fragmentation(aspirin)
     frag.build_frags(1)
-    run_pie(frag.frag)
+    runpie(frag.frag)
