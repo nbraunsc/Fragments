@@ -5,7 +5,6 @@ def recurse(f_old, start, derivs, fraglist):
             #df_new.coeff = f_old.coeff * -1
             if len(df_new) > 0:
                 derivs.append(df_new)
-                print(derivs, 'derivs')
                 recurse(df_new, fj, derivs, fraglist)
 
 def runpie(fraglist):
@@ -15,4 +14,5 @@ def runpie(fraglist):
         #dfi.coeff = 1
         derivs.append(dfi)
         recurse(derivs[fi], fi, derivs, fraglist)
+    print(derivs)
     return derivs
