@@ -3,8 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-#from tools import *
-from toolspractice import *
+from tools import *
 from Fragment import *
 
 class Molecule():
@@ -89,6 +88,7 @@ class Molecule():
                         self.prims[-1].append(j)
                     for k in range(0, len(self.atomtable)):
                         if self.A[i][j] > 1 and self.A[j][k] == 1 and self.atomtable[k][0] == "H": #check if atom pulled in is bonded to H or higher order bond, pull it into prim also
+                            self.prims[-1].append(j)
                             self.prims[-1].append(j)
                             self.prims[-1].append(k)
         
