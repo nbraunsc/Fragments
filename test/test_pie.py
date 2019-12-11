@@ -19,6 +19,7 @@ if __name__ == "__main__":
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1)
+    test_pie()
     print(frag.frag)
     print(runpie(frag.frag)) 
     
