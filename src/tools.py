@@ -14,5 +14,4 @@ def runpie(fraglist):
         #dfi.coeff = 1
         derivs.append(dfi)
         recurse(derivs[fi], fi, derivs, fraglist)
-    print(derivs)
     return derivs

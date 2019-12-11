@@ -12,9 +12,7 @@ class Molecule():
     :makes into xyz format
     :builds primatives
     :builds connectivity charts of atom-atom and prim-prim
-    :need to specify following: 
-        :parse_cml(filename)
-        :build_molmatrix(i, 2) where i is the largest fragment degree wanted
+    :parse_cml(filename), file path needs to be specified
     """
 
     def __init__(self):
@@ -36,6 +34,10 @@ class Molecule():
         self.primchart = []
         #higher order prim conn chart
         self.molchart = []
+   
+    def initalize_molecule(self):
+        self.parse_cml("../inputs/aspirin.cml")
+        self.build_molmatrix(2)
 
     def parse_cml(self, filename):
         self.filename = filename
@@ -78,7 +80,7 @@ class Molecule():
         
         self.build_prims()
         self.build_primchart()
-
+        
     def build_prims(self):
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
@@ -97,7 +99,7 @@ class Molecule():
         for i in range(0, len(self.prims)):
             self.prims[i] = tuple(sorted(self.prims[i]))
         self.prims = set(self.prims)
-    
+
     #if spot in A is non zero add 1 to primchart in row and column of prim1 and prim2 
     def build_primchart(self):
         self.prims = list(self.prims)
@@ -113,7 +115,8 @@ class Molecule():
                             self.primchart[prim1][prim2] = 1
                             self.primchart[prim2][prim1] = 1
     
-    def build_molmatrix(self, eta, i):    #i must 2 to start
+    def build_molmatrix(self, i):    #i must 2 to start
+        eta = self.natoms
         if i == 2:
             self.molchart = self.primchart.dot(self.primchart)
             np.fill_diagonal(self.molchart, 0)
@@ -144,20 +147,19 @@ class Molecule():
 
         if i < eta:     #recursive part of function
             i = i+1
-            self.build_molmatrix(eta, i)
+            self.build_molmatrix(i)
 
 
 
 class Fragmentation():
     """
-    Class to do the building of molecular fragments, no inclusion-exclsuions part here
-    :need to specify following;
-        :build_frags(deg) degree of monomers wanted
+    Class to do the building of molecular fragments and derivatives
     """
     def __init__(self, molecule):
         self.frag = []
         self.fragconn = []
         self.molecule = molecule
+        self.derivs = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -179,10 +181,7 @@ class Fragmentation():
         
         # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
-        for fi in self.frag:
-            fragi = Fragment(prims=fi)
-            print(fragi)
-
+        
 
     def compress_frags(self): #takes full list of frags, compresses to unique frags
         sign = 1
@@ -197,14 +196,17 @@ class Fragmentation():
                 if i not in uniquefrags:
                     uniquefrags.append(i)   
         self.frag = uniquefrags
-    
+   
+    def do_fragmentation(self, deg):
+        self.build_frags(deg)
+        self.derivs = runpie(self.frag)
+        for fi in self.derivs:
+            fragi = Fragment(derivs=fi)
 
 
 if __name__ == "__main__":
     aspirin = Molecule()
-    aspirin.parse_cml("../inputs/aspirin.cml")
-    aspirin.build_molmatrix(10, 2)
-
+    aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
-    frag.build_frags(1)
-    runpie(frag.frag)
+    frag.do_fragmentation(1) #argument is level of fragments wanted
+    #print(frag.derivs)
