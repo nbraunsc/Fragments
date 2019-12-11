@@ -209,4 +209,5 @@ if __name__ == "__main__":
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragments wanted
-    #print(frag.derivs)
+    print(frag.frag, 'fraglist')
+    print(frag.derivs)
