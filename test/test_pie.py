@@ -1,4 +1,5 @@
-from fragclasses import *
+from Molecule import *
+from Fragmentation import *
 
 def test_pie():
     """
@@ -8,7 +9,7 @@ def test_pie():
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1)
-    assert(runpie(frag.frag) == [{1, 3, 4, 5, 6}, {6}, {6}, {1, 4}, {1}, {1, 6}, {2, 6, 7}, {6}, {0, 1, 4}, {6}, {1, 2, 6}])
+    assert(runpie(frag.frag)[0] == [{1, 3, 4, 5, 6}, {6}, {6}, {1, 4}, {1}, {1, 6}, {2, 6, 7}, {2, 6}, {0, 1, 4}, {1}, {1, 2, 6}])
 
 if __name__ == "__main__":
     aspirin = Molecule()

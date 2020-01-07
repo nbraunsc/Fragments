@@ -7,7 +7,6 @@ from tools import *
 from Fragment import *
 from Molecule import *
 
-
 class Fragmentation():
     """
     Class to do the building of molecular fragments and derivatives
@@ -19,6 +18,8 @@ class Fragmentation():
         self.fragconn = []
         self.molecule = molecule
         self.derivs = []
+        self.coefflist = []
+        self.atomlist = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -58,18 +59,31 @@ class Fragmentation():
    
     def do_fragmentation(self, deg):
         self.build_frags(deg)
-        self.derivs = runpie(self.frag)
+        self.derivs, self.coefflist = runpie(self.frag)
+        self.atomlist = [None] * len(self.derivs)
+        
+        for i in range(0, len(self.derivs)):
+            self.derivs[i] = list(self.derivs[i])
+        
+        for fragi in range(0, len(self.derivs)):    #changes prims into atoms
+            x = len(self.derivs[fragi])
+            for primi in range(0, x):
+                value = self.derivs[fragi][primi]
+                atoms = list(self.molecule.prims[value])
+                self.derivs[fragi][primi] = atoms
+        
+        for y in range(0, len(self.derivs)):
+            flatlist = [ item for elem in self.derivs[y] for item in elem]
+            self.atomlist[y] = flatlist     #now fragments are list of atoms
+       
+    def compress_uniquefrags(self): #this compresses frags based on their coefficents
 
-        """
-        todo:
-            sort out which atoms are attached to which atoms for doing link atom stuff.
-            also, we discussed storing frags as atom lists, instead of prims.
-            """
 
+    def make_Frag_object:
         self.frags = []
         for fi in self.derivs:
             coeff = 1
-            self.frags.append(Fragment(fi,self.molecule,coeff=coeff))
+            #self.frags.append(Fragment(fi,self.molecule,coeff=coeff))
             #fragi = Fragment(derivs=fi)
 
 
@@ -78,6 +92,16 @@ if __name__ == "__main__":
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragments wanted
-    print(frag.frag, 'fraglist')
-    print(frag.derivs)
-    print(frag.frags)
+    print(frag.atomlist)
+    #print(frag.frag, 'fraglist')
+   # print(frag.derivs)
+    print(frag.coefflist)
+    #print(frag.frags)
+    
+    """
+        todo:
+            sort out which atoms are attached to which atoms for doing link atom stuff.
+            also, we discussed storing frags as atom lists, instead of prims.
+            """
+
+
