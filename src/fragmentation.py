@@ -75,11 +75,38 @@ class Fragmentation():
         for y in range(0, len(self.derivs)):
             flatlist = [ item for elem in self.derivs[y] for item in elem]
             self.atomlist[y] = flatlist     #now fragments are list of atoms
-       
+        
+        self.find_attached()
+        #self.compress_uniquefrags()
+
     def compress_uniquefrags(self): #this compresses frags based on their coefficents
+        self.compressed = []
+        self.newcoeff = []
+        for i in range(0, len(self.atomlist)):  #sorted atom numbers
+            self.atomlist[i] = list(sorted(self.atomlist[i]))
+        
+        for x in range(0, len(self.atomlist)):
+            for y in range(0, len(self.atomlist)):
+                if x != y and self.atomlist[x] == self.atomlist[y]:
+                    print(self.atomlist[x], self.coefflist[x], 'x')
+                    newcoeff = self.coefflist[x] + self.coefflist[y]
+        
+        print(self.compressed)
 
+    def find_attached(self):
+        print(self.molecule.A)
+        self.attached = [None] * len(self.atomlist)
+        for number in range(0, len(self.molecule.A)):
+            for frag in self.atomlist:
+                for atom in frag:
+                    if self.molecule.A[atom][number] == 1:
+                        if number not in frag:
+                            print(atom, 'atom')
+                            print(number, 'attached')
+                            self.attached.append([atom, number])
+        print(self.attached)
 
-    def make_Frag_object:
+    def make_Frag_object(self):
         self.frags = []
         for fi in self.derivs:
             coeff = 1
@@ -92,10 +119,9 @@ if __name__ == "__main__":
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragments wanted
-    print(frag.atomlist)
     #print(frag.frag, 'fraglist')
-   # print(frag.derivs)
-    print(frag.coefflist)
+    #print(frag.atomlist)
+    #print(frag.coefflist)
     #print(frag.frags)
     
     """
