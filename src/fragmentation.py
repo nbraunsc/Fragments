@@ -76,25 +76,23 @@ class Fragmentation():
             flatlist = [ item for elem in self.derivs[y] for item in elem]
             self.atomlist[y] = flatlist     #now fragments are list of atoms
         
-        self.find_attached()
-        #self.compress_uniquefrags()
-
-    def compress_uniquefrags(self): #this compresses frags based on their coefficents
-        self.compressed = []
-        self.newcoeff = []
         for i in range(0, len(self.atomlist)):  #sorted atom numbers
             self.atomlist[i] = list(sorted(self.atomlist[i]))
         
-        for x in range(0, len(self.atomlist)):
-            for y in range(0, len(self.atomlist)):
-                if x != y and self.atomlist[x] == self.atomlist[y]:
-                    print(self.atomlist[x], self.coefflist[x], 'x')
-                    newcoeff = self.coefflist[x] + self.coefflist[y]
-        
-        print(self.compressed)
+        #self.find_attached()
+   
+   # Going to do this once already made a Fragment, compressing based on coefficents
+   # def compress_uniquefrags(self):
+   #     self.compressed = []
+   #     self.newcoeff = []
+   #     for x in range(0, len(self.atomlist)):
+   #         for y in range(0, len(self.atomlist)):
+   #             if x != y and self.atomlist[x] == self.atomlist[y]:
+   #                 print(self.atomlist[x], self.coefflist[x], 'x')
+   #                 newcoeff = self.coefflist[x] + self.coefflist[y]
 
-    def find_attached(self):
-        print(self.molecule.A)
+    def find_attached(self):    #finding all the attached atoms that were cut during fragmentation
+        #print(self.molecule.A)
         self.attached = [None] * len(self.atomlist)
         for number in range(0, len(self.molecule.A)):
             for frag in self.atomlist:
@@ -104,30 +102,29 @@ class Fragmentation():
                             print(atom, 'atom')
                             print(number, 'attached')
                             self.attached.append([atom, number])
-        print(self.attached)
+        #print(self.attached)
 
-    def make_Frag_object(self):
+    def initalize_Frag_objects(self):
         self.frags = []
-        for fi in self.derivs:
-            coeff = 1
-            #self.frags.append(Fragment(fi,self.molecule,coeff=coeff))
-            #fragi = Fragment(derivs=fi)
-
+        moleculeatoms = list(range(0, self.molecule.natoms)) #list of all atoms in molecule
+        for fi in range(0, len(self.atomlist)):
+            coeffi = self.coefflist[fi]
+            self.frags.append(Fragment(self.atomlist[fi], moleculeatoms, coeff=coeffi))
+            #self.atomlist[fi].attached = [list of attached atoms]
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1) #argument is level of fragments wanted
-    #print(frag.frag, 'fraglist')
+    frag.do_fragmentation(1) #argument is level of fragmentation wanted
+    frag.initalize_Frag_objects()
     #print(frag.atomlist)
     #print(frag.coefflist)
-    #print(frag.frags)
-    
+    print(frag.frags) 
     """
         todo:
             sort out which atoms are attached to which atoms for doing link atom stuff.
-            also, we discussed storing frags as atom lists, instead of prims.
-            """
+            
+        """
 
 
