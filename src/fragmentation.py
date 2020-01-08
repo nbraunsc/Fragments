@@ -83,7 +83,6 @@ class Fragmentation():
         self.find_attached()
         self.initalize_Frag_objects()
    
-   # Going to do this once already made a Fragment, compressing based on coefficents
    # def compress_uniquefrags(self):
    #     self.compressed = []
    #     self.newcoeff = []
@@ -111,23 +110,26 @@ class Fragmentation():
 
     def initalize_Frag_objects(self):
         self.frags = []
-        moleculeatoms = list(range(0, self.molecule.natoms)) #list of all atoms in molecule
         for fi in range(0, len(self.atomlist)):
             coeffi = self.coefflist[fi]
             attachedlist = self.attached[fi]
-            self.frags.append(Fragment(self.atomlist[fi], moleculeatoms, attachedlist, coeff=coeffi))
+            self.frags.append(Fragment(self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
+    def test_fragment(self):
         for i in self.frags:
-            print(i.attachedlist)
+            xyz = i.build_xyz()
+        print(xyz)
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragmentation wanted
+    frag.test_fragment()
+    #print(frag.attached)
     #print(frag.atomlist)
     #print(frag.coefflist)
-    print(frag.frags) 
+    #print(frag.frags) 
 
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.

@@ -5,6 +5,7 @@ from sys import argv
 import xml.etree.ElementTree as ET
 from tools import *
 from Fragment import *
+from cov_rad import *
 
 
 class Molecule():
@@ -35,7 +36,8 @@ class Molecule():
         self.primchart = []
         #higher order prim conn chart
         self.molchart = []
-   
+        self.covrad = form_covalent_radii()
+        
     def initalize_molecule(self):
         self.parse_cml("../inputs/aspirin.cml")
         self.build_molmatrix(2)
