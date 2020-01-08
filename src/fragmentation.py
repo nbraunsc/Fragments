@@ -20,6 +20,7 @@ class Fragmentation():
         self.derivs = []
         self.coefflist = []
         self.atomlist = []
+        self.frags = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -79,7 +80,8 @@ class Fragmentation():
         for i in range(0, len(self.atomlist)):  #sorted atom numbers
             self.atomlist[i] = list(sorted(self.atomlist[i]))
         
-        #self.find_attached()
+        self.find_attached()
+        self.initalize_Frag_objects()
    
    # Going to do this once already made a Fragment, compressing based on coefficents
    # def compress_uniquefrags(self):
@@ -92,39 +94,41 @@ class Fragmentation():
    #                 newcoeff = self.coefflist[x] + self.coefflist[y]
 
     def find_attached(self):    #finding all the attached atoms that were cut during fragmentation
-        #print(self.molecule.A)
-        self.attached = [None] * len(self.atomlist)
-        for number in range(0, len(self.molecule.A)):
-            for frag in self.atomlist:
-                for atom in frag:
-                    if self.molecule.A[atom][number] == 1:
-                        if number not in frag:
-                            print(atom, 'atom')
-                            print(number, 'attached')
-                            self.attached.append([atom, number])
-        #print(self.attached)
+        x = len(self.atomlist)
+        self.attached = []
+        for frag in range(0, len(self.atomlist)):
+            fragi = []
+            for atom in self.atomlist[frag]:
+                row = self.molecule.A[atom]
+                for i in range(0, len(row)):
+                    if row[i] == 1.0:
+                        attached = i
+                        if attached not in self.atomlist[frag]:
+                            fragi.append([atom, i])
+                        else:
+                            continue
+            self.attached.append(fragi) 
 
     def initalize_Frag_objects(self):
         self.frags = []
         moleculeatoms = list(range(0, self.molecule.natoms)) #list of all atoms in molecule
         for fi in range(0, len(self.atomlist)):
             coeffi = self.coefflist[fi]
-            self.frags.append(Fragment(self.atomlist[fi], moleculeatoms, coeff=coeffi))
-            #self.atomlist[fi].attached = [list of attached atoms]
+            attachedlist = self.attached[fi]
+            self.frags.append(Fragment(self.atomlist[fi], moleculeatoms, attachedlist, coeff=coeffi))
+
+        for i in self.frags:
+            print(i.attachedlist)
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragmentation wanted
-    frag.initalize_Frag_objects()
     #print(frag.atomlist)
     #print(frag.coefflist)
     print(frag.frags) 
+
+"""
+    Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
     """
-        todo:
-            sort out which atoms are attached to which atoms for doing link atom stuff.
-            
-        """
-
-
