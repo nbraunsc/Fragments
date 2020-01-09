@@ -57,7 +57,7 @@ class Fragmentation():
                 if i not in uniquefrags:
                     uniquefrags.append(i)   
         self.frag = uniquefrags
-   
+    #print('done compressing frags') 
     def do_fragmentation(self, deg):
         self.build_frags(deg)
         self.derivs, self.coefflist = runpie(self.frag)
@@ -117,8 +117,8 @@ class Fragmentation():
 
     def test_fragment(self):
         for i in self.frags:
-            xyz = i.build_xyz()
-        print(xyz)
+            i.build_xyz()
+            i.run_pyscf()
 
 if __name__ == "__main__":
     aspirin = Molecule()

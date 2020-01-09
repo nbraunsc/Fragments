@@ -12,7 +12,7 @@ def add_linkatoms(atom1, attached_atom, molecule):
     h = 0.32
     factor = (h + cov_atom1)/(cov_atom1 + cov_attached_atom)
     new_xyz = list(factor*vector+atom_xyz)
-    new_xyz.insert(0,'H')
+    new_xyz.insert(0, 'H')
     return new_xyz
 
 

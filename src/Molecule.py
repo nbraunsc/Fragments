@@ -81,9 +81,9 @@ class Molecule():
             self.A[x][y] = z
             self.A[y][x] = z
         
+        #print('done parsing cml')     
         self.build_prims()
         self.build_primchart()
-        
     def build_prims(self):
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
@@ -102,7 +102,7 @@ class Molecule():
         for i in range(0, len(self.prims)):
             self.prims[i] = tuple(sorted(self.prims[i]))
         self.prims = set(self.prims)
-
+        #print('done making prims')
     #if spot in A is non zero add 1 to primchart in row and column of prim1 and prim2 
     def build_primchart(self):
         self.prims = list(self.prims)
@@ -117,7 +117,7 @@ class Molecule():
                         if self.A[atomi][atomj] != 0:
                             self.primchart[prim1][prim2] = 1
                             self.primchart[prim2][prim1] = 1
-    
+        #print('done making primchart') 
     def build_molmatrix(self, i):    #i must 2 to start
         eta = self.natoms
         if i == 2:
@@ -151,6 +151,6 @@ class Molecule():
         if i < eta:     #recursive part of function
             i = i+1
             self.build_molmatrix(i)
-
+        #print('done making molmatrix')
 
 
