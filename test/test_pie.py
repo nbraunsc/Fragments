@@ -1,5 +1,6 @@
 from Molecule import *
 from fragmentation import *
+from Fragment import *
 
 def test_pie():
     """
@@ -14,10 +15,23 @@ def test_pie():
     """ coefficent test """
     assert(runpie(frag.frag)[1] == [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1])
 
+def test_energy():
+    """
+    This is testing the overall energy by taking energies of fragments multiplied by their coefficents and then added up.  Should be the same energy as the full  molecule
+    """
+    aspirin = Molecule()
+    aspirin.initalize_molecule()
+    frag = Fragmentation(aspirin)
+    frag.do_fragmentation(1)
+    print(frag.total)
+    assert(frag.total == -636.6280880465249)
+    
+
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1)
     test_pie()
+    test_energy()
     

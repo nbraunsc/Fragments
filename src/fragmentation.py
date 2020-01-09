@@ -21,6 +21,7 @@ class Fragmentation():
         self.coefflist = []
         self.atomlist = []
         self.frags = []
+        self.total = 0
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -82,6 +83,8 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects()
+        self.test_fragment()
+        self.overall_energy()
    
    # def compress_uniquefrags(self):
    #     self.compressed = []
@@ -119,13 +122,23 @@ class Fragmentation():
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf()
+    
+    def overall_energy(self):
+        for i in self.frags:
+            self.total += i.coeff*i.energy
+
+    #def print_fullxyz(self):
+    #    self.molecule.atomtable = str(self.molecule.atomtable).replace('[', '')
+    #    self.molecule.atomtable = self.molecule.atomtable.replace(']', '\n')
+    #    self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
+    #    print(self.molecule.atomtable)
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragmentation wanted
-    frag.test_fragment()
+    print(frag.total)
     #print(frag.attached)
     #print(frag.atomlist)
     #print(frag.coefflist)

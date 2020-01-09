@@ -36,6 +36,6 @@ class Fragment():
             self.inputxyz += linkatom_xyz
     
     def run_pyscf(self):
-        self.energy = do_pyscf(self.inputxyz)
-        #print(self.energy)
+        print(self.prims)
+        self.energy = do_pyscf(self.inputxyz, 'sto-3g')
 

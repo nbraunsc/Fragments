@@ -1,10 +1,11 @@
 from pyscf import gto, scf
+#from pyscf.geomopt.berny_solver import optimize
 
-def do_pyscf(input_xyz):
+def do_pyscf(input_xyz, basis):
     mol = gto.Mole()
     #mol.atom =  '/home/nbraunsc/Documents/Projects/MIM/myoutfile.txt'   #different atoms are seperated by ; or a line break
     mol.atom = input_xyz
-    mol.basis = 'sto-3g'
+    mol.basis = basis
 
     #mol.symmetry = 1
     #mol.charge = 1
@@ -18,5 +19,7 @@ def do_pyscf(input_xyz):
     mol.build()
     m = scf.RHF(mol)
     energy = m.kernel()
-    print('\n', mol.atom)
+    #mol_eq = optimize(m)
+    #print(mol_eq.atom_coords())
+    #print('\n', mol.atom)
     return energy
