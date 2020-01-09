@@ -1,5 +1,5 @@
 from pyscf import gto, scf
-#from pyscf.geomopt.berny_solver import optimize
+from pyscf.geomopt.berny_solver import optimize
 
 def do_pyscf(input_xyz, basis):
     mol = gto.Mole()
@@ -19,7 +19,7 @@ def do_pyscf(input_xyz, basis):
     mol.build()
     m = scf.RHF(mol)
     energy = m.kernel()
-    #mol_eq = optimize(m)
-    #print(mol_eq.atom_coords())
+    mol_eq = optimize(m)
+    print(mol_eq.atom_coords())
     #print('\n', mol.atom)
     return energy

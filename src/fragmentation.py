@@ -136,6 +136,7 @@ class Fragmentation():
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
+    print(aspirin.atomtable)
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragmentation wanted
     print(frag.total)

@@ -1,5 +1,6 @@
 from linkatoms import *
 from runpyscf import *
+import string
 
 class Fragment():
     """
@@ -25,17 +26,15 @@ class Fragment():
 
     def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms
         for atom in self.prims:
-            atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '')
-            atom_xyz = atom_xyz.replace(']', '\n')
-            atom_xyz = atom_xyz.replace(',', '')   
+            atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             self.inputxyz += atom_xyz
         for pair in self.attached:
             linkatom_xyz = str(add_linkatoms(pair[0], pair[1], self.molecule)).replace('[', '')
-            linkatom_xyz = linkatom_xyz.replace(']', '\n')
-            linkatom_xyz = linkatom_xyz.replace(',', '')   
+            linkatom_xyz = str(add_linkatoms(pair[0], pair[1], self.molecule)).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             self.inputxyz += linkatom_xyz
     
     def run_pyscf(self):
         print(self.prims)
+        print(self.inputxyz)
         self.energy = do_pyscf(self.inputxyz, 'sto-3g')
 
