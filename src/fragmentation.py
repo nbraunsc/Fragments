@@ -119,9 +119,11 @@ class Fragmentation():
             self.frags.append(Fragment(self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
     def test_fragment(self):
-        for i in self.frags:
-            i.build_xyz()
-            i.run_pyscf()
+        #for i in self.frags:
+            #i.build_xyz()
+            #i.run_pyscf()
+        self.frags[0].build_xyz()
+        self.frags[0].run_pyscf()
     
     def overall_energy(self):
         for i in self.frags:
@@ -136,10 +138,11 @@ class Fragmentation():
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
-    print(aspirin.atomtable)
+    #print(aspirin.atomtable)
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1) #argument is level of fragmentation wanted
-    print(frag.total)
+    #print(frag.frags[0].grad)
+    #print(frag.total)
     #print(frag.attached)
     #print(frag.atomlist)
     #print(frag.coefflist)

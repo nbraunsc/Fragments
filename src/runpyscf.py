@@ -1,4 +1,4 @@
-from pyscf import gto, scf
+from pyscf import gto, scf, hessian
 from pyscf.geomopt.berny_solver import optimize
 
 def do_pyscf(input_xyz, basis):
@@ -19,7 +19,12 @@ def do_pyscf(input_xyz, basis):
     mol.build()
     m = scf.RHF(mol)
     energy = m.kernel()
-    mol_eq = optimize(m)
-    print(mol_eq.atom_coords())
+    g = m.nuc_grad_method()
+    grad = g.kernel()
+    #h = m.Hessian().kernel()
+    #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
+    #print(grad)
+    #mol_eq = optimize(m)
+    #print(mol_eq.atom_coords())
     #print('\n', mol.atom)
-    return energy
+    return energy, grad

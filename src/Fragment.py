@@ -13,6 +13,7 @@ class Fragment():
         self.attached = attached
         self.inputxyz = str()
         self.energy = 1
+        self.grad = []
 
     def __str__(self):
         out = "Frag:"
@@ -24,7 +25,7 @@ class Fragment():
     def __repr__(self):
         return str(self)
 
-    def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms
+    def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms as a string
         for atom in self.prims:
             atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             self.inputxyz += atom_xyz
@@ -34,7 +35,11 @@ class Fragment():
             self.inputxyz += linkatom_xyz
     
     def run_pyscf(self):
-        print(self.prims)
-        print(self.inputxyz)
-        self.energy = do_pyscf(self.inputxyz, 'sto-3g')
-
+        #print(self.prims)
+        #print(self.inputxyz, '\n')
+        self.energy, self.grad = do_pyscf(self.inputxyz, 'sto-3g')
+        x = len(self.prims)
+        for i in range(x, len(self.grad)):
+            mag = np.linalg.norm(self.grad[i])
+            print(self.grad[i])
+        print(1/(2**0.5))
