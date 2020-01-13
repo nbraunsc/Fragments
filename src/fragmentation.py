@@ -119,11 +119,11 @@ class Fragmentation():
             self.frags.append(Fragment(self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
     def test_fragment(self):
-        #for i in self.frags:
-            #i.build_xyz()
-            #i.run_pyscf()
-        self.frags[0].build_xyz()
-        self.frags[0].run_pyscf()
+        for i in self.frags:
+            i.build_xyz()
+            i.run_pyscf()
+        #self.frags[0].build_xyz()
+        #self.frags[0].run_pyscf()
     
     def overall_energy(self):
         for i in self.frags:
