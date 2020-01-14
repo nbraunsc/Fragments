@@ -1,13 +1,34 @@
-from pyscf import gto, scf, hessian
+from pyscf import gto, scf, hessian, mp
 from pyscf.geomopt.berny_solver import optimize
 
-def do_pyscf(input_xyz, basis):
+def do_pyscf(input_xyz, theory, basis):
     mol = gto.Mole()
-    #mol.atom =  '/home/nbraunsc/Documents/Projects/MIM/myoutfile.txt'   #different atoms are seperated by ; or a line break
     mol.atom = input_xyz
     mol.basis = basis
+    mol.build()
+    m = int() 
+    if theory == 'RHF': #Restricted HF calc
+        m = scf.RHF(mol)
+        energy = m.kernel()
+        g = m.nuc_grad_method()
+        grad = g.kernel()
+    
+    if theory == 'MP2': #Perturbation second order calc
+        mp2_scanner = mp.MP2(scf.RHF(mol)).as_scanner()
+        energy = mp2_scanner(mol)
+        g = mp2_scanner.nuc_grad_method()
+        grad = g.kernel()
+        
+        #h = m.Hessian().kernel()
+        #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
+        #mol_eq = optimize(m)
+        #print(mol_eq.atom_coords())
+        #print('\n', mol.atom)
+    
+    return energy, grad
 
-    #mol.symmetry = 1
+#mol.atom =  '/home/nbraunsc/Documents/Projects/MIM/myoutfile.txt'   #different atoms are seperated by ; or a line break
+#mol.symmetry = 1
     #mol.charge = 1
     #mol.spin = 2   #This is 2S, difference between number of alpha and beta electrons
     #mol.verbose = 5    #this sets the print level globally 0-9
@@ -16,15 +37,5 @@ def do_pyscf(input_xyz, basis):
         #can also set memory from command line:
         #python example.py -o /path/to/my_log.txt -m 1000
     #mol.output = 'output_log'
-    mol.build()
-    m = scf.RHF(mol)
-    energy = m.kernel()
-    g = m.nuc_grad_method()
-    grad = g.kernel()
-    #h = m.Hessian().kernel()
-    #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
-    #print(grad)
-    #mol_eq = optimize(m)
-    #print(mol_eq.atom_coords())
-    #print('\n', mol.atom)
-    return energy, grad
+    
+

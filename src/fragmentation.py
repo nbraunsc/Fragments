@@ -17,11 +17,13 @@ class Fragmentation():
         self.frag = []
         self.fragconn = []
         self.molecule = molecule
+        self.unique_frag = []
         self.derivs = []
         self.coefflist = []
         self.atomlist = []
         self.frags = []
         self.total = 0
+        self.grad = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -57,35 +59,8 @@ class Fragmentation():
             if add == True:
                 if i not in uniquefrags:
                     uniquefrags.append(i)   
-        self.frag = uniquefrags
-    #print('done compressing frags') 
-    def do_fragmentation(self, deg):
-        self.build_frags(deg)
-        self.derivs, self.coefflist = runpie(self.frag)
-        self.atomlist = [None] * len(self.derivs)
-        
-        for i in range(0, len(self.derivs)):
-            self.derivs[i] = list(self.derivs[i])
-        
-        for fragi in range(0, len(self.derivs)):    #changes prims into atoms
-            x = len(self.derivs[fragi])
-            for primi in range(0, x):
-                value = self.derivs[fragi][primi]
-                atoms = list(self.molecule.prims[value])
-                self.derivs[fragi][primi] = atoms
-        
-        for y in range(0, len(self.derivs)):
-            flatlist = [ item for elem in self.derivs[y] for item in elem]
-            self.atomlist[y] = flatlist     #now fragments are list of atoms
-        
-        for i in range(0, len(self.atomlist)):  #sorted atom numbers
-            self.atomlist[i] = list(sorted(self.atomlist[i]))
-        
-        self.find_attached()
-        self.initalize_Frag_objects()
-        self.test_fragment()
-        self.overall_energy()
-   
+        self.unique_frag = uniquefrags
+    
    # def compress_uniquefrags(self):
    #     self.compressed = []
    #     self.newcoeff = []
@@ -111,42 +86,61 @@ class Fragmentation():
                             continue
             self.attached.append(fragi) 
 
-    def initalize_Frag_objects(self):
+    def initalize_Frag_objects(self, theory, basis):
         self.frags = []
         for fi in range(0, len(self.atomlist)):
             coeffi = self.coefflist[fi]
             attachedlist = self.attached[fi]
-            self.frags.append(Fragment(self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
+            self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
-    def test_fragment(self):
+    def overall_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
         for i in self.frags:
             i.build_xyz()
-            i.run_pyscf()
-        #self.frags[0].build_xyz()
-        #self.frags[0].run_pyscf()
-    
-    def overall_energy(self):
+            i.run_pyscf(theory, basis)
+        
         for i in self.frags:
             self.total += i.coeff*i.energy
 
-    #def print_fullxyz(self):
+    
+    #def print_fullxyz(self):   #makes xyz input for full molecule
     #    self.molecule.atomtable = str(self.molecule.atomtable).replace('[', '')
     #    self.molecule.atomtable = self.molecule.atomtable.replace(']', '\n')
     #    self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
     #    print(self.molecule.atomtable)
 
+    def do_fragmentation(self, deg, theory, basis):
+        self.build_frags(deg)
+        self.derivs, self.coefflist = runpie(self.unique_frag)
+        self.atomlist = [None] * len(self.derivs)
+        
+        for i in range(0, len(self.derivs)):
+            self.derivs[i] = list(self.derivs[i])
+        
+        for fragi in range(0, len(self.derivs)):    #changes prims into atoms
+            x = len(self.derivs[fragi])
+            for primi in range(0, x):
+                value = self.derivs[fragi][primi]
+                atoms = list(self.molecule.prims[value])
+                self.derivs[fragi][primi] = atoms
+        
+        for y in range(0, len(self.derivs)):
+            flatlist = [ item for elem in self.derivs[y] for item in elem]
+            self.atomlist[y] = flatlist     #now fragments are list of atoms
+        
+        for i in range(0, len(self.atomlist)):  #sorted atom numbers
+            self.atomlist[i] = list(sorted(self.atomlist[i]))
+        
+        self.find_attached()
+        self.initalize_Frag_objects(theory, basis)
+        self.overall_energy(theory, basis)
+        return self.total
+   
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule()
-    #print(aspirin.atomtable)
     frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1) #argument is level of fragmentation wanted
-    #print(frag.frags[0].grad)
-    #print(frag.total)
-    #print(frag.attached)
-    #print(frag.atomlist)
-    #print(frag.coefflist)
-    #print(frag.frags) 
+    frag.do_fragmentation(1, 'RHF', 'sto-3g') #argument is level of fragmentation wanted, theory level, basis set
+    print(frag.total)
 
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.

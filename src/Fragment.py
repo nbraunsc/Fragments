@@ -6,7 +6,7 @@ class Fragment():
     """
     Class to store a list of primitives corresponding to a molecular fragment
     """
-    def __init__(self, prims, molecule, attached=[], coeff=1):
+    def __init__(self, theory, basis, prims, molecule, attached=[], coeff=1):
         self.prims = prims 
         self.molecule = molecule 
         self.coeff = coeff 
@@ -14,6 +14,8 @@ class Fragment():
         self.inputxyz = str()
         self.energy = 1
         self.grad = []
+        self.theory = theory
+        self.basis = basis
 
     def __str__(self):
         out = "Frag:"
@@ -34,12 +36,11 @@ class Fragment():
             linkatom_xyz = str(add_linkatoms(pair[0], pair[1], self.molecule)).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             self.inputxyz += linkatom_xyz
     
-    def run_pyscf(self):
+    def run_pyscf(self, theory, basis):
         #print(self.prims)
         #print(self.inputxyz, '\n')
-        self.energy, self.grad = do_pyscf(self.inputxyz, 'sto-3g')
+        self.energy, self.grad = do_pyscf(self.inputxyz, self.theory, self.basis) #'sto-3g')
+        
         x = len(self.prims)
         for i in range(x, len(self.grad)):
             mag = np.linalg.norm(self.grad[i])
-            print(self.grad[i])
-        print(1/(2**0.5))
