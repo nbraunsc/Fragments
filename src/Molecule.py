@@ -3,10 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from tools import *
-from Fragment import *
 from cov_rad import *
-
 
 class Molecule():
     """
@@ -38,8 +35,10 @@ class Molecule():
         self.molchart = []
         self.covrad = form_covalent_radii()
         
-    def initalize_molecule(self):
-        self.parse_cml("../inputs/aspirin.cml")
+    def initalize_molecule(self, file_name):
+        y = file_name
+        x = "../inputs/" + y + ".cml"
+        self.parse_cml(x)
         self.build_molmatrix(2)
 
     def parse_cml(self, filename):
