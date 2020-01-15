@@ -134,12 +134,9 @@ class Fragmentation():
         self.overall_energy(theory, basis)
         return self.total
    
-if __name__ == "__main__":
-    aspirin = Molecule()
-    aspirin.initalize_molecule()
-    #frag = Fragmentation(aspirin)
-    #frag.do_fragmentation(1, 'RHF', 'sto-3g') #argument is level of fragmentation wanted, theory level, basis set
-    #print(frag.total)
+#if __name__ == "__main__":
+#    aspirin = Molecule()
+#    aspirin.initalize_molecule()
 
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
