@@ -23,6 +23,7 @@ class Fragmentation():
         self.frags = []
         self.total = 0
         self.grad = []
+        self.fullgrad = {}
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -93,19 +94,27 @@ class Fragmentation():
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
     def overall_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
+        for k in range(0, self.molecule.natoms):
+            self.fullgrad[k] = np.zeros(3)
+        
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
-        
-        for i in self.frags:
+            i.distribute_linkgrad()
             self.total += i.coeff*i.energy
+            for k in range(0, self.molecule.natoms):
+                if k in i.grad_dict.keys():
+                    self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
+                else:
+                    continue
+        for l in range(0, self.molecule.natoms):
+            print(self.fullgrad[l])
 
-    
     #def print_fullxyz(self):   #makes xyz input for full molecule
-    #    self.molecule.atomtable = str(self.molecule.atomtable).replace('[', '')
-    #    self.molecule.atomtable = self.molecule.atomtable.replace(']', '\n')
-    #    self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
-    #    print(self.molecule.atomtable)
+        #self.molecule.atomtable = str(self.molecule.atomtable).replace('[', '')
+        #self.molecule.atomtable = self.molecule.atomtable.replace(']', '\n')
+        #self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
+        #print(self.molecule.atomtable)
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
@@ -135,8 +144,9 @@ class Fragmentation():
         return self.total
    
 #if __name__ == "__main__":
-#    aspirin = Molecule()
-#    aspirin.initalize_molecule()
+    #aspirin = Molecule()
+    #aspirin.initalize_molecule('aspirin')
+    #frag = Fragment(aspirin)
 
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
