@@ -61,15 +61,6 @@ class Fragmentation():
                     uniquefrags.append(i)   
         self.unique_frag = uniquefrags
     
-   # def compress_uniquefrags(self):
-   #     self.compressed = []
-   #     self.newcoeff = []
-   #     for x in range(0, len(self.atomlist)):
-   #         for y in range(0, len(self.atomlist)):
-   #             if x != y and self.atomlist[x] == self.atomlist[y]:
-   #                 print(self.atomlist[x], self.coefflist[x], 'x')
-   #                 newcoeff = self.coefflist[x] + self.coefflist[y]
-
     def find_attached(self):    #finding all the attached atoms that were cut during fragmentation
         x = len(self.atomlist)
         self.attached = []
@@ -117,14 +108,14 @@ class Fragmentation():
             self.grad += ('\n')
 
        # file = open("coords.xyz", "w")
-       # #file.write('"""')
-       # #file.write('\n')
+       # file.write('"""')
+       # file.write('\n')
        # file.write(coords)
-       # #file.write('"""')
+       # file.write('"""')
        # file.close()
-       # 
-        coords = self.molecule.atomtable
-        newcoords = do_geomopt(coords, self.total, self.grad)
+       
+        #coords = self.molecule.atomtable
+        #newcoords = do_geomopt(coords, self.total, self.grad)
         
    # def print_fullxyz(self):   #makes xyz input for full molecule
    #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
@@ -132,14 +123,34 @@ class Fragmentation():
    #     self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
    #     self.molecule.atomtable = self.molecule.atomtable.replace("'", "")
    #     return self.molecule.atomtable
+    
+    def compress_uniquefrags(self):
+        self.compressed = []
+        self.newcoeff = []
+        for x in range(0, len(self.derivs)):
+            self.compressed.append(self.derivs[x])
+            
+        for x in range(0, len(self.compressed)):
+            for y in range(x+1, len(self.compressed)):
+                if self.compressed[x] == self.compressed[y]:
+                    self.derivs.remove(self.derivs[x])
+                    self.derivs.remove(self.derivs[y])
+                    self.coefflist.remove(self.coefflist[x])
+                    self.coefflist.remove(self.coefflist[y])
+
+            
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
         self.derivs, self.coefflist = runpie(self.unique_frag)
+        print(self.coefflist)
         self.atomlist = [None] * len(self.derivs)
         
         for i in range(0, len(self.derivs)):
             self.derivs[i] = list(self.derivs[i])
+
+        self.unique_derivs = self.compress_uniquefrags()
+        print(self.derivs)
         
         for fragi in range(0, len(self.derivs)):    #changes prims into atoms
             x = len(self.derivs[fragi])
@@ -157,16 +168,16 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        self.total_energy(theory, basis)
-        self.total_gradient(theory, basis)
-        return self.total
+#        self.total_energy(theory, basis)
+#        self.total_gradient(theory, basis)
+#        return self.total
    
-#if __name__ == "__main__":
+if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
-    frag = Fragment(aspirin)
+    frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    print(frag.atomlist)
+    #print(frag.atomlist)
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
     """
