@@ -80,4 +80,4 @@ class Fragment():
                     
 
 
-"""I think i need to make a dictonary where the each atom has its label (0, 1, 2, ... number of atoms in molecule). Then assign to each atom the gradients found from each fragment.  Now I can add the gradients from the link atoms to each atom it was attached to based on the atom key verses the index in each fragment """
+"""Made dictonary where the each atom has its label (0, 1, 2, ... number of atoms in molecule). Then assign to each atom the gradients found from each fragment.  Now I can add the gradients from the link atoms to each atom it was attached to based on the atom key verses the index in each fragment """

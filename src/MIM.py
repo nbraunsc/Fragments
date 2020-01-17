@@ -6,8 +6,9 @@ from fragmentation import *
 def do_MIM1(deg, theory, basis, Molecule):
     frag = Fragmentation(Molecule)
     MIM1_energy = frag.do_fragmentation(deg, theory, basis)
+    xyz = frag.print_fullxyz()
     print('E(MIM1) =', MIM1_energy, 'Hartree')
-    grad = []
+    #grad = []
     return MIM1_energy, grad
 
 """MIM2 is two levels of theory"""

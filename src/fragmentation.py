@@ -22,7 +22,7 @@ class Fragmentation():
         self.atomlist = []
         self.frags = []
         self.total = 0
-        self.grad = []
+        self.grad = str()
         self.fullgrad = {}
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
@@ -93,28 +93,45 @@ class Fragmentation():
             attachedlist = self.attached[fi]
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
-    def overall_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
-        for k in range(0, self.molecule.natoms):
-            self.fullgrad[k] = np.zeros(3)
-        
+    def total_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
             i.distribute_linkgrad()
             self.total += i.coeff*i.energy
+    
+    def total_gradient(self, theory, basis):
+        for j in range(0, self.molecule.natoms):
+            self.fullgrad[j] = np.zeros(3)
+
+        for i in self.frags:
             for k in range(0, self.molecule.natoms):
                 if k in i.grad_dict.keys():
                     self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
                 else:
                     continue
+        
         for l in range(0, self.molecule.natoms):
-            print(self.fullgrad[l])
+            grad = str(self.fullgrad[l])
+            self.grad += grad
+            self.grad += ('\n')
 
-    #def print_fullxyz(self):   #makes xyz input for full molecule
-        #self.molecule.atomtable = str(self.molecule.atomtable).replace('[', '')
-        #self.molecule.atomtable = self.molecule.atomtable.replace(']', '\n')
-        #self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
-        #print(self.molecule.atomtable)
+       # file = open("coords.xyz", "w")
+       # #file.write('"""')
+       # #file.write('\n')
+       # file.write(coords)
+       # #file.write('"""')
+       # file.close()
+       # 
+        coords = self.molecule.atomtable
+        newcoords = do_geomopt(coords, self.total, self.grad)
+        
+   # def print_fullxyz(self):   #makes xyz input for full molecule
+   #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
+   #     self.molecule.atomtable = self.molecule.atomtable.replace('],', '\n')
+   #     self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
+   #     self.molecule.atomtable = self.molecule.atomtable.replace("'", "")
+   #     return self.molecule.atomtable
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
@@ -140,14 +157,16 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        self.overall_energy(theory, basis)
+        self.total_energy(theory, basis)
+        self.total_gradient(theory, basis)
         return self.total
    
 #if __name__ == "__main__":
-    #aspirin = Molecule()
-    #aspirin.initalize_molecule('aspirin')
-    #frag = Fragment(aspirin)
-
+    aspirin = Molecule()
+    aspirin.initalize_molecule('aspirin')
+    frag = Fragment(aspirin)
+    frag.do_fragmentation(1, 'RHF', 'sto-3g')
+    print(frag.atomlist)
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
     """

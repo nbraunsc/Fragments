@@ -1,5 +1,7 @@
 from pyscf import gto, scf, hessian, mp
 from pyscf.geomopt.berny_solver import optimize
+from berny import Berny, geomlib
+from berny.solvers import MopacSolver
 
 def do_pyscf(input_xyz, theory, basis):
     mol = gto.Mole()
@@ -26,6 +28,15 @@ def do_pyscf(input_xyz, theory, basis):
         #print('\n', mol.atom)
     
     return energy, grad
+
+def do_geomopt(coords, energy, gradients):
+    optimizer = Berny(coords)
+    for geom in optimizer:
+        optimizer.send((energy, gradients))
+    relaxed = geom    
+    return relaxed
+
+    
 
 #mol.atom =  '/home/nbraunsc/Documents/Projects/MIM/myoutfile.txt'   #different atoms are seperated by ; or a line break
 #mol.symmetry = 1
