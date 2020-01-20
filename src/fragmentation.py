@@ -4,6 +4,7 @@ import sys
 from sys import argv
 import xml.etree.ElementTree as ET
 from runpie import *
+from runpyscf import *
 from Fragment import *
 from Molecule import *
 
@@ -22,8 +23,9 @@ class Fragmentation():
         self.atomlist = []
         self.frags = []
         self.total = 0
-        self.grad = str()
+        self.grad = []
         self.fullgrad = {}
+        self.moleculexyz = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -91,31 +93,29 @@ class Fragmentation():
             i.distribute_linkgrad()
             self.total += i.coeff*i.energy
     
-    def total_gradient(self, theory, basis):
+    def total_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.grad:np.array of full gradient
         for j in range(0, self.molecule.natoms):
             self.fullgrad[j] = np.zeros(3)
 
-        for i in self.frags:
+        for i in self.frags:    #projects link atom gradients back to host and supporting atoms
             for k in range(0, self.molecule.natoms):
                 if k in i.grad_dict.keys():
                     self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
                 else:
                     continue
         
-        for l in range(0, self.molecule.natoms):
-            grad = str(self.fullgrad[l])
-            self.grad += grad
-            self.grad += ('\n')
+        for l in range(0, self.molecule.natoms):    #making into numpy array
+            grad = list(self.fullgrad[l])
+            self.grad.append(grad)
 
-       # file = open("coords.xyz", "w")
-       # file.write('"""')
-       # file.write('\n')
-       # file.write(coords)
-       # file.write('"""')
-       # file.close()
+        #self.grad = np.array(self.grad)
+        molecule = np.array(self.molecule.atomtable)
+        self.moleculexyz = molecule[:,[1,2,3]]
        
-        #coords = self.molecule.atomtable
-        #newcoords = do_geomopt(coords, self.total, self.grad)
+    def opt_grad(self, basis):
+        opt_grad = do_geomopt(self.moleculexyz, self.total, self.grad, basis)
+        print(opt_grad)
+
         
    # def print_fullxyz(self):   #makes xyz input for full molecule
    #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
@@ -124,33 +124,32 @@ class Fragmentation():
    #     self.molecule.atomtable = self.molecule.atomtable.replace("'", "")
    #     return self.molecule.atomtable
     
-    def compress_uniquefrags(self):
-        self.compressed = []
-        self.newcoeff = []
-        for x in range(0, len(self.derivs)):
-            self.compressed.append(self.derivs[x])
-            
-        for x in range(0, len(self.compressed)):
-            for y in range(x+1, len(self.compressed)):
-                if self.compressed[x] == self.compressed[y]:
-                    self.derivs.remove(self.derivs[x])
-                    self.derivs.remove(self.derivs[y])
-                    self.coefflist.remove(self.coefflist[x])
-                    self.coefflist.remove(self.coefflist[y])
+   # def compress_uniquefrags(self):
+   #     self.compressed = []
+   #     self.newcoeff = []
+   #     for x in range(0, len(self.derivs)):
+   #         self.compressed.append(self.derivs[x])
+   #         
+   #     for x in range(0, len(self.compressed)):
+   #         for y in range(x+1, len(self.compressed)):
+   #             if self.compressed[x] == self.compressed[y]:
+   #                 self.derivs.remove(self.derivs[x])
+   #                 self.derivs.remove(self.derivs[y])
+   #                 self.coefflist.remove(self.coefflist[x])
+   #                 self.coefflist.remove(self.coefflist[y])
 
             
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
         self.derivs, self.coefflist = runpie(self.unique_frag)
-        print(self.coefflist)
         self.atomlist = [None] * len(self.derivs)
         
         for i in range(0, len(self.derivs)):
             self.derivs[i] = list(self.derivs[i])
 
-        self.unique_derivs = self.compress_uniquefrags()
-        print(self.derivs)
+        #self.unique_derivs = self.compress_uniquefrags()
+        #print(self.derivs)
         
         for fragi in range(0, len(self.derivs)):    #changes prims into atoms
             x = len(self.derivs[fragi])
@@ -168,10 +167,11 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-#        self.total_energy(theory, basis)
-#        self.total_gradient(theory, basis)
-#        return self.total
-   
+        self.total_energy(theory, basis)
+        self.total_gradient(theory, basis)
+        self.opt_grad(basis)
+        return self.total, self.grad
+ 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
