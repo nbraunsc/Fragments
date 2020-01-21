@@ -11,12 +11,10 @@ from Molecule import *
 #from pyscf.grad.rhf import GradientsBasics
 #from pyscf.geomopt.berny_solver import optimize
 #from berny import Berny, geomlib
-#from pyscf.geomopt import berny_solver
-import psi4
-import time
-import psi4.driver.p4util as p4util
-from psi4.driver.procrouting import proc_util
+#from pyscf.geomopt import berny_solver, as_pyscf_method
+#from decimal import *
 
+from scipy.optimize import minimize
 
 class Fragmentation():
     """
@@ -36,6 +34,7 @@ class Fragmentation():
         self.grad = []
         self.fullgrad = {}
         self.moleculexyz = []
+        self.mol = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -117,25 +116,37 @@ class Fragmentation():
         for l in range(0, self.molecule.natoms):    #making into numpy array
             grad = list(self.fullgrad[l])
             self.grad.append(grad)
+        self.grad = np.array(self.grad)
+        molecule = np.array(self.molecule.atomtable)    #formatting molecule coords
+        self.moleculeinput = molecule[:,[1,2,3]]
+        self.moleculexyz = []
+        for i in self.moleculeinput:
+            x = (i[0], i[1], i[2])
+            y = np.array(x)
+            z = y.astype(float)
+            self.moleculexyz.append(z)
+        self.moleculexyz = np.array(self.moleculexyz)
+        print(self.grad)
+        norm = np.linalg.norm(self.grad)
+        print(norm, 'norm')
 
-        #self.grad = np.array(self.grad)
-        molecule = np.array(self.molecule.atomtable)
-        self.moleculexyz = molecule[:,[1,2,3]]
-        return tuple([self.total, self.grad])
-
-    def do_geomopt(self, theory, basis):
-        mol = gto.Mole()
-        mol.atom = self.moleculexyz
-        mol.basis = basis
-        mol.build
-        fake_method = as_pyscf_method(mol, self.total_gradient(theory, basis))
-        new_mol = berny_solver.optimize(fake_method)
-        return new_mol
-       
-    def opt_grad(self, theory, basis):
-        opt_grad = self.do_geomopt(theory, basis)
-        print(opt_grad)
-    
+   #     mol = gto.Mole()    #initalizing pyscf mol, has to be outside of geomopt and test_fnc
+   #     mol.atom = self.moleculexyz
+   #     mol.basis = basis
+   #     mol.build
+   #     self.mol = mol
+   # 
+   # def test_fn(self, mol): #creates scanner_fnc to do geom opt with given etot and grad
+   #     etot = self.total
+   #     grad = self.grad
+   #     print('Customized |grad|', np.linalg.norm(grad))
+   #     return etot, grad
+   # 
+   # def do_geomopt(self):   #runs geom opt for molecule based on gradients, gives new coords
+   #     fake_method = as_pyscf_method(self.mol, self.test_fn)
+   #     new_mol = berny_solver.optimize(fake_method)
+   #     return new_mol
+   #    
       
    # def print_fullxyz(self):   #makes xyz input for full molecule
    #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
@@ -158,7 +169,19 @@ class Fragmentation():
    #                 self.coefflist.remove(self.coefflist[x])
    #                 self.coefflist.remove(self.coefflist[y])
 
-            
+    def do_geomopt(self):
+        scipy.optimize.minimize(fun, x0, args=(), method='BFGS', jac=None, tol=None, options={'gtol': 1e-08, 'maxiter': None, 'disp':True,  'eps': 1.4901161193847656e-08})
+
+        """
+        :fun -function that needs to be minimized, so in my case it is the norm of the gradient that needs to get normalized.
+        :x0 -is an inital guess so it would most likely be the inital norm of the gradient or it is the inital xyz coords, energy that would be inputs to the fun function.
+        :args=() -this is extra stuff that can be passed to the fun function as well as jac and hess functions
+        :method -this is the type of solver, vibin mentioned the 'BFGS' method
+        :jac -function that computes the gradient
+        :hess -function that computes the hessian
+        :tol -the tolerance for termination, float number
+        :options -stuff
+        """
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
@@ -188,16 +211,19 @@ class Fragmentation():
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
         self.total_energy(theory, basis)
+        print(self.total, 'etot')
         self.total_gradient(theory, basis)
-        self.opt_grad(theory, basis)
-        #return self.total, self.grad
+        print(self.grad, 'gradients')
+        print(self.moleculexyz, 'xyz coords')
+        self.do_geomopt()
+        return self.total, self.grad
  
-if __name__ == "__main__":
-    aspirin = Molecule()
-    aspirin.initalize_molecule('aspirin')
-    frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    #print(frag.atomlist)
+#if __name__ == "__main__":
+#    aspirin = Molecule()
+#    aspirin.initalize_molecule('aspirin')
+#    frag = Fragmentation(aspirin)
+#    frag.do_fragmentation(1, 'RHF', 'sto-3g')
+#
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
     """

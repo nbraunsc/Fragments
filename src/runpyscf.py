@@ -10,9 +10,9 @@ from pyscf.geomopt import berny_solver
 def do_pyscf(input_xyz, theory, basis):
     mol = gto.Mole()
     mol.atom = input_xyz
-    mol.basis = basis
+    #mol.basis = basis
     mol.build()
-    m = int() 
+    #m = int() 
     if theory == 'RHF': #Restricted HF calc
         m = scf.RHF(mol)
         energy = m.kernel()
@@ -20,17 +20,17 @@ def do_pyscf(input_xyz, theory, basis):
         grad = g.kernel()
     
     if theory == 'MP2': #Perturbation second order calc
-        mp2_scanner = mp.MP2(scf.RHF(mol)).as_scanner()
-        energy = mp2_scanner(mol)
-        g = mp2_scanner.nuc_grad_method()
-        grad = g.kernel()
+        mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
+        #energy = mp2_scanner(mol)
+        e, g = mp2_scanner(mol) #.nuc_grad_method()
+        #grad = g.kernel()
         
         #h = m.Hessian().kernel()
         #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
         #mol_eq = optimize(m)
         #print(mol_eq.atom_coords())
         #print('\n', mol.atom)
-    return energy, grad
+    return e, g
 
     
    
