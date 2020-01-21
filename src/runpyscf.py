@@ -30,21 +30,7 @@ def do_pyscf(input_xyz, theory, basis):
         #mol_eq = optimize(m)
         #print(mol_eq.atom_coords())
         #print('\n', mol.atom)
-    
     return energy, grad
-
-def test_fn(etot, grad):
-    e_total = etot
-    grad_total = grad
-    return e_total, grad_total
-
-def do_geomopt(molecule, etot, grad, basis):
-    mol = gto.Mole()
-    mol.atom = molecule
-    mol.basis = basis
-    mol.build
-    fake_method = berny_solver.as_pyscf_method(mol, test_fn(etot, grad))
-    new_mol = berny_solver.optimize(fake_method)
 
     
    

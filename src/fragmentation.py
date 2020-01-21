@@ -7,6 +7,16 @@ from runpie import *
 from runpyscf import *
 from Fragment import *
 from Molecule import *
+#from pyscf import gto, scf, hessian, mp, lib
+#from pyscf.grad.rhf import GradientsBasics
+#from pyscf.geomopt.berny_solver import optimize
+#from berny import Berny, geomlib
+#from pyscf.geomopt import berny_solver
+import psi4
+import time
+import psi4.driver.p4util as p4util
+from psi4.driver.procrouting import proc_util
+
 
 class Fragmentation():
     """
@@ -111,12 +121,22 @@ class Fragmentation():
         #self.grad = np.array(self.grad)
         molecule = np.array(self.molecule.atomtable)
         self.moleculexyz = molecule[:,[1,2,3]]
-       
-    def opt_grad(self, basis):
-        opt_grad = do_geomopt(self.moleculexyz, self.total, self.grad, basis)
-        print(opt_grad)
+        return tuple([self.total, self.grad])
 
-        
+    def do_geomopt(self, theory, basis):
+        mol = gto.Mole()
+        mol.atom = self.moleculexyz
+        mol.basis = basis
+        mol.build
+        fake_method = as_pyscf_method(mol, self.total_gradient(theory, basis))
+        new_mol = berny_solver.optimize(fake_method)
+        return new_mol
+       
+    def opt_grad(self, theory, basis):
+        opt_grad = self.do_geomopt(theory, basis)
+        print(opt_grad)
+    
+      
    # def print_fullxyz(self):   #makes xyz input for full molecule
    #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
    #     self.molecule.atomtable = self.molecule.atomtable.replace('],', '\n')
@@ -169,8 +189,8 @@ class Fragmentation():
         self.initalize_Frag_objects(theory, basis)
         self.total_energy(theory, basis)
         self.total_gradient(theory, basis)
-        self.opt_grad(basis)
-        return self.total, self.grad
+        self.opt_grad(theory, basis)
+        #return self.total, self.grad
  
 if __name__ == "__main__":
     aspirin = Molecule()
