@@ -31,7 +31,7 @@ class Fragmentation():
         self.atomlist = []
         self.frags = []
         self.total = 0
-        self.grad = []
+        self.gradient = []
         self.fullgrad = {}
         self.moleculexyz = []
         self.mol = []
@@ -102,7 +102,7 @@ class Fragmentation():
             i.distribute_linkgrad()
             self.total += i.coeff*i.energy
     
-    def total_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.grad:np.array of full gradient
+    def total_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
         for j in range(0, self.molecule.natoms):
             self.fullgrad[j] = np.zeros(3)
 
@@ -115,8 +115,8 @@ class Fragmentation():
         
         for l in range(0, self.molecule.natoms):    #making into numpy array
             grad = list(self.fullgrad[l])
-            self.grad.append(grad)
-        self.grad = np.array(self.grad)
+            self.gradient.append(grad)
+        self.gradient = np.array(self.gradient)
         molecule = np.array(self.molecule.atomtable)    #formatting molecule coords
         self.moleculeinput = molecule[:,[1,2,3]]
         self.moleculexyz = []
@@ -126,9 +126,6 @@ class Fragmentation():
             z = y.astype(float)
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)
-        print(self.grad)
-        norm = np.linalg.norm(self.grad)
-        print(norm, 'norm')
 
    #     mol = gto.Mole()    #initalizing pyscf mol, has to be outside of geomopt and test_fnc
    #     mol.atom = self.moleculexyz
@@ -138,7 +135,7 @@ class Fragmentation():
    # 
    # def test_fn(self, mol): #creates scanner_fnc to do geom opt with given etot and grad
    #     etot = self.total
-   #     grad = self.grad
+   #     grad = self.gradient
    #     print('Customized |grad|', np.linalg.norm(grad))
    #     return etot, grad
    # 
@@ -181,7 +178,7 @@ class Fragmentation():
         :hess -function that computes the hessian
         :tol -the tolerance for termination, float number
         :options -stuff
-        """
+       """
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
@@ -208,21 +205,26 @@ class Fragmentation():
         for i in range(0, len(self.atomlist)):  #sorted atom numbers
             self.atomlist[i] = list(sorted(self.atomlist[i]))
         
+
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
         self.total_energy(theory, basis)
-        print(self.total, 'etot')
         self.total_gradient(theory, basis)
-        print(self.grad, 'gradients')
-        print(self.moleculexyz, 'xyz coords')
-        self.do_geomopt()
-        return self.total, self.grad
+        #print(self.gradient, 'gradients')
+        #print(self.moleculexyz, 'xyz coords')
+        #self.do_geomopt()
+        #self.frags[0].build_xyz()
+        #self.frags[0].run_pyscf(theory, basis)
+        #print(self.frags[0].inputxyz)
+        #print(self.frags[0].energy, 'energy')
+        #print(self.frags[0].grad)
+        return self.total, self.gradient
  
 #if __name__ == "__main__":
 #    aspirin = Molecule()
 #    aspirin.initalize_molecule('aspirin')
 #    frag = Fragmentation(aspirin)
-#    frag.do_fragmentation(1, 'RHF', 'sto-3g')
+#    frag.do_fragmentation(1, 'MP2', 'sto-3g')
 #
 """
     Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.

@@ -64,7 +64,7 @@ class Fragment():
         print(self.prims)
         print(self.attached, 'attached')
         self.energy, self.grad = do_pyscf(self.inputxyz, self.theory, self.basis)
-        self.grad = list(self.grad) 
+        #self.grad = list(self.grad) 
         #x = len(self.prims)
         #for i in range(x, len(self.grad)):
             #mag = np.linalg.norm(self.grad[i])

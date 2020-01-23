@@ -1,5 +1,5 @@
 import numpy as np
-from pyscf import gto, scf, hessian, mp, lib
+from pyscf import gto, scf, hessian, mp, lib, grad
 from pyscf.grad.rhf import GradientsBasics
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
@@ -14,10 +14,9 @@ def do_pyscf(input_xyz, theory, basis):
     mol.build()
     #m = int() 
     if theory == 'RHF': #Restricted HF calc
-        m = scf.RHF(mol)
-        energy = m.kernel()
-        g = m.nuc_grad_method()
-        grad = g.kernel()
+        hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
+        e, g = hf_scanner(mol)
+        return e, g
     
     if theory == 'MP2': #Perturbation second order calc
         mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
@@ -27,10 +26,10 @@ def do_pyscf(input_xyz, theory, basis):
         
         #h = m.Hessian().kernel()
         #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
-        #mol_eq = optimize(m)
+        #mol_eq = optimize(mol)
         #print(mol_eq.atom_coords())
         #print('\n', mol.atom)
-    return e, g
+        return e, g
 
     
    
