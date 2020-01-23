@@ -30,11 +30,10 @@ class Fragmentation():
         self.coefflist = []
         self.atomlist = []
         self.frags = []
-        self.total = 0
+        self.etot = 0
         self.gradient = []
-        self.fullgrad = {}
-        self.moleculexyz = []
-        self.mol = []
+        self.fullgrad = {}  #dictonary for full molecule gradient
+        self.moleculexyz = []   #full molecule xyz's
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         for x in range(0, len(self.molecule.molchart)):
@@ -95,14 +94,14 @@ class Fragmentation():
             attachedlist = self.attached[fi]
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
-    def total_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
+    def global_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
             i.distribute_linkgrad()
-            self.total += i.coeff*i.energy
+            self.etot += i.coeff*i.energy
     
-    def total_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
+    def global_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
         for j in range(0, self.molecule.natoms):
             self.fullgrad[j] = np.zeros(3)
 
@@ -127,45 +126,24 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)
 
-   #     mol = gto.Mole()    #initalizing pyscf mol, has to be outside of geomopt and test_fnc
-   #     mol.atom = self.moleculexyz
-   #     mol.basis = basis
-   #     mol.build
-   #     self.mol = mol
-   # 
-   # def test_fn(self, mol): #creates scanner_fnc to do geom opt with given etot and grad
-   #     etot = self.total
-   #     grad = self.gradient
-   #     print('Customized |grad|', np.linalg.norm(grad))
-   #     return etot, grad
-   # 
-   # def do_geomopt(self):   #runs geom opt for molecule based on gradients, gives new coords
-   #     fake_method = as_pyscf_method(self.mol, self.test_fn)
-   #     new_mol = berny_solver.optimize(fake_method)
-   #     return new_mol
-   #    
-      
-   # def print_fullxyz(self):   #makes xyz input for full molecule
-   #     self.molecule.atomtable = str(self.molecule.atomtable).replace('[', ' ').replace('C', '').replace('H', '').replace('O', '')
-   #     self.molecule.atomtable = self.molecule.atomtable.replace('],', '\n')
-   #     self.molecule.atomtable = self.molecule.atomtable.replace(',', '')
-   #     self.molecule.atomtable = self.molecule.atomtable.replace("'", "")
-   #     return self.molecule.atomtable
+    def remove_repeatingfrags(self, oldcoeff):  #this removes the derivatives that were exactly the same (i.e. this derivs would be subtracted then added right back)
+        compressed = []
+        coeff_position = []
+        self.coefflist = []
+        for i in self.derivs:
+            compressed.append(i)
+        for i in self.derivs:
+            for x in range(0, len(compressed)):
+                for y in range(0, len(compressed)):
+                    if x != y:
+                        if compressed[x] == compressed[y]:
+                            if i == compressed[x]:
+                                coeff_position.append(x)
+                                self.derivs.remove(i)
+        for i in range(0, len(oldcoeff)):
+            if i not in coeff_position:
+                self.coefflist.append(oldcoeff[i])
     
-   # def compress_uniquefrags(self):
-   #     self.compressed = []
-   #     self.newcoeff = []
-   #     for x in range(0, len(self.derivs)):
-   #         self.compressed.append(self.derivs[x])
-   #         
-   #     for x in range(0, len(self.compressed)):
-   #         for y in range(x+1, len(self.compressed)):
-   #             if self.compressed[x] == self.compressed[y]:
-   #                 self.derivs.remove(self.derivs[x])
-   #                 self.derivs.remove(self.derivs[y])
-   #                 self.coefflist.remove(self.coefflist[x])
-   #                 self.coefflist.remove(self.coefflist[y])
-
     def do_geomopt(self):
         scipy.optimize.minimize(fun, x0, args=(), method='BFGS', jac=None, tol=None, options={'gtol': 1e-08, 'maxiter': None, 'disp':True,  'eps': 1.4901161193847656e-08})
 
@@ -182,15 +160,13 @@ class Fragmentation():
 
     def do_fragmentation(self, deg, theory, basis):
         self.build_frags(deg)
-        self.derivs, self.coefflist = runpie(self.unique_frag)
+        self.derivs, oldcoeff = runpie(self.unique_frag)
+        self.remove_repeatingfrags(oldcoeff)  
         self.atomlist = [None] * len(self.derivs)
         
         for i in range(0, len(self.derivs)):
             self.derivs[i] = list(self.derivs[i])
 
-        #self.unique_derivs = self.compress_uniquefrags()
-        #print(self.derivs)
-        
         for fragi in range(0, len(self.derivs)):    #changes prims into atoms
             x = len(self.derivs[fragi])
             for primi in range(0, x):
@@ -208,24 +184,14 @@ class Fragmentation():
 
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        self.total_energy(theory, basis)
-        self.total_gradient(theory, basis)
-        #print(self.gradient, 'gradients')
-        #print(self.moleculexyz, 'xyz coords')
-        #self.do_geomopt()
-        #self.frags[0].build_xyz()
-        #self.frags[0].run_pyscf(theory, basis)
-        #print(self.frags[0].inputxyz)
-        #print(self.frags[0].energy, 'energy')
-        #print(self.frags[0].grad)
-        return self.total, self.gradient
+        self.global_energy(theory, basis)
+        self.global_gradient(theory, basis)
+        return self.etot, self.gradient
  
 #if __name__ == "__main__":
 #    aspirin = Molecule()
 #    aspirin.initalize_molecule('aspirin')
 #    frag = Fragmentation(aspirin)
 #    frag.do_fragmentation(1, 'MP2', 'sto-3g')
-#
-"""
-    Still need to write a function to delete exact same derivatives so I am not running the same thing twice just to subtract it then adding it back.
-    """
+
+

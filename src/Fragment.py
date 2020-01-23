@@ -14,11 +14,11 @@ class Fragment():
         self.atomxyz = str()
         self.inputxyz = str()
         self.energy = 1
-        self.grad_dict = {}
+        self.grad_dict = {}     #dictonary for atom gradients in prim after link atom projections, no link atoms included
         self.grad = []
         self.theory = theory
         self.basis = basis
-        self.notes = []     # [position of link atom, factor, supporting atom, host atom]
+        self.notes = []     # [index of link atom, factor, supporting atom, host atom]
 
     def __str__(self):
         out = "Frag:"
