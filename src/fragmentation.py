@@ -10,7 +10,7 @@ from Molecule import *
 #from pyscf import gto, scf, hessian, mp, lib
 #from pyscf.grad.rhf import GradientsBasics
 #from pyscf.geomopt.berny_solver import optimize
-#from berny import Berny, geomlib
+from berny import Berny, geomlib
 #from pyscf.geomopt import berny_solver, as_pyscf_method
 #from decimal import *
 
@@ -94,37 +94,28 @@ class Fragmentation():
             attachedlist = self.attached[fi]
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
-    def global_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
-        for i in self.frags:
-            i.build_xyz()
-            i.run_pyscf(theory, basis)
-            i.distribute_linkgrad()
-            self.etot += i.coeff*i.energy
-    
-    def global_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
-        for j in range(0, self.molecule.natoms):
-            self.fullgrad[j] = np.zeros(3)
+    #def global_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
+    #    for i in self.frags:
+    #        i.build_xyz()
+    #        i.run_pyscf(theory, basis)
+    #        i.distribute_linkgrad()
+    #        self.etot += i.coeff*i.energy
+    #
+    #def global_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
+    #    for j in range(0, self.molecule.natoms):
+    #        self.fullgrad[j] = np.zeros(3)
 
-        for i in self.frags:    #projects link atom gradients back to host and supporting atoms
-            for k in range(0, self.molecule.natoms):
-                if k in i.grad_dict.keys():
-                    self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
-                else:
-                    continue
-        
-        for l in range(0, self.molecule.natoms):    #making into numpy array
-            grad = list(self.fullgrad[l])
-            self.gradient.append(grad)
-        self.gradient = np.array(self.gradient)
-        molecule = np.array(self.molecule.atomtable)    #formatting molecule coords
-        self.moleculeinput = molecule[:,[1,2,3]]
-        self.moleculexyz = []
-        for i in self.moleculeinput:
-            x = (i[0], i[1], i[2])
-            y = np.array(x)
-            z = y.astype(float)
-            self.moleculexyz.append(z)
-        self.moleculexyz = np.array(self.moleculexyz)
+    #    for i in self.frags:    #projects link atom gradients back to host and supporting atoms
+    #        for k in range(0, self.molecule.natoms):
+    #            if k in i.grad_dict.keys():
+    #                self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
+    #            else:
+    #                continue
+    #    
+    #    for l in range(0, self.molecule.natoms):    #making into numpy array
+    #        grad = list(self.fullgrad[l])
+    #        self.gradient.append(grad)
+    #    self.gradient = np.array(self.gradient)
 
     def remove_repeatingfrags(self, oldcoeff):  #this removes the derivatives that were exactly the same (i.e. this derivs would be subtracted then added right back)
         compressed = []
@@ -144,21 +135,55 @@ class Fragmentation():
             if i not in coeff_position:
                 self.coefflist.append(oldcoeff[i])
     
-    def do_geomopt(self):
-        scipy.optimize.minimize(fun, x0, args=(), method='BFGS', jac=None, tol=None, options={'gtol': 1e-08, 'maxiter': None, 'disp':True,  'eps': 1.4901161193847656e-08})
+    #def do_geomopt(self.energy_gradient, theory, basis):
+    #    scipy.optimize.minimize(fun, x0, args=(), method='BFGS', jac=None, tol=None, options={'gtol': 1e-08, 'maxiter': None, 'disp':True,  'eps': 1.4901161193847656e-08})
 
-        """
-        :fun -function that needs to be minimized, so in my case it is the norm of the gradient that needs to get normalized.
-        :x0 -is an inital guess so it would most likely be the inital norm of the gradient or it is the inital xyz coords, energy that would be inputs to the fun function.
-        :args=() -this is extra stuff that can be passed to the fun function as well as jac and hess functions
-        :method -this is the type of solver, vibin mentioned the 'BFGS' method
-        :jac -function that computes the gradient
-        :hess -function that computes the hessian
-        :tol -the tolerance for termination, float number
-        :options -stuff
-       """
+    #    """
+    #    :fun -function that needs to be minimized, so in my case it is the norm of the gradient that needs to get normalized.
+    #    :x0 -is an inital guess so it would most likely be the inital norm of the gradient or it is the inital xyz coords, energy that would be inputs to the fun function.
+    #    :args=() -this is extra stuff that can be passed to the fun function as well as jac and hess functions
+    #    :method -this is the type of solver, vibin mentioned the 'BFGS' method
+    #    :jac -function that computes the gradient
+    #    :hess -function that computes the hessian
+    #    :tol -the tolerance for termination, float number
+    #    :options -stuff
+    #   """
+    
+    def energy_gradient(self, moleculexyz):
+        self.moleculexyz = moleculexyz
+        for i in self.frags:
+            i.build_xyz()
+            i.run_pyscf(theory, basis)
+            i.distribute_linkgrad()
+            self.etot += i.coeff*i.energy
+        
+        for j in range(0, self.molecule.natoms):
+            self.fullgrad[j] = np.zeros(3)
+
+        for i in self.frags:    #projects link atom gradients back to host and supporting atoms
+            for k in range(0, self.molecule.natoms):
+                if k in i.grad_dict.keys():
+                    self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
+                else:
+                    continue
+        
+        for l in range(0, self.molecule.natoms):    #making into numpy array
+            grad = list(self.fullgrad[l])
+            self.gradient.append(grad)
+        self.gradient = np.array(self.gradient)
+        return self.etot, self.gradient
 
     def do_fragmentation(self, deg, theory, basis):
+        molecule = np.array(self.molecule.atomtable)    #formatting molecule coords
+        self.moleculeinput = molecule[:,[1,2,3]]
+        self.moleculexyz = []
+        for i in self.moleculeinput:
+            x = (i[0], i[1], i[2])
+            y = np.array(x)
+            z = y.astype(float)
+            self.moleculexyz.append(z)
+        self.moleculexyz = np.array(self.moleculexyz)
+        
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)  
@@ -184,14 +209,18 @@ class Fragmentation():
 
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        self.global_energy(theory, basis)
-        self.global_gradient(theory, basis)
+        #here is where do_fragmentation needs to end
+
+"""now start optimization function that takes in full molecule xyz, global_enery func and global_grad func: returns the optimized coords, energy, and grad.  These get passed into the MIM formulas to do MIM1, MIM2, etc. """
+
+        #self.global_energy(theory, basis)
+        #self.global_gradient(theory, basis)
         return self.etot, self.gradient
  
-#if __name__ == "__main__":
-#    aspirin = Molecule()
-#    aspirin.initalize_molecule('aspirin')
-#    frag = Fragmentation(aspirin)
-#    frag.do_fragmentation(1, 'MP2', 'sto-3g')
-
+if __name__ == "__main__":
+    aspirin = Molecule()
+    aspirin.initalize_molecule('aspirin')
+    frag = Fragmentation(aspirin)
+    frag.do_fragmentation(1, 'MP2', 'sto-3g')
+    frag.do_geomopt(
 
