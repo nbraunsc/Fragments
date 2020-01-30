@@ -61,8 +61,8 @@ class Fragment():
             self.notes[-1].append(self.attached[pair][1])
     
     def run_pyscf(self, theory, basis):
-        print(self.prims)
-        print(self.attached, 'attached')
+        #print(self.prims)
+        #print(self.attached, 'attached')
         self.energy, self.grad = do_pyscf(self.inputxyz, self.theory, self.basis)
         #self.grad = list(self.grad) 
         #x = len(self.prims)

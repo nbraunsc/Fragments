@@ -9,7 +9,7 @@ def do_MIM1(deg, theory, basis, Molecule):
     norm = np.linalg.norm(grad)
     print('E(MIM1) =', MIM1_energy, 'Hartree')
     print('Grad(MIM1):', '\n', grad)
-    print('Norm(grad) =', norm)
+    #print('Norm(grad) =', norm)
     return MIM1_energy, grad
 
 """MIM2 is two levels of theory"""
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin') #argument is input file name without any extension
         
     """do_MIM1(deg, theory, basis, Molecule)"""
-    #do_MIM1(1, 'MP2', 'sto-3g', aspirin)        #uncomment to run MIM1
+    do_MIM1(1, 'RHF', 'sto-3g', aspirin)        #uncomment to run MIM1
     
     """do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin) #uncomment to run MIM2
+    #do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
     #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin)     #uncomment to run MIM3

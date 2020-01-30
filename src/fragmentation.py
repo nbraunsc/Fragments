@@ -6,15 +6,13 @@ import xml.etree.ElementTree as ET
 from runpie import *
 from runpyscf import *
 from Fragment import *
+from berny import Berny, geomlib
+from pyscf.geomopt.berny_solver import optimize
 from Molecule import *
 #from pyscf import gto, scf, hessian, mp, lib
 #from pyscf.grad.rhf import GradientsBasics
-#from pyscf.geomopt.berny_solver import optimize
-from berny import Berny, geomlib
-#from pyscf.geomopt import berny_solver, as_pyscf_method
-#from decimal import *
-
-from scipy.optimize import minimize
+from pyscf.geomopt import berny_solver, as_pyscf_method
+#from scipy.optimize import minimize
 
 class Fragmentation():
     """
@@ -117,7 +115,7 @@ class Fragmentation():
     #        self.gradient.append(grad)
     #    self.gradient = np.array(self.gradient)
 
-    def remove_repeatingfrags(self, oldcoeff):  #this removes the derivatives that were exactly the same (i.e. this derivs would be subtracted then added right back)
+    def remove_repeatingfrags(self, oldcoeff):  #this removes the derivs that were the same (i.e. this derivs would be subtracted then added right back)
         compressed = []
         coeff_position = []
         self.coefflist = []
@@ -149,7 +147,7 @@ class Fragmentation():
     #    :options -stuff
     #   """
     
-    def energy_gradient(self, moleculexyz):
+    def energy_gradient(self, moleculexyz, theory, basis):
         self.moleculexyz = moleculexyz
         for i in self.frags:
             i.build_xyz()
@@ -172,9 +170,9 @@ class Fragmentation():
             self.gradient.append(grad)
         self.gradient = np.array(self.gradient)
         return self.etot, self.gradient
-
+    
     def do_fragmentation(self, deg, theory, basis):
-        molecule = np.array(self.molecule.atomtable)    #formatting molecule coords
+        molecule = np.array(self.molecule.atomtable)
         self.moleculeinput = molecule[:,[1,2,3]]
         self.moleculexyz = []
         for i in self.moleculeinput:
@@ -182,7 +180,7 @@ class Fragmentation():
             y = np.array(x)
             z = y.astype(float)
             self.moleculexyz.append(z)
-        self.moleculexyz = np.array(self.moleculexyz)
+        self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
@@ -209,18 +207,20 @@ class Fragmentation():
 
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
+        self.energy_gradient(self.moleculexyz, theory, basis)
+        return self.etot, self.gradient
         #here is where do_fragmentation needs to end
 
-"""now start optimization function that takes in full molecule xyz, global_enery func and global_grad func: returns the optimized coords, energy, and grad.  These get passed into the MIM formulas to do MIM1, MIM2, etc. """
+    def do_geomopt(self, theory, basis):
+        optimize(Berny(self.energy_gradient(self.moleculexyz, theory, basis)), trajectory='../inputs/new_coords.xyz')
 
-        #self.global_energy(theory, basis)
-        #self.global_gradient(theory, basis)
-        return self.etot, self.gradient
- 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1, 'MP2', 'sto-3g')
-    frag.do_geomopt(
+    frag.do_fragmentation(1, 'RHF', 'sto-3g')
+    frag.do_geomopt('RHF', 'sto-3g')
 
+
+""" Having and issue with the optimization where the matrix is said to be singular when the LU decomposition is called. I am using the pyBerny function, which uses the scipy linalg functions to do the decompositions.  This is where the error is being called
+"""
