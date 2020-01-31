@@ -18,15 +18,16 @@ class Numerical_Grad():
     def an_grad(self, deg, theory, basis):
         self.a_energy, self.a_grad = do_MIM1(deg, theory, basis, self.molecule)
 
-    def num_gradient(self, deg, theory, basis):
+    def num_gradient(self, deg, theory, basis, step):
         length = len(self.molecule.atomtable)
         self.num_grad = np.zeros((length,3))
         for i in range(0, length):
             for j in range(1, 4):
-                self.molecule.atomtable[i][j] = self.molecule.atomtable[i][j]+0.0000001
+                self.molecule.atomtable[i][j] = self.molecule.atomtable[i][j]+step
                 e = do_MIM1(deg, theory, basis, self.molecule)[0]
-                factor = (e - self.a_energy)/(2*0.0000001)
+                factor = (e - self.a_energy)/(2*step)
                 self.num_grad[i][j-1] = factor
+                self.molecule.atomtable[i][j] = self.molecule.atomtable[i][j]-step
         
         diff = np.subtract(self.a_grad, self.num_grad)
         print(self.molecule.atomtable)
@@ -39,4 +40,4 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     num = Numerical_Grad(aspirin)
     num.an_grad(1, 'RHF', 'sto-3g')
-    num.num_gradient(1, 'RHF', 'sto-3g')
+    num.num_gradient(1, 'RHF', 'sto-3g', 0.00001)

@@ -147,8 +147,7 @@ class Fragmentation():
     #    :options -stuff
     #   """
     
-    def energy_gradient(self, moleculexyz, theory, basis):
-        self.moleculexyz = moleculexyz
+    def energy_gradient(self, theory, basis):
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
@@ -174,6 +173,7 @@ class Fragmentation():
     def do_fragmentation(self, deg, theory, basis):
         molecule = np.array(self.molecule.atomtable)
         self.moleculeinput = molecule[:,[1,2,3]]
+        
         self.moleculexyz = []
         for i in self.moleculeinput:
             x = (i[0], i[1], i[2])
@@ -207,18 +207,26 @@ class Fragmentation():
 
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        self.energy_gradient(self.moleculexyz, theory, basis)
+        #self.energy_gradient(self.moleculexyz, theory, basis)
         return self.etot, self.gradient
         #here is where do_fragmentation needs to end
 
+    def aspirin(self):
+        return geomlib.readfile(resource_file('../inputs', 'aspirin.xyz'))
+
     def do_geomopt(self, theory, basis):
-        optimize(Berny(self.energy_gradient(self.moleculexyz, theory, basis)), trajectory='../inputs/new_coords.xyz')
+        #optimize(Berny(self.energy_gradient(self.moleculexyz, theory, basis)), trajectory='../inputs/new_coords.xyz')
+        berny = Berny(aspirin, steprms=0.01, stepmax=0.05, maxsteps=5)
+        final = optimize(berny, self.energy_gradient(theory, basis))
+        intertia_princpl = np.linalge.eigvalsh(final.inertia)
+
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
+    print(frag.moleculexyz)
     frag.do_geomopt('RHF', 'sto-3g')
 
 
