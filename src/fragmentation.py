@@ -219,7 +219,7 @@ class Fragmentation():
         berny = Berny(aspirin, steprms=0.01, stepmax=0.05, maxsteps=5)
         final = optimize(berny, self.energy_gradient(theory, basis))
         intertia_princpl = np.linalge.eigvalsh(final.inertia)
-
+"""need to figure out how to write the xyz coords so it can read them.  I am getting closer!"""
 
 if __name__ == "__main__":
     aspirin = Molecule()
