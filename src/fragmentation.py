@@ -6,13 +6,13 @@ import xml.etree.ElementTree as ET
 from runpie import *
 from runpyscf import *
 from Fragment import *
-from berny import Berny, geomlib
-from pyscf.geomopt.berny_solver import optimize
 from Molecule import *
-#from pyscf import gto, scf, hessian, mp, lib
-#from pyscf.grad.rhf import GradientsBasics
+
+from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method
+from pyscf.geomopt.berny_solver import optimize
 #from scipy.optimize import minimize
+from itertools import cycle
 
 class Fragmentation():
     """
@@ -172,16 +172,24 @@ class Fragmentation():
     
     def do_fragmentation(self, deg, theory, basis):
         molecule = np.array(self.molecule.atomtable)
-        self.moleculeinput = molecule[:,[1,2,3]]
-        
+        atomlabels = []
+        for i in range(0, len(molecule)):
+            atomlabels.append(molecule[i][0])
+        coords = molecule[:,[1,2,3]]
         self.moleculexyz = []
-        for i in self.moleculeinput:
+        for i in coords:
             x = (i[0], i[1], i[2])
             y = np.array(x)
             z = y.astype(float)
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
+        f = open("../inputs/aspirin.txt", "w+")
+        title = ""
+        f.write("%d\n%s\n" % (coords.size / 3, title))
+        for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
+            f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
+
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)  
@@ -204,21 +212,24 @@ class Fragmentation():
         for i in range(0, len(self.atomlist)):  #sorted atom numbers
             self.atomlist[i] = list(sorted(self.atomlist[i]))
         
-
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
         #self.energy_gradient(self.moleculexyz, theory, basis)
         return self.etot, self.gradient
-        #here is where do_fragmentation needs to end
 
-    def aspirin(self):
-        return geomlib.readfile(resource_file('../inputs', 'aspirin.xyz'))
+    def molecule_input(self, name):
+        #return geomlib.readfile(resource_file('../inputs', 'name.xyz'))
+        #filename = open(os.path.join('../inputs/', "name.xzy"), "r")
+        filename = '/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/' + name + '.xyz'
+        return geomlib.readfile(filename)
 
-    def do_geomopt(self, theory, basis):
+    def do_geomopt(self, name, theory, basis):
         #optimize(Berny(self.energy_gradient(self.moleculexyz, theory, basis)), trajectory='../inputs/new_coords.xyz')
-        berny = Berny(aspirin, steprms=0.01, stepmax=0.05, maxsteps=5)
+        molecule = self.molecule_input(name)
+        berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
         final = optimize(berny, self.energy_gradient(theory, basis))
         intertia_princpl = np.linalge.eigvalsh(final.inertia)
+
 """need to figure out how to write the xyz coords so it can read them.  I am getting closer!"""
 
 if __name__ == "__main__":
@@ -227,7 +238,7 @@ if __name__ == "__main__":
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
     print(frag.moleculexyz)
-    frag.do_geomopt('RHF', 'sto-3g')
+    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
 
 
 """ Having and issue with the optimization where the matrix is said to be singular when the LU decomposition is called. I am using the pyBerny function, which uses the scipy linalg functions to do the decompositions.  This is where the error is being called
