@@ -147,7 +147,8 @@ class Fragmentation():
     #    :options -stuff
     #   """
     
-    def energy_gradient(self, theory, basis):
+    def energy_gradient(self, theory, basis, newcoords):
+        print(newcoords, "######################################################")
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
@@ -172,6 +173,7 @@ class Fragmentation():
     
     def do_fragmentation(self, deg, theory, basis):
         molecule = np.array(self.molecule.atomtable)
+        print(self.molecule.atomtable)
         atomlabels = []
         for i in range(0, len(molecule)):
             atomlabels.append(molecule[i][0])
@@ -184,11 +186,12 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/aspirin.txt", "w+")
+        f = open("../inputs/aspirin.xyz", "w+")
         title = ""
-        f.write("%d\n%s\n" % (coords.size / 3, title))
+        f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
         for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
             f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
+        f.close()
 
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
@@ -217,29 +220,28 @@ class Fragmentation():
         #self.energy_gradient(self.moleculexyz, theory, basis)
         return self.etot, self.gradient
 
-    def molecule_input(self, name):
-        #return geomlib.readfile(resource_file('../inputs', 'name.xyz'))
-        #filename = open(os.path.join('../inputs/', "name.xzy"), "r")
-        filename = '/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/' + name + '.xyz'
-        return geomlib.readfile(filename)
-
     def do_geomopt(self, name, theory, basis):
-        #optimize(Berny(self.energy_gradient(self.moleculexyz, theory, basis)), trajectory='../inputs/new_coords.xyz')
-        molecule = self.molecule_input(name)
-        berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
-        final = optimize(berny, self.energy_gradient(theory, basis))
-        intertia_princpl = np.linalge.eigvalsh(final.inertia)
+        optimizer = Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.xyz'), debug=True)
+        solver = self.energy_gradient(theory, basis, 'newcoords')
+        for geom in optimizer:
+            newcoords = geom.coords
+            optimizer.send(solver)
+        relaxed = geom
+        #relaxed = optimize(Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.xyz')), self.energy_gradient(theory, basis))
 
-"""need to figure out how to write the xyz coords so it can read them.  I am getting closer!"""
+        #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
+
 
 if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    print(frag.moleculexyz)
+    #print(frag.moleculexyz)
     frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
 
-
-""" Having and issue with the optimization where the matrix is said to be singular when the LU decomposition is called. I am using the pyBerny function, which uses the scipy linalg functions to do the decompositions.  This is where the error is being called
-"""
+    """
+    I got the optimizer working but it is optimizing the entire molecule.  
+    - Need to figure out a way to take the geom in optimizer and make that update the self.moleculeatomtable which in turn will update the Fragment xyz's
+    - Need to figure out how to make the optimizer recalculate the energy and gradients after each step using my funciton energy_gradient since the atomtable should be updated thus teh coords of the fragments will be updating thus the energy and gradient should be updating
+    """
