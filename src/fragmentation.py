@@ -189,12 +189,12 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        #if = open("../inputs/aspirin.xyz", "w+")
-        #title = ""
-        #f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
-        #for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
-        #    f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
-        #f.close()
+        f = open("../inputs/aspirin.xyz", "w+")
+        title = ""
+        f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
+        for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
+            f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
+        f.close()
 
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
@@ -221,6 +221,7 @@ class Fragmentation():
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
         #self.energy_gradient(theory, basis, self.moleculexyz)
+        #print(self.etot)
         return self.etot, self.gradient
 
     def do_geomopt(self, name, theory, basis):
@@ -246,5 +247,5 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
+    #frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
 

@@ -42,6 +42,10 @@ class Molecule():
         self.build_molmatrix(2)
 
     def parse_cml(self, filename):
+        """
+        Takes the cml file and converts it into xyz coords still keeping the bonding information
+        :filename - name of the file name for the molecule wanted to run
+        """
         self.filename = filename
         tree = ET.parse(filename)
         self.tree = tree
@@ -81,7 +85,14 @@ class Molecule():
         
         self.build_prims()
         self.build_primchart()
+    
     def build_prims(self):
+        """
+        Builds the primiative fragments (smallest possible fragments)
+        :these primiatitves are made by not cutting hydrogen bonds or higher than single bonds
+        :funciton gets called in parse_cml()
+        :returns a list of primiataives
+        """
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
                 self.prims.append([i])
@@ -100,8 +111,11 @@ class Molecule():
             self.prims[i] = tuple(sorted(self.prims[i]))
         self.prims = set(self.prims)
     
-    #if spot in A is non zero add 1 to primchart in row and column of prim1 and prim2 
     def build_primchart(self):
+        """
+        Builds a primiative array (nd array) where row and column are associated with each primative
+        :returns a matrix called A where if the primiatives are connected it adds a 1 in that spot
+        """
         self.prims = list(self.prims)
         self.primsleng = len(self.prims)
         self.primchart = np.zeros( (self.primsleng,self.primsleng))
@@ -115,7 +129,13 @@ class Molecule():
                             self.primchart[prim1][prim2] = 1
                             self.primchart[prim2][prim1] = 1
     
-    def build_molmatrix(self, i):    #i must 2 to start
+    def build_molmatrix(self, i):
+        """
+        Builds the whole molecule matrix (nd array) where it shows what order each prim is connecte to eachtother
+        :built through a series of matrix manipulations (need to review this)
+        :i must be 2 to start the recursive funciton correctly
+        :returns nd array that is used for fragment building
+        """
         eta = self.natoms
         if i == 2:
             self.molchart = self.primchart.dot(self.primchart)

@@ -1,4 +1,7 @@
 def recurse(f_old, start, derivs, fraglist, signlist, sign):    #1st depth and on, finding intersection
+    """
+    Recursive part of the pie, where it builds layers and layers of fragments from interestions
+    """
     for fj in range(start, len(fraglist)):
         if fj > start:
             df_new = fraglist[fj].intersection(f_old)
@@ -9,6 +12,10 @@ def recurse(f_old, start, derivs, fraglist, signlist, sign):    #1st depth and o
                 recurse(df_new, fj, derivs, fraglist, signlist, df_newcoeff)
 
 def runpie(fraglist):
+    """
+    Runs the principle of inculsion-exculsion
+    :fraglist is the list of fragments from Fragmentation class
+    """
     derivs = []
     signlist = []
     for fi in range(0, len(fraglist)):  #0th depth, just initial frags

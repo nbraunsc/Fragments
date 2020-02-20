@@ -23,9 +23,8 @@ def test_energy():
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    print(frag.total)
-    assert(frag.total == -636.6280880465249)
-    
+    frag.energy_gradient('RHF', 'sto-3g', frag.moleculexyz)
+    assert(frag.etot == -636.6280880465254) #will sometimes fail bec last decimal point is wrong
 
 if __name__ == "__main__":
     aspirin = Molecule()
