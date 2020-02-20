@@ -34,6 +34,11 @@ class Fragmentation():
         self.moleculexyz = []   #full molecule xyz's
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
+        """
+        Does the initalize fragmmentation 
+        :deg - the degree of monomers wanted
+        :returns the list of fragments
+        """
         for x in range(0, len(self.molecule.molchart)):
             for y in range(0, len(self.molecule.molchart)):
                 if self.molecule.molchart[x][y] <= deg and self.molecule.molchart[x][y] != 0:
@@ -50,8 +55,12 @@ class Fragmentation():
         # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
         
-
     def compress_frags(self): #takes full list of frags, compresses to unique frags
+        """
+        Takes the full list of fragments and compresses them to only the unique fragments
+        :this function is called in build_frags()
+        :returns the unquie list of fragments
+        """
         frag = []
         for i in range(0, len(self.fragment)): 
             frag.append(set(self.fragment[i]))    #makes into a list of sets
@@ -70,6 +79,10 @@ class Fragmentation():
         self.unique_frag = uniquefrags
     
     def find_attached(self):    #finding all the attached atoms that were cut during fragmentation
+        """
+        Finds the atoms that were cut during the fragmentation
+        :returns a list of pairs of atoms (1, 2) so atom 2 was attached to atom 1
+        """
         x = len(self.atomlist)
         self.attached = []
         for frag in range(0, len(self.atomlist)):
@@ -86,36 +99,21 @@ class Fragmentation():
             self.attached.append(fragi) 
 
     def initalize_Frag_objects(self, theory, basis):
+        """
+        Initalizes the Fragment objects where link atoms get added and get fragment gets run
+        """
         self.frags = []
         for fi in range(0, len(self.atomlist)):
             coeffi = self.coefflist[fi]
             attachedlist = self.attached[fi]
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
-    #def global_energy(self, theory, basis):   #computes the overall energy from the fragment energies and coeffs
-    #    for i in self.frags:
-    #        i.build_xyz()
-    #        i.run_pyscf(theory, basis)
-    #        i.distribute_linkgrad()
-    #        self.etot += i.coeff*i.energy
-    #
-    #def global_gradient(self, theory, basis):    #grad_dict:individual frag grad, self.fullgrad:full molecule gradient after link atom projections, self.gradient:np.array of full gradient
-    #    for j in range(0, self.molecule.natoms):
-    #        self.fullgrad[j] = np.zeros(3)
+    def remove_repeatingfrags(self, oldcoeff):
+        """
+        Funciton removes the repeating derivates that would be subtracted then added back again during the principle of inclusion-exculsion process
+        :updates the self.derivs list and self.coefflist list that get used to intialize Fragment objects with correct attributes
+        """
 
-    #    for i in self.frags:    #projects link atom gradients back to host and supporting atoms
-    #        for k in range(0, self.molecule.natoms):
-    #            if k in i.grad_dict.keys():
-    #                self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
-    #            else:
-    #                continue
-    #    
-    #    for l in range(0, self.molecule.natoms):    #making into numpy array
-    #        grad = list(self.fullgrad[l])
-    #        self.gradient.append(grad)
-    #    self.gradient = np.array(self.gradient)
-
-    def remove_repeatingfrags(self, oldcoeff):  #this removes the derivs that were the same (i.e. this derivs would be subtracted then added right back)
         compressed = []
         coeff_position = []
         self.coefflist = []
@@ -133,22 +131,23 @@ class Fragmentation():
             if i not in coeff_position:
                 self.coefflist.append(oldcoeff[i])
     
-    #def do_geomopt(self.energy_gradient, theory, basis):
-    #    scipy.optimize.minimize(fun, x0, args=(), method='BFGS', jac=None, tol=None, options={'gtol': 1e-08, 'maxiter': None, 'disp':True,  'eps': 1.4901161193847656e-08})
-
-    #    """
-    #    :fun -function that needs to be minimized, so in my case it is the norm of the gradient that needs to get normalized.
-    #    :x0 -is an inital guess so it would most likely be the inital norm of the gradient or it is the inital xyz coords, energy that would be inputs to the fun function.
-    #    :args=() -this is extra stuff that can be passed to the fun function as well as jac and hess functions
-    #    :method -this is the type of solver, vibin mentioned the 'BFGS' method
-    #    :jac -function that computes the gradient
-    #    :hess -function that computes the hessian
-    #    :tol -the tolerance for termination, float number
-    #    :options -stuff
-    #   """
-    
     def energy_gradient(self, theory, basis, newcoords):
-        print(newcoords, "######################################################")
+        """
+        Function returns total energy (scalar) and gradient (nd.array) of molecule
+
+        :theory is RHF or MP2
+        :basis is basis set for pyscf
+        :newcoords - np.array with xyz coords for the molecule, these update after each geom opt cycle
+        """
+
+        self.gradient = []  #making them back to zero for optimiztion cycles
+        self.etot = 0
+        for atom in range(0, len(self.molecule.atomtable)):
+            x = list(newcoords[atom])
+            self.molecule.atomtable[atom][1:] = x
+
+        self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
+        
         for i in self.frags:
             i.build_xyz()
             i.run_pyscf(theory, basis)
@@ -172,8 +171,12 @@ class Fragmentation():
         return self.etot, self.gradient
     
     def do_fragmentation(self, deg, theory, basis):
+        """
+        Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
+        :currently returns total energy and total gradient that was used for MIM method
+        :will change this so the final geometry after geomopt will be the energy and gradient that gets used for MIM method script
+        """
         molecule = np.array(self.molecule.atomtable)
-        print(self.molecule.atomtable)
         atomlabels = []
         for i in range(0, len(molecule)):
             atomlabels.append(molecule[i][0])
@@ -186,12 +189,12 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/aspirin.xyz", "w+")
-        title = ""
-        f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
-        for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
-            f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
-        f.close()
+        #if = open("../inputs/aspirin.xyz", "w+")
+        #title = ""
+        #f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
+        #for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
+        #    f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
+        #f.close()
 
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
@@ -217,18 +220,24 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        #self.energy_gradient(self.moleculexyz, theory, basis)
+        #self.energy_gradient(theory, basis, self.moleculexyz)
         return self.etot, self.gradient
 
     def do_geomopt(self, name, theory, basis):
+        """
+        Completes the geometry optimization using pyberny from pyscf
+        :name - name of Molecule() object to help with file path
+        :theory - theory for pyscf either RHF or MP2
+        :basis - basis set for pyscf
+        :returns the optimized geometry of the full molecule
+        :I will eventually set it up where you can change different parameters for geomopt
+        """
         optimizer = Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.xyz'), debug=True)
-        solver = self.energy_gradient(theory, basis, 'newcoords')
         for geom in optimizer:
-            newcoords = geom.coords
+            solver = self.energy_gradient(theory, basis, geom.coords)
             optimizer.send(solver)
         relaxed = geom
-        #relaxed = optimize(Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.xyz')), self.energy_gradient(theory, basis))
-
+        print(relaxed)
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
 
 
@@ -237,11 +246,5 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    #print(frag.moleculexyz)
     frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
 
-    """
-    I got the optimizer working but it is optimizing the entire molecule.  
-    - Need to figure out a way to take the geom in optimizer and make that update the self.moleculeatomtable which in turn will update the Fragment xyz's
-    - Need to figure out how to make the optimizer recalculate the energy and gradients after each step using my funciton energy_gradient since the atomtable should be updated thus teh coords of the fragments will be updating thus the energy and gradient should be updating
-    """
