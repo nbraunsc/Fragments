@@ -237,8 +237,10 @@ class Fragmentation():
         for geom in optimizer:
             solver = self.energy_gradient(theory, basis, geom.coords)
             optimizer.send(solver)
+            print("\n", "Energy = ", solver[0], "\n")
+            print("Gradients:", "\n", solver[1], "\n")
         relaxed = geom
-        print(relaxed)
+        print("Converged geometry coords:", "\n", relaxed.coords)
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
 
 
@@ -247,5 +249,5 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    #frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
+    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
 
