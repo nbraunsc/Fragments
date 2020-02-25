@@ -257,4 +257,6 @@ if __name__ == "__main__":
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
     frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
+    print(frag.etot_opt)
+    print(frag.grad_opt)
 
