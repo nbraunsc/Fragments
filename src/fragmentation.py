@@ -32,6 +32,8 @@ class Fragmentation():
         self.gradient = []
         self.fullgrad = {}  #dictonary for full molecule gradient
         self.moleculexyz = []   #full molecule xyz's
+        self.etot_opt = 0
+        self.grad_opt = []
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         """
@@ -113,7 +115,6 @@ class Fragmentation():
         Funciton removes the repeating derivates that would be subtracted then added back again during the principle of inclusion-exculsion process
         :updates the self.derivs list and self.coefflist list that get used to intialize Fragment objects with correct attributes
         """
-
         compressed = []
         coeff_position = []
         self.coefflist = []
@@ -139,7 +140,6 @@ class Fragmentation():
         :basis is basis set for pyscf
         :newcoords - np.array with xyz coords for the molecule, these update after each geom opt cycle
         """
-
         self.gradient = []  #making them back to zero for optimiztion cycles
         self.etot = 0
         for atom in range(0, len(self.molecule.atomtable)):
@@ -170,16 +170,15 @@ class Fragmentation():
         self.gradient = np.array(self.gradient)
         return self.etot, self.gradient
     
-    def do_fragmentation(self, deg, theory, basis):
+    def write_xyz(self, name):
         """
-        Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
-        :currently returns total energy and total gradient that was used for MIM method
-        :will change this so the final geometry after geomopt will be the energy and gradient that gets used for MIM method script
+        Function that writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords
+        :name - name of the Molecule class or molecule in fragmentation
         """
         molecule = np.array(self.molecule.atomtable)
         atomlabels = []
-        for i in range(0, len(molecule)):
-            atomlabels.append(molecule[i][0])
+        for j in range(0, len(molecule)):
+            atomlabels.append(molecule[j][0])
         coords = molecule[:,[1,2,3]]
         self.moleculexyz = []
         for i in coords:
@@ -189,16 +188,22 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/aspirin.xyz", "w+")
+        f = open("../inputs/" + name + ".xyz", "w+")
         title = ""
         f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
-        for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): #writes xyz file for full molecule, will be used in optimization fnc
+        for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): 
             f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
         f.close()
 
+    def do_fragmentation(self, deg, theory, basis):
+        """
+        Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
+        :currently returns total energy and total gradient that was used for MIM method
+        :will change this so the final geometry after geomopt will be the energy and gradient that gets used for MIM method script
+        """
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
-        self.remove_repeatingfrags(oldcoeff)  
+        self.remove_repeatingfrags(oldcoeff)
         self.atomlist = [None] * len(self.derivs)
         
         for i in range(0, len(self.derivs)):
@@ -220,8 +225,6 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
-        #self.energy_gradient(theory, basis, self.moleculexyz)
-        #print(self.etot)
         return self.etot, self.gradient
 
     def do_geomopt(self, name, theory, basis):
@@ -233,14 +236,18 @@ class Fragmentation():
         :returns the optimized geometry of the full molecule
         :I will eventually set it up where you can change different parameters for geomopt
         """
-        optimizer = Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/aspirin.xyz'), debug=True)
+        self.write_xyz(name)
+        optimizer = Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/' + name + '.xyz'), debug=True)
         for geom in optimizer:
             solver = self.energy_gradient(theory, basis, geom.coords)
             optimizer.send(solver)
+            self.etot_opt = solver[0]
+            self.grad_opt = solver[1]
             print("\n", "Energy = ", solver[0], "\n")
             print("Gradients:", "\n", solver[1], "\n")
         relaxed = geom
         print("Converged geometry coords:", "\n", relaxed.coords)
+        return self.etot_opt, self.grad_opt
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
 
 

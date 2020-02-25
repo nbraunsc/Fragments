@@ -79,7 +79,7 @@ class Fragment():
         """
         self.energy, self.grad = do_pyscf(self.inputxyz, self.theory, self.basis)
 
-    def distribute_linkgrad(self):  #projects link-atom gradients back to respective atoms (supporting and host)
+    def distribute_linkgrad(self):  
         """
         Projects link atom gradients back to its respective atoms (both supporting and host atoms)
         :returns a dictonary with atom indexes as the keys and the corresponding gradient for each atom is stored
