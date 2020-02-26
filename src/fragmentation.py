@@ -63,15 +63,12 @@ class Fragmentation():
         :this function is called in build_frags()
         :returns the unquie list of fragments
         """
-        frag = []
-        for i in range(0, len(self.fragment)): 
-            frag.append(set(self.fragment[i]))    #makes into a list of sets
-        
+        self.fragment = [set(i) for i in self.fragment]
         sign = 1
         uniquefrags = []
-        for i in frag:
+        for i in self.fragment:
             add = True
-            for j in frag:
+            for j in self.fragment:
                 if i.issubset(j) and i != j:
                     add = False
            
@@ -85,7 +82,6 @@ class Fragmentation():
         Finds the atoms that were cut during the fragmentation
         :returns a list of pairs of atoms (1, 2) so atom 2 was attached to atom 1
         """
-        x = len(self.atomlist)
         self.attached = []
         for frag in range(0, len(self.atomlist)):
             fragi = []
@@ -118,8 +114,8 @@ class Fragmentation():
         compressed = []
         coeff_position = []
         self.coefflist = []
-        for i in self.derivs:
-            compressed.append(i)
+        for k in self.derivs:
+            compressed.append(k)
         for i in self.derivs:
             for x in range(0, len(compressed)):
                 for y in range(0, len(compressed)):
@@ -256,7 +252,7 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
-    print(frag.etot_opt)
-    print(frag.grad_opt)
+    #frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
+    #print(frag.etot_opt)
+    #print(frag.grad_opt)
 

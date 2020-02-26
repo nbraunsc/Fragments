@@ -46,16 +46,16 @@ class Molecule():
         Takes the cml file and converts it into xyz coords still keeping the bonding information
         :filename - name of the file name for the molecule wanted to run
         """
-        self.filename = filename
+        #self.filename = filename
         tree = ET.parse(filename)
-        self.tree = tree
+        #self.tree = tree
         root = tree.getroot()
         molecule = root
-        self.molecule = molecule
+        #self.molecule = molecule
         atomArray = root[0]
         self.atomArray = atomArray
         bondArray = root[1]
-        self.bondArray = bondArray        
+        #self.bondArray = bondArray        
         self.natoms = len(self.atomArray)
         self.A = np.zeros( (self.natoms,self.natoms)) 
         self.atomtable = [[0 for x in range(4)] for y in range(self.natoms)]
