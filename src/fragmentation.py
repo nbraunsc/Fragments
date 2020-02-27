@@ -233,7 +233,9 @@ class Fragmentation():
         :I will eventually set it up where you can change different parameters for geomopt
         """
         self.write_xyz(name)
-        optimizer = Berny(geomlib.readfile('/home/nbraunsc/Documents/Projects/MIM/Fragments/inputs/' + name + '.xyz'), debug=True)
+        os.path.abspath(os.curdir)
+        os.chdir('../inputs/')
+        optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
         for geom in optimizer:
             solver = self.energy_gradient(theory, basis, geom.coords)
             optimizer.send(solver)
@@ -252,7 +254,7 @@ if __name__ == "__main__":
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    #frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
+    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
     #print(frag.etot_opt)
     #print(frag.grad_opt)
 

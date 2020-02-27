@@ -97,7 +97,7 @@ if __name__ == "__main__":
     #do_MIM1(1, 'RHF', 'sto-3g', aspirin, 'aspirin')        #uncomment to run MIM1
     
     """do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin') #uncomment to run MIM2
+    #do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin') #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin')     #uncomment to run MIM3
+    do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin')     #uncomment to run MIM3
