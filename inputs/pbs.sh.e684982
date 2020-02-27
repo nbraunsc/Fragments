@@ -1,0 +1,8 @@
+/opt/torque/torque/spool/mom_priv/jobs/684982.master.cluster.SC: line 15: =: command not found
+/opt/torque/torque/spool/mom_priv/jobs/684982.master.cluster.SC: line 18: pyconda: No such file or directory
+Directory '.' is not installable. File 'setup.py' not found.
+  File "runfile.py", line 2
+    from nicole-fragment import *
+               ^
+SyntaxError: invalid syntax
+cp: './runfile.out' and '/home/nbraunsc/Projects/Fragments/inputs/runfile.out' are the same file
