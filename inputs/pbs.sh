@@ -26,7 +26,7 @@ do
    sleep 60
 done&
 
-# run Psi4 job
+# run python job
 python $FILE.py  >> $FILE.out
 # copy data back
 cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out

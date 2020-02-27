@@ -17,7 +17,7 @@ requirements = open('requirements.txt').readlines()
 requirements = [r.strip() for r in requirements]
 
 
-setup(name='nicole_fragment',
+setup(name='nicole-fragment',
         version=0,
         description='Molecular Fragmentation Code',
         url='https://github.com/nbraunsc/Fragments',
