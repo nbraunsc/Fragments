@@ -1,4 +1,7 @@
 #this is where i will need to import my package, need to check name
+import os
+os.path.abspath(os.curdir)
+os.chdir('..')
 from nicolefragment import *
 
 
