@@ -9,7 +9,6 @@ module purge
 module load gcc/5.2.0
 module load Anaconda/5.2.0
 
-FILE=runfile
 
 #need num of threads for python jobs, keep one until parallizing
 $MKL_NUM_THREADS = 1
@@ -17,6 +16,8 @@ $MKL_NUM_THREADS = 1
 cd $PBS_O_WORKDIR
 source activate pyconda
 pip install -e ../.
+
+FILE=runfile
 
 # every so often, copy the output file back here!!
 #touch ./$FILE.out
