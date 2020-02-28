@@ -1,9 +1,9 @@
-#PBS -l walltime=00:1:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -l mem=10GB
-#PBS -q nmayhall_lab
-#PBS -A qcvt_doe
-#PBS -W group_list=nmayhall_lab
+PBS -l walltime=00:1:00:00
+PBS -l nodes=1:ppn=1
+PBS -l mem=10GB
+PBS -q nmayhall_lab
+PBS -A qcvt_doe
+PBS -W group_list=nmayhall_lab
 
 module purge
 module load gcc/5.2.0
