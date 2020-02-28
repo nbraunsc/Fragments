@@ -15,7 +15,7 @@ FILE=runfile
 $MKL_NUM_THREADS = 1
 
 cd $PBS_O_WORKDIR
-source pyconda activate
+source activate pyconda
 pip install -e ../.
 
 # every so often, copy the output file back here!!
