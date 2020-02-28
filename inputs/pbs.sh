@@ -15,7 +15,10 @@ $MKL_NUM_THREADS = 1
 
 cd $PBS_O_WORKDIR
 source activate pyconda
-pip install -e ../.
+cd ../
+pip install .
+
+cd $PBS_O_WORKDIR
 
 FILE=runfile
 
@@ -28,6 +31,7 @@ FILE=runfile
 #done&
 
 # run python job
+
 python $FILE.py  >> $FILE.out
 # copy data back
 cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
