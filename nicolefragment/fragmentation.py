@@ -3,10 +3,10 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from runpie import *
-from runpyscf import *
-from Fragment import *
-from Molecule import *
+from .runpie import *
+from .runpyscf import *
+from .Fragment import *
+from .Molecule import *
 
 from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method

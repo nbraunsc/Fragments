@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from cov_rad import *
+from .cov_rad import *
 
 class Molecule():
     """

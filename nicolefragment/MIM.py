@@ -1,6 +1,6 @@
-from Molecule import *
-from Fragment import *
-from fragmentation import *
+from .Molecule import *
+from .Fragment import *
+from .fragmentation import *
 
 def do_MIM1(deg, theory, basis, Molecule, name):
     """
