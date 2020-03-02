@@ -13,6 +13,12 @@ def do_pyscf(input_xyz, theory, basis):
     mol.basis = basis
     mol.build()
     #m = int() 
+    if theory == 'full':
+        hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
+        e, g = hf_scanner(mol)
+        opt = optimize(scf.RHF(mol).kernel())
+        return e, g
+
     if theory == 'RHF': #Restricted HF calc
         hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
         e, g = hf_scanner(mol)

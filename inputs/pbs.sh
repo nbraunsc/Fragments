@@ -16,7 +16,7 @@ $MKL_NUM_THREADS = 1
 cd $PBS_O_WORKDIR
 source activate pyconda
 cd ../
-pip install .
+python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
