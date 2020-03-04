@@ -1,0 +1,14 @@
+This is a log for the benchmark to test my fragmentation method
+against the regular pyscf optimization.
+
+
+Aspirin: 21 atoms
+RMS = 6.8388129192341974e-06
+
+Benzene: 12 atoms
+RMS = 3.713032823991545e-21
+This is extrememly small cause molcule is to small to fragment
+
+Fluorene:
+
+
