@@ -11,6 +11,8 @@ theory = RHF, MP2, MIM2 (problem cause comparing MIM2 to RHF and not MP2)
 RMS = 0.26646058932368927 Hartree
     = 167.2065 kcal/mol
 
+theory = MIM2, MP2 and RHF compared to MP2
+
 ##########################################
 largermol: 20 atoms
 theory = RHF, MIM1
@@ -20,6 +22,9 @@ RMS = 4.394938095239683e-07 Hartree
 theory = RHF, MP2, MIM2 
 RMS = 0.10068399721475667 Hartree
     = 63.18017 kcal/mol
+
+theory = MIM2, MP2 and RHF compared to MP2
+
 #########################################
 carbonylavo: 13 atoms
 theory = RHF, MIM1
@@ -29,6 +34,9 @@ RMS = 6.198379777622849e-07 Hartree
 theory = RHF, MP2, MIM2
 RMS = 0.038398073911983736 Hartree
     = 24.095157855 kcal/mol 
+
+theory = MIM2, MP2 and RHF compared to MP2
+
 ########################################
 Benzene: 12 atoms
 Theory = RHF, MIM1

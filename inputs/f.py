@@ -35,13 +35,13 @@ H 0.997140000000000026 -4.57669999999999977 0.268010000000000026
         ''',
         basis='sto-3g')
 mol.build()
-myHF = scf.RHF(mol)
-mol1 = optimize(myHF)
-opte = scf.RHF(mol1).kernel()
-
-#mp2_scanner = mp.MP2(scf.RHF(mol)).as_scanner()
-#mol1 = optimize(mp2_scanner)
+#myHF = scf.RHF(mol)
+#mol1 = optimize(myHF)
 #opte = scf.RHF(mol1).kernel()
+
+mp2_scanner = mp.MP2(scf.RHF(mol)).as_scanner()
+mol1 = optimize(mp2_scanner)
+opte = scf.RHF(mol1).kernel()
 
 carbon = Molecule.Molecule()
 carbon.initalize_molecule('carbonylavo')
@@ -64,22 +64,22 @@ H -1.60584600000000011 1.08578599999999992 -0.0979420000000000013
         ''',
         basis='sto-3g')
 mol.build()
-myHF = scf.RHF(mol)
-mol2 = optimize(myHF)
-optc = scf.RHF(mol2).kernel()
-
-#mp2_scanner2 = mp.MP2(scf.RHF(mol)).as_scanner()
-#mol2 = optimize(mp_scanner2)
+#myHF = scf.RHF(mol)
+#mol2 = optimize(myHF)
 #optc = scf.RHF(mol2).kernel()
+
+mp2_scanner2 = mp.MP2(scf.RHF(mol)).as_scanner()
+mol2 = optimize(mp_scanner2)
+optc = scf.RHF(mol2).kernel()
 
 largermol_diff = energy_MIM - opte
 rms_largermol = (largermol_diff**2)/2
-print(rms_largermol, "RMS for largermol")
+print(rms_largermol, "RMS for largermol MP2")
 print(largermol_diff, "largermol difference")
 
 carbon_diff = energy_MIMc - optc
 rms_carbonylmol = (carbon_diff**2)/2
-print(rms_carbonylmol, 'RMS for carbonylavo')
+print(rms_carbonylmol, 'RMS for carbonylavo MP2')
 print(carbon_diff, 'difference')
 
 #fluorene = Molecule.Molecule()

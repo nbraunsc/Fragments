@@ -38,8 +38,12 @@ H -3.69879999999999987 0.847099999999999964 -1.09860000000000002
                         basis='sto-3g')
 
 mol.build()
-myHF = scf.RHF(mol)
-mol1 = optimize(myHF)
+#myHF = scf.RHF(mol)
+#mol1 = optimize(myHF)
+#opte = scf.RHF(mol1).kernel()
+
+mp2_scanner2 = mp.MP2(scf.RHF(mol)).as_scanner()
+mol1 = optimize(mp_scanner2)
 opte = scf.RHF(mol1).kernel()
 
 #mol = gto.Mole()
@@ -69,7 +73,7 @@ opte = scf.RHF(mol1).kernel()
 
 aspirin_diff = energy_MIM - opte
 rms_aspirin = (aspirin_diff**2)/2
-print(aspirin_diff, "aspirin difference")
+print(aspirin_diff, "aspirin difference MP2")
 print(rms_aspirin, "RMS for aspirin")
 
 #benzene_diff = energy_MIMben - opte_ben
