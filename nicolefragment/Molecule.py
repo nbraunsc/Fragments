@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from .cov_rad import *
+from cov_rad import *
 
 class Molecule():
     """
@@ -34,6 +34,7 @@ class Molecule():
         #higher order prim conn chart
         self.molchart = []
         self.covrad = form_covalent_radii()
+        self.optxyz = []
         
     def initalize_molecule(self, file_name):
         y = file_name

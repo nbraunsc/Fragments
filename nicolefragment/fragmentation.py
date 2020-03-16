@@ -3,10 +3,10 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from .runpie import *
-from .runpyscf import *
-from .Fragment import *
-from .Molecule import *
+from runpie import *
+from runpyscf import *
+from Fragment import *
+from Molecule import *
 
 from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method
@@ -145,9 +145,7 @@ class Fragmentation():
         self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
         
         for i in self.frags:
-            i.build_xyz()
             i.run_pyscf(theory, basis)
-            i.distribute_linkgrad()
             self.etot += i.coeff*i.energy
         
         for j in range(0, self.molecule.natoms):
@@ -245,15 +243,19 @@ class Fragmentation():
             print("Gradients:", "\n", solver[1], "\n")
         relaxed = geom
         print("Converged geometry coords:", "\n", relaxed.coords)
+        self.molecule.optxyz = relaxed.coords
+        print(type(self.molecule.optxyz), 'optimized xyzs')
         return self.etot_opt, self.grad_opt
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
 
 
 if __name__ == "__main__":
-    aspirin = Molecule()
-    aspirin.initalize_molecule('aspirin')
-    frag = Fragmentation(aspirin)
+    carbonylavo = Molecule()
+    carbonylavo.initalize_molecule('carbonylavo')
+    frag = Fragmentation(carbonylavo)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
+    frag.write_xyz('carbonylavo')
+    #frag.energy_gradient('RHF', 'sto-3g', frag.moleculexyz) 
     frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
     #print(frag.etot_opt)
     #print(frag.grad_opt)

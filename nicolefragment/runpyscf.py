@@ -22,7 +22,8 @@ def do_pyscf(input_xyz, theory, basis):
     if theory == 'RHF': #Restricted HF calc
         hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
         e, g = hf_scanner(mol)
-        return e, g
+        #h = hf_scanner.Hessian().kernel()
+        return e, g, #h
     
     if theory == 'MP2': #Perturbation second order calc
         mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()

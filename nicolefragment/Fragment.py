@@ -1,4 +1,4 @@
-from .runpyscf import *
+from runpyscf import *
 import string
 import numpy as np
 
@@ -11,13 +11,12 @@ class Fragment():
         self.molecule = molecule 
         self.coeff = coeff 
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
-        self.atomxyz = str()
-        self.inputxyz = str()
         self.energy = 1
         self.grad_dict = {}     #dictonary for atom gradients in prim after link atom projections, no link atoms included
         self.grad = []
         self.theory = theory
         self.basis = basis
+        self.hessian = []
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
 
     def __str__(self):
@@ -57,27 +56,32 @@ class Fragment():
         :returns the inputxyz as a string
         :returns a list called self.notes that has the form [index of link atom, factor, supporting atom, host atom]
         """
+        atomxyz = str()   #makes sure strings are empty, unsure if I need this
+        inputxyz = str()
         for atom in self.prims:
             atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
-            self.atomxyz += atom_xyz
-            self.inputxyz += atom_xyz
+            atomxyz += atom_xyz
+            inputxyz += atom_xyz
         for pair in range(0, len(self.attached)):
             linkatom_xyz = str(self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[0]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             factor = self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[1]
-            self.inputxyz += linkatom_xyz
+            inputxyz += linkatom_xyz
             position = len(self.prims) + pair
             self.notes.append([position])
             self.notes[-1].append(factor)
             self.notes[-1].append(self.attached[pair][0])
             self.notes[-1].append(self.attached[pair][1])
-    
+        return inputxyz
+
     def run_pyscf(self, theory, basis):
         """
         Runs pyscf and returns the fragments energy and gradient
         :theory - theory for pyscf wanted, right now only 'RHF' and MP2 implemented
         :basis - basis set for pyscf
         """
-        self.energy, self.grad = do_pyscf(self.inputxyz, self.theory, self.basis)
+        inputxyz = self.build_xyz()
+        self.energy, self.grad  = do_pyscf(inputxyz, self.theory, self.basis)
+        self.distribute_linkgrad()
 
     def distribute_linkgrad(self):  
         """
@@ -91,4 +95,11 @@ class Fragment():
             old_grad = self.grad_dict[j[2]]
             self.grad_dict[j[2]] = old_grad + self.grad[int(j[0])]*(1-j[1])
 
-                    
+    def distribute_linkhessian(self):
+        """Projects mass-weighted Hessian matrix elements of link atoms back to its respective atoms (both supporting and host atoms)
+        :WORK IN PROGRESS
+        """
+        atom_optxyz = np.zeros((len(self.prims),3))
+        for atom in range(0, len(self.prims)):
+            atom_optxyz[self.prims[atom]] = self.molecule.optxyz[atom]
+        pass
