@@ -20,7 +20,7 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=runfile
+FILE=asp_benz
 
 # every so often, copy the output file back here!!
 #touch ./$FILE.out

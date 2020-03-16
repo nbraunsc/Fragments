@@ -1,14 +1,45 @@
 This is a log for the benchmark to test my fragmentation method
 against the regular pyscf optimization.
 
-
+########################################
 Aspirin: 21 atoms
-RMS = 6.8388129192341974e-06
+theory = RHF, MIM1
+RMS = 6.8388129192341974e-06 Hartree
+    = 0.006 kcal/mol (1.0E-3)
 
+theory = RHF, MP2, MIM2 (problem cause comparing MIM2 to RHF and not MP2)
+RMS = 0.26646058932368927 Hartree
+    = 167.2065 kcal/mol
+
+theory = MIM2, MP2 and RHF compared to MP2
+
+##########################################
+largermol: 20 atoms
+theory = RHF, MIM1
+RMS = 4.394938095239683e-07 Hartree
+    = 0.0004 kcal/mol (1.0 E-4)
+
+theory = RHF, MP2, MIM2 
+RMS = 0.10068399721475667 Hartree
+    = 63.18017 kcal/mol
+
+theory = MIM2, MP2 and RHF compared to MP2
+
+#########################################
+carbonylavo: 13 atoms
+theory = RHF, MIM1
+RMS = 6.198379777622849e-07 Hartree
+    = 0.0006 kcal/mol (1.0 E-4)
+
+theory = RHF, MP2, MIM2
+RMS = 0.038398073911983736 Hartree
+    = 24.095157855 kcal/mol 
+
+theory = MIM2, MP2 and RHF compared to MP2
+
+########################################
 Benzene: 12 atoms
+Theory = RHF, MIM1
 RMS = 3.713032823991545e-21
 This is extrememly small cause molcule is to small to fragment
-
-Fluorene:
-
 

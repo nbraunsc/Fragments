@@ -10,7 +10,7 @@ from berny import Berny, geomlib
 
 aspirin = Molecule.Molecule()
 aspirin.initalize_molecule('aspirin')     
-energy_MIM = MIM.do_MIM1(1, 'RHF', 'sto-3g', aspirin, 'aspirin')[0]
+energy_MIM = MIM.do_MIM2(1, 'MP2', 'sto-3g', 2, 'RHF', 'sto-3g', aspirin, 'aspirin')[0]
 
 mol = gto.Mole(atom= '''
 C 2.23930000000000007 -0.379099999999999993 0.263000000000000012
@@ -38,42 +38,46 @@ H -3.69879999999999987 0.847099999999999964 -1.09860000000000002
                         basis='sto-3g')
 
 mol.build()
-myHF = scf.RHF(mol)
-mol1 = optimize(myHF)
+#myHF = scf.RHF(mol)
+#mol1 = optimize(myHF)
+#opte = scf.RHF(mol1).kernel()
+
+mp2_scanner2 = mp.MP2(scf.RHF(mol)).as_scanner()
+mol1 = optimize(mp_scanner2)
 opte = scf.RHF(mol1).kernel()
 
-mol = gto.Mole()
-mol.atom ='''
-C 0.164099999999999996 -1.37260000000000004 -0.00020000000000000001
-C -1.10660000000000003 -0.828400000000000025 0.000100000000000000005
-C -1.27069999999999994 0.544200000000000017 -0
-C -0.164099999999999996 1.37260000000000004 0
-C 1.10660000000000003 0.828400000000000025 0.000599999999999999947
-C 1.27069999999999994 -0.544200000000000017 -0.000699999999999999993
-H 0.292300000000000004 -2.44490000000000007 0.00440000000000000027
-H -1.97120000000000006 -1.47560000000000002 0
-H -2.26350000000000007 0.96930000000000005 -0.00050000000000000001
-H -0.292300000000000004 2.44490000000000007 -0.000800000000000000038
-H 1.97120000000000006 1.47560000000000002 -0.000100000000000000005
-H 2.26350000000000007 -0.96930000000000005 0.00020000000000000001
-'''
-mol.basis = 'sto-3g'
-mol.build()
-myHFben = scf.RHF(mol)
-mol2 = optimize(myHFben)
-opte_ben = scf.RHF(mol2).kernel()
-
-benzene = Molecule.Molecule()
-benzene.initalize_molecule('benzene')
-energy_MIMben = MIM.do_MIM1(1, 'RHF', 'sto-3g', benzene, 'benzene')[0]
+#mol = gto.Mole()
+#mol.atom ='''
+#C 0.164099999999999996 -1.37260000000000004 -0.00020000000000000001
+#C -1.10660000000000003 -0.828400000000000025 0.000100000000000000005
+#C -1.27069999999999994 0.544200000000000017 -0
+#C -0.164099999999999996 1.37260000000000004 0
+#C 1.10660000000000003 0.828400000000000025 0.000599999999999999947
+#C 1.27069999999999994 -0.544200000000000017 -0.000699999999999999993
+#H 0.292300000000000004 -2.44490000000000007 0.00440000000000000027
+#H -1.97120000000000006 -1.47560000000000002 0
+#H -2.26350000000000007 0.96930000000000005 -0.00050000000000000001
+#H -0.292300000000000004 2.44490000000000007 -0.000800000000000000038
+#H 1.97120000000000006 1.47560000000000002 -0.000100000000000000005
+#H 2.26350000000000007 -0.96930000000000005 0.00020000000000000001
+#'''
+#mol.basis = 'sto-3g'
+#mol.build()
+#myHFben = scf.RHF(mol)
+#mol2 = optimize(myHFben)
+#opte_ben = scf.RHF(mol2).kernel()
+#
+#benzene = Molecule.Molecule()
+#benzene.initalize_molecule('benzene')
+#energy_MIMben = MIM.do_MIM2(1, 'RHF', 'sto-3g', benzene, 'benzene')[0]
 
 aspirin_diff = energy_MIM - opte
 rms_aspirin = (aspirin_diff**2)/2
-print(aspirin_diff, "aspirin difference")
+print(aspirin_diff, "aspirin difference MP2")
 print(rms_aspirin, "RMS for aspirin")
 
-benzene_diff = energy_MIMben - opte_ben
-rms_benzene = (benzene_diff**2)/2
-print(benzene_diff, "benzene difference")
-print(rms_benzene, "RMS for benzene")
+#benzene_diff = energy_MIMben - opte_ben
+#rms_benzene = (benzene_diff**2)/2
+#print(benzene_diff, "benzene difference")
+#print(rms_benzene, "RMS for benzene")
 
