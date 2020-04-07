@@ -12,12 +12,14 @@ class Fragment():
         self.coeff = coeff 
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
         self.energy = 1
-        self.grad_dict = {}     #dictonary for atom gradients in prim after link atom projections, no link atoms included
+        self.grad_dict = {}#dictonary for atom gradients in prim after link atom projections, no link atoms included
+        self.hess_dict = {}
         self.grad = []
+        self.hess = []
         self.theory = theory
         self.basis = basis
-        self.hessian = []
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
+        self.jacobian = []
 
     def __str__(self):
         out = "Frag:"
@@ -58,6 +60,7 @@ class Fragment():
         """
         atomxyz = str()   #makes sure strings are empty, unsure if I need this
         inputxyz = str()
+        self.notes = []
         for atom in self.prims:
             atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
             atomxyz += atom_xyz
@@ -80,9 +83,29 @@ class Fragment():
         :basis - basis set for pyscf
         """
         inputxyz = self.build_xyz()
-        self.energy, self.grad  = do_pyscf(inputxyz, self.theory, self.basis)
+        self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
         self.distribute_linkgrad()
 
+    def build_jacobian(self):
+        """
+        Builds Jacobian matrix that is full system x subsystem.
+        :will be used for the gradient and Hessian link atom projections
+        """
+        #self.jacobian = np.zeros(self.molecule.natoms*3, len(self.prims)*3)
+        zero_list = []
+        full_array = []
+        for l in range(0, self.molecule.natoms):
+            zeros = np.zeros((3,3))
+            zero_list.append(zeros)
+        for i in range(0, len(self.prims)):
+            i_list = zero_list
+            i_list[self.prims[i]] = np.identity(3)
+            i_array = np.vstack(i_list)
+            full_array.append(i_array)  #array full system(xyz) x atoms in fragment(xyz)
+            i_list[self.prims[i]] = np.zeros((3,3)) #chaning back to all zeros
+       
+       #NEED TO ADD COLUMNS FOR THE LINK ATOMS######################
+    
     def distribute_linkgrad(self):  
         """
         Projects link atom gradients back to its respective atoms (both supporting and host atoms)
@@ -91,15 +114,31 @@ class Fragment():
         for i in range(0, len(self.prims)):
             self.grad_dict[self.prims[i]] = self.grad[i]
         for j in self.notes:
-            self.grad_dict[j[3]] = self.grad[int(j[0])]*j[1]
+            self.grad_dict[j[3]] = self.grad[int(j[0])]*j[1]    #link to ghost
             old_grad = self.grad_dict[j[2]]
-            self.grad_dict[j[2]] = old_grad + self.grad[int(j[0])]*(1-j[1])
+            self.grad_dict[j[2]] = old_grad + self.grad[int(j[0])]*(1-j[1]) #link to real
+
+    def do_Hessian(self):
+        inputxyz = self.build_xyz()
+        self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
+        self.distribute_linkhessian() 
 
     def distribute_linkhessian(self):
         """Projects mass-weighted Hessian matrix elements of link atoms back to its respective atoms (both supporting and host atoms)
         :WORK IN PROGRESS
         """
-        atom_optxyz = np.zeros((len(self.prims),3))
-        for atom in range(0, len(self.prims)):
-            atom_optxyz[self.prims[atom]] = self.molecule.optxyz[atom]
-        pass
+        ghost_list = []
+        print(len(self.hess), 'length of fragment hessian')
+        print(len(self.notes), 'number of link atoms')
+        print(len(self.prims), 'number of atoms in fragment')
+        for i in range(0, len(self.prims)):
+            self.hess_dict[self.prims[i]] = self.hess[i]
+            print(self.hess[i], 'indiviudal atom hess')
+        for j in self.notes:
+            ghost_list.append(j[3])
+            self.hess_dict[j[3]] = self.hess[int(j[0])]*(j[1]**2)   #link to ghost
+            old_hess = self.hess_dict[j[2]]
+            self.hess_dict[j[2]] = old_hess + self.hess[int(j[0])]*((1-j[1])**2)    #link to real
+        #After i project, I need to insert np.zeros(3,3) at indices not in the fragment, but that are in full molecule
+        for k in range(0, len(self.molecule.atomtable)):
+            pass
