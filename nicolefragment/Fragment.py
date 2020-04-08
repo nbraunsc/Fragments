@@ -142,8 +142,7 @@ class Fragment():
         inputxyz = self.build_xyz()
         self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
         print(self.hess)
-        print(self.hess.shape)
-        print(self.hess.flatten())
+        print(self.hess.shape)  #self.hess is shape of (10, 10, 3, 3), j.t is shape of (30, 39), j shape of (39, 30) NEED TO FIX THIS
         self.build_jacobian_Hess()
         j_transpose = np.transpose(self.jacobian_hess)
         self.hess = j_transpose.dot(self.hess).dot(self.jacobian_hess)
