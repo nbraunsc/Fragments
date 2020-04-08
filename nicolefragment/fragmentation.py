@@ -30,7 +30,9 @@ class Fragmentation():
         self.frags = []
         self.etot = 0
         self.gradient = []
+        self.hessian = []
         self.fullgrad = {}  #dictonary for full molecule gradient
+        self.fullhess = {}
         self.moleculexyz = []   #full molecule xyz's
         self.etot_opt = 0
         self.grad_opt = []
@@ -98,7 +100,7 @@ class Fragmentation():
 
     def initalize_Frag_objects(self, theory, basis):
         """
-        Initalizes the Fragment objects where link atoms get added and get fragment gets run
+        Initalizes the Fragment objects where link atoms get added and fragment gets run
         """
         self.frags = []
         for fi in range(0, len(self.atomlist)):
@@ -138,30 +140,33 @@ class Fragmentation():
         """
         self.gradient = []  #making them back to zero for optimiztion cycles
         self.etot = 0
-        for atom in range(0, len(self.molecule.atomtable)):
+        for atom in range(0, len(self.molecule.atomtable)): #updates coords
             x = list(newcoords[atom])
             self.molecule.atomtable[atom][1:] = x
 
         self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
-        
+        self.gradient = np.zeros((self.molecule.natoms, 3)) 
         for i in self.frags:
             i.run_pyscf(theory, basis)
             self.etot += i.coeff*i.energy
+            self.gradient += i.coeff*i.grad
         
-        for j in range(0, self.molecule.natoms):
-            self.fullgrad[j] = np.zeros(3)
+        #for j in range(0, self.molecule.natoms):
+        #    self.fullgrad[j] = np.zeros(3)
 
-        for i in self.frags:    #projects link atom gradients back to host and supporting atoms
-            for k in range(0, self.molecule.natoms):
-                if k in i.grad_dict.keys():
-                    self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
-                else:
-                    continue
+        #for i in self.frags:    #projects link atom gradients back to host and supporting atoms
+        #    for k in range(0, self.molecule.natoms):
+        #        if k in i.grad_dict.keys():
+        #            self.fullgrad[k] = self.fullgrad[k] + i.coeff*i.grad_dict[k]
+        #        else:
+        #            continue
         
-        for l in range(0, self.molecule.natoms):    #making into numpy array
-            grad = list(self.fullgrad[l])
-            self.gradient.append(grad)
-        self.gradient = np.array(self.gradient)
+        #for l in range(0, self.molecule.natoms):    #making into numpy array
+        #    grad = list(self.fullgrad[l])
+        #    self.gradient.append(grad)
+        #self.gradient = np.array(self.gradient)
+        #print(self.gradient, "Gradient from originial link projection")
+        
         return self.etot, self.gradient
     
     def write_xyz(self, name):
@@ -244,9 +249,36 @@ class Fragmentation():
         relaxed = geom
         print("Converged geometry coords:", "\n", relaxed.coords)
         self.molecule.optxyz = relaxed.coords
-        print(type(self.molecule.optxyz), 'optimized xyzs')
         return self.etot_opt, self.grad_opt
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
+    
+    def compute_Hessian(self):
+        """
+        Computes the overall Hessian for the molecule after the geometry optimization is completed.
+        :Also does link atom projects for the Hessians
+        """
+        self.hessian = np.zeros((self.molecule.natoms, 3)) 
+        for i in self.frags:
+            i.do_Hessian()
+            self.hessian += i.hess
+
+        #for j in range(0, self.molecule.natoms):
+        #    self.fullhess[j] = np.zeros(3)
+
+        #for i in self.frags:    #projects link atom gradients back to host and supporting atoms
+        #    for k in range(0, self.molecule.natoms):
+        #        if k in i.hess_dict.keys():
+        #            self.fullhess[k] = self.fullhess[k] + i.coeff*i.hess_dict[k]
+        #        else:
+        #            continue
+       
+        #Need to fix this following part to work with matrices instead of just lists
+        #for l in range(0, self.molecule.natoms):    #making into numpy arrary
+        #    hess = list(self.fullhess[l])
+        #    self.hessian.append(hess)
+        #self.hessian = np.array(self.hessian)
+        #print(self.hessian)
+        #return self.hessian
 
 
 if __name__ == "__main__":
@@ -254,9 +286,6 @@ if __name__ == "__main__":
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.write_xyz('carbonylavo')
-    #frag.energy_gradient('RHF', 'sto-3g', frag.moleculexyz) 
-    frag.do_geomopt('aspirin', 'RHF', 'sto-3g')
-    #print(frag.etot_opt)
-    #print(frag.grad_opt)
+    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.compute_Hessian()
 
