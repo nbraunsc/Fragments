@@ -93,19 +93,41 @@ class Fragment():
         """
         #self.jacobian = np.zeros(self.molecule.natoms*3, len(self.prims)*3)
         zero_list = []
-        full_array = []
+        #full_array = []
+        full_array = np.empty([self.molecule.natoms*3, 3]) #len(self.prims) + len(self.notes)])
+        print(full_array.shape)
+        
         for l in range(0, self.molecule.natoms):
             zeros = np.zeros((3,3))
             zero_list.append(zeros)
+        
         for i in range(0, len(self.prims)):
             i_list = zero_list
             i_list[self.prims[i]] = np.identity(3)
-            i_array = np.vstack(i_list)
-            full_array.append(i_array)  #array full system(xyz) x atoms in fragment(xyz)
+            i_array = np.vstack(i_list) #len molecule x 3 array
+            print(i_array.shape)
+            #full_array.append(i_array)
+            full_array = np.stack((full_array, i_array), axis=1) #[:,self.prims[i]] = i_array  #array full system(xyz) x atoms in fragment(xyz)
             i_list[self.prims[i]] = np.zeros((3,3)) #chaning back to all zeros
-       
-       #NEED TO ADD COLUMNS FOR THE LINK ATOMS######################
-    
+        #full_array = np.array(full_array)
+        print(full_array.shape)
+        for j in range(0, len(self.notes)):
+            j_list = zero_list
+            factor_s = 1-self.notes[j][1]   #support factor on diag
+            factor_h = self.notes[j][1]     #host factor on diag
+            a = j_list[self.notes[j][2]]
+            np.fill_diagonal(a, factor_s)   #fillin with support factor
+            j_list[self.notes[j][2]] = a
+            b = j_list[self.notes[j][3]]
+            np.fill_diagonal(b, factor_h)   #filling with host factor
+            j_list[self.notes[j][3]] = b
+            j_array = np.vstack(j_list)
+            full_array.append(j_array)
+        full_array = np.array(full_array) 
+        a = full_array.flatten()
+        print(a.shape)
+        print(full_array.shape)
+        print(self.prims)
     def distribute_linkgrad(self):  
         """
         Projects link atom gradients back to its respective atoms (both supporting and host atoms)
