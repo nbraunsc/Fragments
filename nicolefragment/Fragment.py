@@ -75,6 +75,7 @@ class Fragment():
             self.notes[-1].append(factor)
             self.notes[-1].append(self.attached[pair][0])
             self.notes[-1].append(self.attached[pair][1])
+            print(self.notes)
         return inputxyz
 
     def run_pyscf(self, theory, basis):
@@ -103,52 +104,65 @@ class Fragment():
             linkarray[self.notes[j][3]][j] = self.notes[j][1]
         self.jacobian_grad = np.concatenate((array, linkarray), axis=1)
     
-    def build_jacobian_Hess(self):
+    def build_jacobian_Hess(self, shape):
         """
         Builds Jacobian matrix that is full system x subsystem.
         :entires are matrices
         :will be used for Hessian link atom projections
         """
         zero_list = []
-        full_array = []
-        
-        for l in range(0, self.molecule.natoms):    #making zero arrays len of full system
-            zeros = np.zeros((3,3))
-            zero_list.append(zeros)
-        
-        for i in range(0, len(self.prims)): #adding in identity matrix in correct location (no link atoms yet)
-            i_list = zero_list
-            i_list[self.prims[i]] = np.identity(3)
-            i_array = np.vstack(i_list) #len molecule x 3 array
-            full_array.append(i_array)
-            i_list[self.prims[i]] = np.zeros((3,3)) #chaning back to all zeros
-        
-        for j in range(0, len(self.notes)): #adding in factors on diag for support and host atoms
-            j_list = zero_list
-            factor_s = 1-self.notes[j][1]   #support factor on diag
-            factor_h = self.notes[j][1]     #host factor on diag
-            a = j_list[self.notes[j][2]]
-            np.fill_diagonal(a, factor_s)   #fillin with support factor
-            j_list[self.notes[j][2]] = a
-            b = j_list[self.notes[j][3]]
-            np.fill_diagonal(b, factor_h)   #filling with host factor
-            j_list[self.notes[j][3]] = b
-            j_array = np.vstack(j_list)
-            full_array.append(j_array)
-        
-        self.jacobian_hess = np.concatenate(full_array, axis=1)
-    
+        full_array = np.zeros((self.molecule.natoms, shape, 3, 3))
+
+        for i in range(0, len(self.prims)):
+            full_array[self.prims[i], i] = np.identity(3)
+        for j in range(0, len(self.notes)):
+            factor_s = 1-self.notes[j][1]
+            factor_h = self.notes[j][1]
+            x = np.zeros((3,3))
+            np.fill_diagonal(x, factor_s)
+            position = len(self.prims) + j
+            full_array[self.notes[j][2]][position] = x
+            np.fill_diagonal(x, factor_h)
+            full_array[self.notes[j][3]][position] = x
+        self.jacobian_hess = full_array
+
     def do_Hessian(self):   #"Need to work on dimesions for the matrix multiplication"
         inputxyz = self.build_xyz()
         self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
-        print(self.hess)
-        print(self.hess.shape)  #self.hess is shape of (10, 10, 3, 3), j.t is shape of (30, 39), j shape of (39, 30) NEED TO FIX THIS
-        self.build_jacobian_Hess()
-        j_transpose = np.transpose(self.jacobian_hess)
-        self.hess = j_transpose.dot(self.hess).dot(self.jacobian_hess)
+        self.build_jacobian_Hess(self.hess.shape[0])
+        j_reshape = self.jacobian_hess.transpose(1,0,3, 2)
+        y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
+        self.hess = np.einsum('ijkl, jmln -> imkn', y, j_reshape) 
 
 """Stuff after this point is just the old link atom projection without using the Jacobian matrix"""
-
+    
+    #def old jacobian hessian build:
+       # for l in range(0, self.molecule.natoms):    #making zero arrays len of full system
+       #     zeros = np.zeros((3,3))
+       #     zero_list.append(zeros)
+       # 
+       # for i in range(0, len(self.prims)): #adding in identity matrix in correct location (no link atoms yet)
+       #     i_list = zero_list
+       #     i_list[self.prims[i]] = np.identity(3)
+       #     i_array = np.vstack(i_list) #len molecule x 3 array
+       #     full_array.append(i_array)
+       #     i_list[self.prims[i]] = np.zeros((3,3)) #chaning back to all zeros
+       # 
+       # for j in range(0, len(self.notes)): #adding in factors on diag for support and host atoms
+       #     j_list = zero_list
+       #     factor_s = 1-self.notes[j][1]   #support factor on diag
+       #     factor_h = self.notes[j][1]     #host factor on diag
+       #     a = j_list[self.notes[j][2]]
+       #     np.fill_diagonal(a, factor_s)   #fillin with support factor
+       #     j_list[self.notes[j][2]] = a
+       #     b = j_list[self.notes[j][3]]
+       #     np.fill_diagonal(b, factor_h)   #filling with host factor
+       #     j_list[self.notes[j][3]] = b
+       #     j_array = np.vstack(j_list)
+       #     full_array.append(j_array)
+       # 
+       # self.jacobian_hess = np.concatenate(full_array, axis=1)
+    
     #def distribute_linkgrad(self):     ####Old way of doing the gradient link atom projections###########
     #    """
     #    Projects link atom gradients back to its respective atoms (both supporting and host atoms)

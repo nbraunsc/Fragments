@@ -252,15 +252,23 @@ class Fragmentation():
         return self.etot_opt, self.grad_opt
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
     
-    def compute_Hessian(self):
+    def compute_Hessian(self, theory, basis):
         """
         Computes the overall Hessian for the molecule after the geometry optimization is completed.
         :Also does link atom projects for the Hessians
         """
-        self.hessian = np.zeros((self.molecule.natoms, 3)) 
+        self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
         for i in self.frags:
+            i.run_pyscf(theory, basis)
             i.do_Hessian()
             self.hessian += i.hess
+        x = self.hessian.flatten(order='C')
+        print(x)
+        print(x.shape)
+        """
+        :NEED TO FIGURE OUT HOW TO FLATTEN HESSIAN SO I CAN DIAGONILZE IT
+        :THERE ARE ALSO ENTRIES IN HESSIAN THAT ARE ZERO WHICH DO NOT SEEM RIGHT, NEED TO CHECK THIS
+        """
 
         #for j in range(0, self.molecule.natoms):
         #    self.fullhess[j] = np.zeros(3)
@@ -286,6 +294,6 @@ if __name__ == "__main__":
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
-    frag.compute_Hessian()
+    #frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.compute_Hessian('RHF', 'sto-3g')
 
