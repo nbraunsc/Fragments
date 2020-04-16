@@ -11,8 +11,8 @@ from Molecule import *
 from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method
 from pyscf.geomopt.berny_solver import optimize
-#from scipy.optimize import minimize
 from itertools import cycle
+from numpy import linalg as LA
 
 class Fragmentation():
     """
@@ -140,7 +140,7 @@ class Fragmentation():
         """
         self.gradient = []  #making them back to zero for optimiztion cycles
         self.etot = 0
-        for atom in range(0, len(self.molecule.atomtable)): #updates coords
+        for atom in range(0, len(self.molecule.atomtable)): #updates coords in Molecule class
             x = list(newcoords[atom])
             self.molecule.atomtable[atom][1:] = x
 
@@ -197,8 +197,6 @@ class Fragmentation():
     def do_fragmentation(self, deg, theory, basis):
         """
         Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
-        :currently returns total energy and total gradient that was used for MIM method
-        :will change this so the final geometry after geomopt will be the energy and gradient that gets used for MIM method script
         """
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
@@ -259,41 +257,20 @@ class Fragmentation():
         """
         self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
         for i in self.frags:
-            i.run_pyscf(theory, basis)
             i.do_Hessian()
-            self.hessian += i.hess
-        x = self.hessian.flatten(order='C')
-        print(x)
-        print(x.shape)
-        """
-        :NEED TO FIGURE OUT HOW TO FLATTEN HESSIAN SO I CAN DIAGONILZE IT
-        :THERE ARE ALSO ENTRIES IN HESSIAN THAT ARE ZERO WHICH DO NOT SEEM RIGHT, NEED TO CHECK THIS
-        """
+            self.hessian += i.hess*i.coeff
 
-        #for j in range(0, self.molecule.natoms):
-        #    self.fullhess[j] = np.zeros(3)
-
-        #for i in self.frags:    #projects link atom gradients back to host and supporting atoms
-        #    for k in range(0, self.molecule.natoms):
-        #        if k in i.hess_dict.keys():
-        #            self.fullhess[k] = self.fullhess[k] + i.coeff*i.hess_dict[k]
-        #        else:
-        #            continue
-       
-        #Need to fix this following part to work with matrices instead of just lists
-        #for l in range(0, self.molecule.natoms):    #making into numpy arrary
-        #    hess = list(self.fullhess[l])
-        #    self.hessian.append(hess)
-        #self.hessian = np.array(self.hessian)
-        #print(self.hessian)
-        #return self.hessian
-
+        x = np.reshape(self.hessian, (self.hessian.shape[0]*3, self.hessian.shape[1]*3))
+        hess_values, hess_vectors = LA.eigh(x)
+        #print(hess_vectors, "eigenvectors aka directions of normal modes")
+        #print(hess_values, "eigenvalues, aka frequencies")
+        return self.hessian, hess_values, hess_vectors
 
 if __name__ == "__main__":
     carbonylavo = Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo)
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    #frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
     frag.compute_Hessian('RHF', 'sto-3g')
 

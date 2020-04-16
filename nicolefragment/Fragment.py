@@ -75,7 +75,6 @@ class Fragment():
             self.notes[-1].append(factor)
             self.notes[-1].append(self.attached[pair][0])
             self.notes[-1].append(self.attached[pair][1])
-            print(self.notes)
         return inputxyz
 
     def run_pyscf(self, theory, basis):
@@ -93,7 +92,6 @@ class Fragment():
         """Builds Jacobians for gradient link atom projections
         :entries are floats and not matrices
         """
-        #zero_list = np.zeros(self.molecule.natoms)
         array = np.zeros((self.molecule.natoms, len(self.prims)))
         linkarray = np.zeros((self.molecule.natoms, len(self.notes)))
         for i in range(0, len(self.prims)):
@@ -127,10 +125,11 @@ class Fragment():
         self.jacobian_hess = full_array
 
     def do_Hessian(self):   #"Need to work on dimesions for the matrix multiplication"
+        #self.hess = 0 #just to make sure it is zero to start 
         inputxyz = self.build_xyz()
         self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
         self.build_jacobian_Hess(self.hess.shape[0])
-        j_reshape = self.jacobian_hess.transpose(1,0,3, 2)
+        j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
         self.hess = np.einsum('ijkl, jmln -> imkn', y, j_reshape) 
 
