@@ -7,7 +7,7 @@ from berny import Berny, geomlib
 #from pyscf.geomopt import berny_solver
 
 
-def do_pyscf(input_xyz, theory, basis):
+def do_pyscf(input_xyz, theory, basis, hess=True):
     mol = gto.Mole()
     mol.atom = input_xyz
     mol.basis = basis
@@ -22,28 +22,52 @@ def do_pyscf(input_xyz, theory, basis):
     if theory == 'RHF': #Restricted HF calc
         hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
         e, g = hf_scanner(mol)
-        #h = hf_scanner.Hessian().kernel()
-        return e, g, #h
+        if hess == True:
+            mf = mol.RHF().run()
+            h = mf.Hessian().kernel()
+        if hess == False:
+            h = 0
+        return e, g, h
     
+    ##################################################################
+    # NEED TO FIGURE OUT HOW TO PULL OUT HESSIAN FOR HIGHER THEORIES #
+    ##################################################################
+
     if theory == 'MP2': #Perturbation second order calc
         mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
         e, g = mp2_scanner(mol) 
-        
-        #print('--------------- RHF Hessian ------------------','\n', h, '\n', '----------------------------------------------')
-        #print(mol_eq.atom_coords())
-        return e, g
+        if hess == True:
+            #mf = mp.MP2(scf.RHF(mol)).as_scanner().run()
+            #h = mf.Hessian().kernel()
+            mf = mol.RHF().run()
+            mh = mf.MP2().run()
+            print(mh.kernel())
+            #h = mh.Hessian().kernel()
+            #h = mp.MP2(scf.RHF(mol)).Hessian().kernel()
+        if hess == False:
+            h = 0
+        return e, g, h
 
     if theory == 'CISD':    #CI for singles and double excitations
         ci_scanner = ci.CISD(scf.RHF(mol)).nuc_grad_method().as_scanner()
         e, g = ci_scanner(mol)
-        return e, g
+        if hess == True:
+            mf = ci.CISD(scf.RHF(mol)).run()
+            h = mf.Hessian().kernel()
+        else:
+            h = 0
+        return e, g, h
 
     if theory == 'CCSD':    #Couple Cluster for singles and doubles
         cc_scanner = cc.CCSD(scf.RHF(mol)).nuc_grad_method().as_scanner()
         e, g = cc_scanner(mol)
-        return e, g
+        if hess == True:
+            mf = cc.CCSD(scf.RHF(mol)).run()
+            h = mf.Hessian().kernel()
+        else:
+            h = 0
+        return e, g, h
 
-    
    
 #mol.symmetry = 1
     #mol.charge = 1

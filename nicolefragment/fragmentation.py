@@ -262,15 +262,41 @@ class Fragmentation():
 
         x = np.reshape(self.hessian, (self.hessian.shape[0]*3, self.hessian.shape[1]*3))
         hess_values, hess_vectors = LA.eigh(x)
-        #print(hess_vectors, "eigenvectors aka directions of normal modes")
+        print(hess_vectors, "eigenvectors aka directions of normal modes")
         #print(hess_values, "eigenvalues, aka frequencies")
         return self.hessian, hess_values, hess_vectors
+
+############################################################# 
+# IDEAS TO MAKE OWN HESSIANS:                               #
+# - use psi4 but then i would have to convert everything to #
+#   psi4 format, these are numerical Hessians anyway        #
+# - use autograd like in the example below, these pretty    #
+#   much just computes the jacobian which is the same thing #
+#   as the hessian (need to check the theory on this)       #
+# - also need to check if my mp2 gradients are actual mp2   #
+#   gradients, vibin thinks pyscf is just giving hf grads   #
+# - autograd will also be able to give me the analytical    #
+#   gradients and hessians for higher levels of theory      #
+# - i also need to do finite difference to check hessians   #
+#############################################################
+"""
+from autograd import elementwise_grad as egrad
+from autograd import jacobian
+import autograd.numpy as np
+
+def func(x):
+    return np.sin(x[0]) * np.sin(x[1])
+
+x_value = np.array([0.0, 0.0])  # note inputs have to be floats
+H_f = jacobian(egrad(func))  # returns a function
+print(H_f(x_value))
+"""
 
 if __name__ == "__main__":
     carbonylavo = Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo)
-    frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
-    frag.compute_Hessian('RHF', 'sto-3g')
+    frag.do_fragmentation(1, 'MP2', 'sto-3g')
+    #frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.compute_Hessian('MP2', 'sto-3g')
 
