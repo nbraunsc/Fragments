@@ -132,7 +132,7 @@ class Molecule():
     
     def build_molmatrix(self, i):
         """
-        Builds the whole molecule matrix (nd array) where it shows what order each prim is connecte to eachtother
+        Builds the whole molecule matrix (nd array) where it shows what order each prim is connected: to eachtother
         :built through a series of matrix manipulations (need to review this)
         :i must be 2 to start the recursive funciton correctly
         :returns nd array that is used for fragment building

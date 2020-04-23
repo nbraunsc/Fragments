@@ -1,6 +1,11 @@
 from runpyscf import *
 import string
 import numpy as np
+#import torch
+import autograd.numpy as np
+from autograd import grad as a_grad
+from autograd import hessian as a_hess
+
 
 class Fragment():
     """
@@ -87,6 +92,7 @@ class Fragment():
         self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
         self.build_jacobian_Grad()
         self.grad = self.jacobian_grad.dot(self.grad)
+        return self.grad
 
     def build_jacobian_Grad(self):
         """Builds Jacobians for gradient link atom projections
@@ -124,14 +130,24 @@ class Fragment():
             full_array[self.notes[j][3]][position] = x
         self.jacobian_hess = full_array
 
+    def example_func(self, y):
+        return y
+
+
     def do_Hessian(self):   #"Need to work on dimesions for the matrix multiplication"
         #self.hess = 0 #just to make sure it is zero to start 
         inputxyz = self.build_xyz()
-        self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
-        self.build_jacobian_Hess(self.hess.shape[0])
-        j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
-        y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
-        self.hess = np.einsum('ijkl, jmln -> imkn', y, j_reshape) 
+        #self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
+        hessian_example = a_hess(self.example_func)
+        x = hessian_example(self.grad).diagonal(axis1=1, axis2=2)
+        print(self.grad, 'self.grad')
+        print(x, "hessian")
+        print(x.shape, "hessian shape")
+        
+        #self.build_jacobian_Hess(self.hess.shape[0])
+        #j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
+        #y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
+        #self.hess = np.einsum('ijkl, jmln -> imkn', y, j_reshape) 
 
 """Stuff after this point is just the old link atom projection without using the Jacobian matrix"""
     

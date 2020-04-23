@@ -6,6 +6,11 @@ from berny import Berny, geomlib
 #from berny.solvers import MopacSolver
 #from pyscf.geomopt import berny_solver
 
+#import autograd.numpy as auto
+#import autograd.numpy as np
+#from autograd import (grad, elementwise_grad, jacobian, value_and_grad,grad_and_aux, hessian_vector_product, hessian, multigrad, jacobian, vector_jacobian_product)
+#from autograd import grad as a_grad
+#from autograd import hessian as a_hess
 
 def do_pyscf(input_xyz, theory, basis, hess=True):
     mol = gto.Mole()
@@ -37,13 +42,7 @@ def do_pyscf(input_xyz, theory, basis, hess=True):
         mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
         e, g = mp2_scanner(mol) 
         if hess == True:
-            #mf = mp.MP2(scf.RHF(mol)).as_scanner().run()
-            #h = mf.Hessian().kernel()
-            mf = mol.RHF().run()
-            mh = mf.MP2().run()
-            print(mh.kernel())
-            #h = mh.Hessian().kernel()
-            #h = mp.MP2(scf.RHF(mol)).Hessian().kernel()
+            pass
         if hess == False:
             h = 0
         return e, g, h

@@ -13,6 +13,7 @@ from pyscf.geomopt import berny_solver, as_pyscf_method
 from pyscf.geomopt.berny_solver import optimize
 from itertools import cycle
 from numpy import linalg as LA
+#import torch
 
 class Fragmentation():
     """
@@ -260,9 +261,9 @@ class Fragmentation():
             i.do_Hessian()
             self.hessian += i.hess*i.coeff
 
-        x = np.reshape(self.hessian, (self.hessian.shape[0]*3, self.hessian.shape[1]*3))
-        hess_values, hess_vectors = LA.eigh(x)
-        print(hess_vectors, "eigenvectors aka directions of normal modes")
+        #x = np.reshape(self.hessian, (self.hessian.shape[0]*3, self.hessian.shape[1]*3))
+        #hess_values, hess_vectors = LA.eigh(x)
+        #print(hess_vectors, "eigenvectors aka directions of normal modes")
         #print(hess_values, "eigenvalues, aka frequencies")
         return self.hessian, hess_values, hess_vectors
 
@@ -297,6 +298,6 @@ if __name__ == "__main__":
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo)
     frag.do_fragmentation(1, 'MP2', 'sto-3g')
-    #frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
     frag.compute_Hessian('MP2', 'sto-3g')
 
