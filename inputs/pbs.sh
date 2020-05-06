@@ -20,7 +20,7 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=asp_benz
+FILE=frag_practice
 
 # every so often, copy the output file back here!!
 #touch ./$FILE.out
@@ -34,5 +34,5 @@ FILE=asp_benz
 
 python $FILE.py  >> $FILE.out
 # copy data back
-cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+#cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
 exit;
