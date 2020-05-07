@@ -13,11 +13,11 @@ ratio_list = []
 
 for k in frag_list:
     start_time = time.time()
-    aspirin = Molecule.Molecule()
-    aspirin.initalize_molecule('aspirin')
-    energy_MIM = MIM.do_MIM1(k, 'RHF', 'sto-3g', aspirin, 'aspirin')[0]
+    largermol = Molecule.Molecule()
+    largermol.initalize_molecule('largermol')
+    energy_MIM = MIM.do_MIM1(k, 'RHF', 'sto-3g', largermol, 'largermol')[0]
     
-    full_energy = runpyscf.do_pyscf(aspirin.atomtable, 'RHF', 'sto-3g', hess=False)[0]
+    full_energy = runpyscf.do_pyscf(largermol.atomtable, 'RHF', 'sto-3g', hess=False)[0]
     total_time = time.time() - start_time
     energy_error = abs(full_energy - energy_MIM)/full_energy
     ratio = total_time/energy_error
