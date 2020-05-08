@@ -39,8 +39,14 @@ class Molecule():
         #self.mol_class = mol_class
         
     def initalize_molecule(self, file_name):
+<<<<<<< HEAD
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         x = "../inputs/" + file_name + ".cml"
+=======
+        current_dir = os.getcwd()
+        x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
+        #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
+>>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
         self.parse_cml(x)
         self.build_molmatrix(2)
 
@@ -55,9 +61,15 @@ class Molecule():
         root = tree.getroot()
         molecule = root
         #self.molecule = molecule
+<<<<<<< HEAD
         atomArray = root[3]
         self.atomArray = atomArray
         bondArray = root[4]
+=======
+        atomArray = root[3]    #root[0]
+        self.atomArray = atomArray
+        bondArray = root[4]     #root[1]
+>>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
         #self.bondArray = bondArray        
         self.natoms = len(self.atomArray)
         self.A = np.zeros( (self.natoms,self.natoms)) 
@@ -68,6 +80,7 @@ class Molecule():
             self.atomtable[atomi][2] = float(atomArray[atomi].attrib['y3'])
             self.atomtable[atomi][3] = float(atomArray[atomi].attrib['z3'])
         #start extracting bond order
+        print(self.atomtable)
         for bondi in bondArray:
             a12 = bondi.attrib['atomRefs2'].split()
             #assert is making all first part of indexes = a
@@ -85,7 +98,7 @@ class Molecule():
             z = self.bond_table[2]
             self.A[x][y] = z
             self.A[y][x] = z
-        
+        print(self.atomtable)
         self.build_prims()
         self.build_primchart()
     

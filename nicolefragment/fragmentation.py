@@ -188,7 +188,7 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/" + name + ".xyz", "w+")
+        f = open("../inputs/" + self.molecule.mol_class + "/" + name + ".xyz", "w+")
         title = ""
         f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
         for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): 
@@ -236,7 +236,8 @@ class Fragmentation():
         """
         self.write_xyz(name)
         os.path.abspath(os.curdir)
-        os.chdir('../inputs/')
+        os.chdir('../inputs/' + self.molecule.mol_class)
+        #os.chdir('../inputs/')
         optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
         for geom in optimizer:
             solver = self.energy_gradient(theory, basis, geom.coords)
@@ -248,6 +249,7 @@ class Fragmentation():
         relaxed = geom
         print("Converged geometry coords:", "\n", relaxed.coords)
         self.molecule.optxyz = relaxed.coords
+        os.chdir('../')
         return self.etot_opt, self.grad_opt
         #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
     

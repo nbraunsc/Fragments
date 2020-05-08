@@ -4,10 +4,6 @@ from nicolefragment import Molecule, MIM, runpyscf
 import time
 import numpy as np
 
-from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad
-from pyscf.geomopt.berny_solver import optimize
-from berny import Berny, geomlib
-
 import os
 import sys
 from pathlib import Path
@@ -33,12 +29,22 @@ for i in molecule_classlist:
                 print(i, "class", file_name, "molecule name")
                 start_time = time.time()
                 filename_nocml = Path(file_name).stem
+<<<<<<< HEAD
                 filename_nocml = Molecule.Molecule(i)
                 print(filename_nocml, "molecule name with no cml")
                 filename_nocml.initalize_molecule(Path(file_name).stem) #no cml extension
                 print(filename_nocml.atomtable)
                 energy_MIM = MIM.do_MIM1(k, 'RHF', 'sto-3g', filename_nocml, Path(file_name).stem)[0]
                 full_energy = runpyscf.do_pyscf(filename_nocml.atomtable, 'RHF', 'sto-3g', hess=False)[0]       #start of full molecule calc
+=======
+                z = str(Path(file_name).stem)
+                a_k = Molecule.Molecule(i)
+                print(a_k)
+                a_k.initalize_molecule(z) #no cml extension
+                print(a_k.atomtable)
+                energy_MIM = MIM.do_MIM1(k, 'RHF', 'sto-3g', a_k, z)[0]
+                full_energy = runpyscf.do_pyscf(a_k.atomtable, 'RHF', 'sto-3g', hess=False)[0]       #start of full molecule calc
+>>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
                 total_time = time.time() - start_time
                 energy_error = abs(full_energy - energy_MIM)/full_energy
                 ratio = total_time/energy_error

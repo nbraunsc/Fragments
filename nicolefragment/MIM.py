@@ -20,7 +20,11 @@ def do_MIM1(deg, theory, basis, Molecule, name):
     #print('Hess(MIM1):', '\n', MIM1_hess)
     #print('Frequencies:', '\n', MIM1_freq)
     #print('Norm(grad) =', norm)
+<<<<<<< HEAD
     return MIM1_energy, grad # , MIM1_hess, MIM1_freq, MIM1_vectors
+=======
+    return MIM1_energy, grad    #, MIM1_hess, MIM1_freq, MIM1_vectors
+>>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
 
 def do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name):
     """
