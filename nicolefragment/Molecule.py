@@ -14,7 +14,8 @@ class Molecule():
     :parse_cml(filename), file path needs to be specified
     """
 
-    def __init__(self, mol_class=str()):
+    def __init__(self):
+    #def __init__(self, mol_class=str()):
         #number of atoms
         self.natoms = {} 
         #atom coords with index and element, type:list
@@ -35,10 +36,11 @@ class Molecule():
         self.molchart = []
         self.covrad = form_covalent_radii()
         self.optxyz = []
-        self.mol_class = mol_class
+        #self.mol_class = mol_class
         
     def initalize_molecule(self, file_name):
-        x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
+        #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
+        x = "../inputs/" + file_name + ".cml"
         self.parse_cml(x)
         self.build_molmatrix(2)
 
@@ -172,4 +174,9 @@ class Molecule():
 
 if __name__ == "__main__":
     ethanol = Molecule()
+<<<<<<< HEAD
     aspirin.initalize_molecule('ethanol')
+=======
+    ethanol.initalize_molecule('ethanol')
+    print(ethanol.atomtable)
+>>>>>>> f83ac6ae86878a4c62a8ad9c033e8eaea8f8753f
