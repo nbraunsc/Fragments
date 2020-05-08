@@ -55,9 +55,9 @@ class Molecule():
         root = tree.getroot()
         molecule = root
         #self.molecule = molecule
-        atomArray = root[3]
+        atomArray = root[3] #root[0]
         self.atomArray = atomArray
-        bondArray = root[4]
+        bondArray = root[4] #root[1]
         #self.bondArray = bondArray        
         self.natoms = len(self.atomArray)
         self.A = np.zeros( (self.natoms,self.natoms)) 
