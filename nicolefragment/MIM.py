@@ -1,6 +1,6 @@
-from Molecule import *
-from Fragment import *
-from fragmentation import *
+from .Molecule import *
+from .Fragment import *
+from .fragmentation import *
 
 def do_MIM1(deg, theory, basis, Molecule, name):
     """
@@ -13,14 +13,14 @@ def do_MIM1(deg, theory, basis, Molecule, name):
     frag = Fragmentation(Molecule)
     frag.do_fragmentation(deg, theory, basis)
     MIM1_energy, grad = frag.do_geomopt(name, theory, basis)
-    MIM1_hess, MIM1_freq, MIM1_vectors = frag.compute_Hessian(theory, basis)
-    norm = np.linalg.norm(grad)
+    #MIM1_hess, MIM1_freq, MIM1_vectors = frag.compute_Hessian(theory, basis)
+    #norm = np.linalg.norm(grad)
     print('E(MIM1) =', MIM1_energy, 'Hartree')
     print('Grad(MIM1):', '\n', grad)
-    print('Hess(MIM1):', '\n', MIM1_hess)
-    print('Frequencies:', '\n', MIM1_freq)
+    #print('Hess(MIM1):', '\n', MIM1_hess)
+    #print('Frequencies:', '\n', MIM1_freq)
     #print('Norm(grad) =', norm)
-    return MIM1_energy, grad, MIM1_hess, MIM1_freq, MIM1_vectors
+    return MIM1_energy, grad    #, MIM1_hess, MIM1_freq, MIM1_vectors
 
 def do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name):
     """
