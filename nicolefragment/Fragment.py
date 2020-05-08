@@ -1,4 +1,4 @@
-from .runpyscf import *
+from runpyscf import *
 import string
 import numpy as np
 #import torch

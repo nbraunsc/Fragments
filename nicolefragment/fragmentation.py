@@ -3,10 +3,10 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from .runpie import *
-from .runpyscf import *
-from .Fragment import *
-from .Molecule import *
+from runpie import *
+from runpyscf import *
+from Fragment import *
+from Molecule import *
 
 from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method
@@ -188,7 +188,8 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/" + self.molecule.mol_class + "/" + name + ".xyz", "w+")
+        #f = open("../inputs/" + self.molecule.mol_class + "/" + name + ".xyz", "w+")
+        f = open("../inputs/" + name + ".xyz", "w+")
         title = ""
         f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
         for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): 
@@ -236,8 +237,8 @@ class Fragmentation():
         """
         self.write_xyz(name)
         os.path.abspath(os.curdir)
-        os.chdir('../inputs/' + self.molecule.mol_class)
-        #os.chdir('../inputs/')
+        #os.chdir('../inputs/' + self.molecule.mol_class)
+        os.chdir('../inputs/')
         optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
         for geom in optimizer:
             solver = self.energy_gradient(theory, basis, geom.coords)

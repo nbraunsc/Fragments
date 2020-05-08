@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from .cov_rad import *
+from cov_rad import *
 
 class Molecule():
     """
@@ -39,14 +39,11 @@ class Molecule():
         #self.mol_class = mol_class
         
     def initalize_molecule(self, file_name):
-<<<<<<< HEAD
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         x = "../inputs/" + file_name + ".cml"
-=======
         current_dir = os.getcwd()
-        x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
+        #x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
->>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
         self.parse_cml(x)
         self.build_molmatrix(2)
 
@@ -60,23 +57,13 @@ class Molecule():
         #self.tree = tree
         root = tree.getroot()
         molecule = root
-        #self.molecule = molecule
-<<<<<<< HEAD
-        atomArray = root[3] #root[0]
+        self.molecule = molecule
+        atomArray = root[0]
+        #atomArray = root[3]
         self.atomArray = atomArray
-        bondArray = root[4] #root[1]
-=======
-<<<<<<< HEAD
-        atomArray = root[3]
-        self.atomArray = atomArray
-        bondArray = root[4]
-=======
-        atomArray = root[3]    #root[0]
-        self.atomArray = atomArray
-        bondArray = root[4]     #root[1]
->>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
->>>>>>> a1624c3f1e0987ed3e446cfe154e5ff0e96e6314
-        #self.bondArray = bondArray        
+        #bondArray = root[4]
+        bondArray = root[1]
+        self.bondArray = bondArray        
         self.natoms = len(self.atomArray)
         self.A = np.zeros( (self.natoms,self.natoms)) 
         self.atomtable = [[0 for x in range(4)] for y in range(self.natoms)]
@@ -193,9 +180,5 @@ class Molecule():
 
 if __name__ == "__main__":
     ethanol = Molecule()
-<<<<<<< HEAD
-    aspirin.initalize_molecule('ethanol')
-=======
     ethanol.initalize_molecule('ethanol')
     print(ethanol.atomtable)
->>>>>>> f83ac6ae86878a4c62a8ad9c033e8eaea8f8753f
