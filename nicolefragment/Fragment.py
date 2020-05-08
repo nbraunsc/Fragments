@@ -1,10 +1,10 @@
-from runpyscf import *
+from .runpyscf import *
 import string
 import numpy as np
 #import torch
-import autograd.numpy as np
-from autograd import grad as a_grad
-from autograd import hessian as a_hess
+#import autograd.numpy as np
+#from autograd import grad as a_grad
+#from autograd import hessian as a_hess
 
 
 class Fragment():

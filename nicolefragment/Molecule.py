@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from cov_rad import *
+from .cov_rad import *
 
 class Molecule():
     """
@@ -53,9 +53,9 @@ class Molecule():
         root = tree.getroot()
         molecule = root
         #self.molecule = molecule
-        atomArray = root[0]
+        atomArray = root[3]
         self.atomArray = atomArray
-        bondArray = root[1]
+        bondArray = root[4]
         #self.bondArray = bondArray        
         self.natoms = len(self.atomArray)
         self.A = np.zeros( (self.natoms,self.natoms)) 
@@ -171,5 +171,5 @@ class Molecule():
             self.build_molmatrix(i)
 
 if __name__ == "__main__":
-    aspirin = Molecule()
-    aspirin.initalize_molecule('aspirin')
+    ethanol = Molecule()
+    aspirin.initalize_molecule('ethanol')
