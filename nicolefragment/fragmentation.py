@@ -203,7 +203,8 @@ class Fragmentation():
         """
         #self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
-        self.remove_repeatingfrags(oldcoeff)
+        if len(self.derivs) > 0:
+            self.remove_repeatingfrags(oldcoeff)
         self.atomlist = [None] * len(self.derivs)
         
         for i in range(0, len(self.derivs)):
