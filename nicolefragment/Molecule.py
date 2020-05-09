@@ -39,10 +39,12 @@ class Molecule():
         
     def initalize_molecule(self, file_name):
         current_dir = os.getcwd()
-        x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
+        #x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
-        self.parse_cml(x)
+        directory = "/home/nbraunsc/Projects/Fragments/inputs/drugs/" + file_name + ".cml"
+        self.parse_cml(directory)
         self.build_molmatrix(2)
+        #os.chdir("../")
 
     def parse_cml(self, filename):
         """
@@ -68,7 +70,6 @@ class Molecule():
             self.atomtable[atomi][2] = float(atomArray[atomi].attrib['y3'])
             self.atomtable[atomi][3] = float(atomArray[atomi].attrib['z3'])
         #start extracting bond order
-        print(self.atomtable)
         for bondi in bondArray:
             a12 = bondi.attrib['atomRefs2'].split()
             #assert is making all first part of indexes = a
@@ -86,7 +87,6 @@ class Molecule():
             z = self.bond_table[2]
             self.A[x][y] = z
             self.A[y][x] = z
-        print(self.atomtable)
         self.build_prims()
         self.build_primchart()
     

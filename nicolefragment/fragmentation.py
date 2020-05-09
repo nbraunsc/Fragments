@@ -187,19 +187,21 @@ class Fragmentation():
             z = y.astype(float)
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
-        
-        f = open("../inputs/" + self.molecule.mol_class + "/" + name + ".xyz", "w+")
+       
+        directory = "/home/nbraunsc/Projects/Fragments/inputs/drugs/" 
+        f = open(directory + name + ".xyz", "w+")
+        #f = open("../inputs/" + self.molecule.mol_class + "/" + name + ".xyz", "w+")
         title = ""
         f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
         for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): 
             f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
         f.close()
 
-    def do_fragmentation(self, deg, theory, basis):
+    def do_fragmentation(self, deg, theory, basis, name):
         """
         Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
         """
-        self.build_frags(deg)
+        #self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)
         self.atomlist = [None] * len(self.derivs)
@@ -223,6 +225,17 @@ class Fragmentation():
         
         self.find_attached()
         self.initalize_Frag_objects(theory, basis)
+        
+        self.write_xyz(name)
+        #os.path.abspath(os.curdir)
+        #os.chdir('../inputs/' + self.molecule.mol_class)
+        #directory = os.getcwd() + "/inputs/drugs"
+        directory = "/home/nbraunsc/Projects/Fragments/inputs/drugs" 
+        optimizer = Berny(geomlib.readfile(directory + '/' + name + '.xyz'), debug=True)
+        #optimizer = Berny(geomlib.readfile(os.path.abspath(directory) + '/' + name + '.xyz'), debug=True)
+        for geom in optimizer:
+            self.etot = self.energy_gradient(theory, basis, geom.coords)[0]
+            break
         return self.etot, self.gradient
 
     def do_geomopt(self, name, theory, basis):
