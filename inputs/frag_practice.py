@@ -24,9 +24,9 @@ current_dir = os.getcwd()
 directory = current_dir + "/drugs/"
 x = 0
 for file_name in os.listdir(directory):
-    filenames.append(file_name)
     ratio_list = []
     if file_name.endswith(".cml"):
+        filenames.append(file_name)
         for k in frag_list:
             start_time = time.time()
             filename_nocml = Path(file_name).stem
@@ -41,11 +41,11 @@ for file_name in os.listdir(directory):
             ratio = total_time/energy_error
             ratio_list.append(ratio)
         k_index = np.argmin(ratio_list)
-        best_list.append(k_index)
+        best_list.append(frag_list[k_index])
     
 
 for i in range(0, len(filenames)):
-    print(filenames[i], "", "Best k value:", "", frag_list[best_list[i]])
+    print(filenames[i], "", "Best k value:", "", best_list[i])
 
 #x = np.argmin(ratio_list)      #smaller time to error = best fragmentation level
 f = open("molecule_class", "a")
