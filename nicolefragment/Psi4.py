@@ -1,9 +1,3 @@
-try:
-    import os, sys
-    sys.path.insert(1, os.path.abspath('/scratch/psilocaluser/conda-builds/psi4-docs-multiout_1589298426985/work/build/stage//scratch/psilocaluser/conda-builds/psi4-docs-multiout_1589298426985/_h_env_placehold_placehold_place/lib/python3.7/site-packages'))
-except ImportError:
-    pass
-
 import psi4
 import os
 import numpy as np
@@ -21,18 +15,17 @@ class Psi4():
     """
     Virtual class to run psi4 
     """
-
     def __init__(self, molecule):
         self.molecule = molecule
 
-    def energy_gradient(self):
-    #def energy_gradient(self, theory, basis, newcoords):
-        f = open('../inputs/carbonylavo.xyz', "r")
+    def energy_gradient(self, theory, basis, newcoords):
+        f = open('../inputs/' + self.molecule + '.xyz', "r")
         h2o = psi4.geometry(f.read())
         f.close()
         
         #psi4.set_options({'basis': basis})
-        psi4.energy(theory + "/" + basis)
+        energy = psi4.energy(theory + "/" + basis)
+        print(energy)
         grad = psi4.gradient(theory)
 
     def do_geomopt(self, name, theory, basis):
