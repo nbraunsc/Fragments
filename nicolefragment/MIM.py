@@ -13,6 +13,10 @@ def do_MIM1(deg, theory, basis, Molecule, name):
     frag = Fragmentation(Molecule)
     frag.do_fragmentation(deg, theory, basis)
     MIM1_energy, grad = frag.do_geomopt(name, theory, basis)
+    MIM1_results = str(MIM1_energy) + str(grad)
+    f = open("mim1_results", "w")
+    f.write(MIM1_results)
+    f.close()
     #MIM1_hess, MIM1_freq, MIM1_vectors = frag.compute_Hessian(theory, basis)
     #norm = np.linalg.norm(grad)
     print('E(MIM1) =', MIM1_energy, 'Hartree')
@@ -20,11 +24,7 @@ def do_MIM1(deg, theory, basis, Molecule, name):
     #print('Hess(MIM1):', '\n', MIM1_hess)
     #print('Frequencies:', '\n', MIM1_freq)
     #print('Norm(grad) =', norm)
-<<<<<<< HEAD
     return MIM1_energy, grad # , MIM1_hess, MIM1_freq, MIM1_vectors
-=======
-    return MIM1_energy, grad    #, MIM1_hess, MIM1_freq, MIM1_vectors
->>>>>>> 43b78aa7d53cfc4eb412d9aec7370a698e660ab4
 
 def do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name):
     """
@@ -114,11 +114,11 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    aspirin = Molecule()
-    aspirin.initalize_molecule('aspirin') #argument is input file name without any extension
+    largermol = Molecule()
+    largermol.initalize_molecule('largermol') #argument is input file name without any extension
         
     """do_MIM1(deg, theory, basis, Molecule)"""
-    do_MIM1(1, 'MP2', 'sto-3g', aspirin, 'aspirin')        #uncomment to run MIM1
+    do_MIM1(1, 'RHF', 'sto-3g', largermol, 'largermol')        #uncomment to run MIM1
     
     """do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
     #do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin') #uncomment to run MIM2

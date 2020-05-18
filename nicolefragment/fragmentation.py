@@ -7,6 +7,7 @@ from runpie import *
 from runpyscf import *
 from Fragment import *
 from Molecule import *
+from Pyscf import *
 
 from berny import Berny, geomlib
 from pyscf.geomopt import berny_solver, as_pyscf_method
@@ -21,7 +22,7 @@ class Fragmentation():
 
     An instance of this class represents a mapping between a large molecule and a list of independent fragments with the appropriate coefficients needed to reassemble expectation values of observables. 
     """
-    def __init__(self, molecule):
+    def __init__(self, molecule, chem_software):
         self.fragment = []
         self.molecule = molecule
         self.unique_frag = []
@@ -37,6 +38,7 @@ class Fragmentation():
         self.moleculexyz = []   #full molecule xyz's
         self.etot_opt = 0
         self.grad_opt = []
+        self.chem_software = chem_software
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
         """
@@ -139,19 +141,24 @@ class Fragmentation():
         :basis is basis set for pyscf
         :newcoords - np.array with xyz coords for the molecule, these update after each geom opt cycle
         """
-        self.gradient = []  #making them back to zero for optimiztion cycles
-        self.etot = 0
-        for atom in range(0, len(self.molecule.atomtable)): #updates coords in Molecule class
-            x = list(newcoords[atom])
-            self.molecule.atomtable[atom][1:] = x
+        if self.chem_software == 'pyscf':
+            self.etot, self.gradient = Pyscf.energy_gradient(self, theory, basis, newcoords)
+        else:
+            raise Exception("NoChemicalSoftwareImplemented")
 
-        self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
-        self.gradient = np.zeros((self.molecule.natoms, 3)) 
-        for i in self.frags:
-            i.run_pyscf(theory, basis)
-            self.etot += i.coeff*i.energy
-            self.gradient += i.coeff*i.grad
-        
+       # self.gradient = []  #making them back to zero for optimiztion cycles
+       # self.etot = 0
+       # for atom in range(0, len(self.molecule.atomtable)): #updates coords in Molecule class
+       #     x = list(newcoords[atom])
+       #     self.molecule.atomtable[atom][1:] = x
+
+       # self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
+       # self.gradient = np.zeros((self.molecule.natoms, 3)) 
+       # for i in self.frags:
+       #     i.run_pyscf(theory, basis)
+       #     self.etot += i.coeff*i.energy
+       #     self.gradient += i.coeff*i.grad
+       # 
         #for j in range(0, self.molecule.natoms):
         #    self.fullgrad[j] = np.zeros(3)
 
@@ -235,24 +242,31 @@ class Fragmentation():
         :returns the optimized geometry of the full molecule
         :I will eventually set it up where you can change different parameters for geomopt
         """
+        
         self.write_xyz(name)
         os.path.abspath(os.curdir)
         #os.chdir('../inputs/' + self.molecule.mol_class)
         os.chdir('../inputs/')
-        optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
-        for geom in optimizer:
-            solver = self.energy_gradient(theory, basis, geom.coords)
-            optimizer.send(solver)
-            self.etot_opt = solver[0]
-            self.grad_opt = solver[1]
-            print("\n", "Energy = ", solver[0], "\n")
-            print("Gradients:", "\n", solver[1], "\n")
-        relaxed = geom
-        print("Converged geometry coords:", "\n", relaxed.coords)
-        self.molecule.optxyz = relaxed.coords
-        os.chdir('../')
-        return self.etot_opt, self.grad_opt
-        #berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
+        if self.chem_software == 'pyscf':
+            self.etot_opt, self.grad_opt = Pyscf.do_geomopt(self, name, theory, basis)
+        else:
+            raise Exception("NoChemicalSoftwareImplemented")
+
+
+       # optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
+       # for geom in optimizer:
+       #     solver = self.energy_gradient(theory, basis, geom.coords)
+       #     optimizer.send(solver)
+       #     self.etot_opt = solver[0]
+       #     self.grad_opt = solver[1]
+       #     print("\n", "Energy = ", solver[0], "\n")
+       #     print("Gradients:", "\n", solver[1], "\n")
+       # relaxed = geom
+       # print("Converged geometry coords:", "\n", relaxed.coords)
+       # self.molecule.optxyz = relaxed.coords
+       # os.chdir('../')
+       # return self.etot_opt, self.grad_opt
+        ###berny = Berny(molecule, steprms=0.01, stepmax=0.05, maxsteps=5)
     
     def compute_Hessian(self, theory, basis):
         """
@@ -299,8 +313,8 @@ print(H_f(x_value))
 if __name__ == "__main__":
     carbonylavo = Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
-    frag = Fragmentation(carbonylavo)
-    frag.do_fragmentation(1, 'MP2', 'sto-3g')
+    frag = Fragmentation(carbonylavo, 'pyscf')
+    frag.do_fragmentation(1, 'RHF', 'sto-3g')
     frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
-    frag.compute_Hessian('MP2', 'sto-3g')
+    #frag.compute_Hessian('MP2', 'sto-3g')
 
