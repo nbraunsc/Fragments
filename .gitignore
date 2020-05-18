@@ -97,3 +97,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+#other files
+.dat
+.xyz
+.e*
+.o*
+.out*
