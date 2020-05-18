@@ -133,7 +133,6 @@ class Fragment():
     def example_func(self, y):
         return y
 
-
     def do_Hessian(self):   #"Need to work on dimesions for the matrix multiplication"
         #self.hess = 0 #just to make sure it is zero to start 
         inputxyz = self.build_xyz()

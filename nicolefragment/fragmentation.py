@@ -8,13 +8,7 @@ from runpyscf import *
 from Fragment import *
 from Molecule import *
 from Pyscf import *
-
-from berny import Berny, geomlib
-from pyscf.geomopt import berny_solver, as_pyscf_method
-from pyscf.geomopt.berny_solver import optimize
-from itertools import cycle
-from numpy import linalg as LA
-#import torch
+from Psi4 import *
 
 class Fragmentation():
     """
@@ -143,6 +137,8 @@ class Fragmentation():
         """
         if self.chem_software == 'pyscf':
             self.etot, self.gradient = Pyscf.energy_gradient(self, theory, basis, newcoords)
+        if self.chem_software == 'psi4':
+            self.etot, self.gradient = Psi4.energy_gradient(self, theory, basis, newcoords)
         else:
             raise Exception("NoChemicalSoftwareImplemented")
 
@@ -249,6 +245,9 @@ class Fragmentation():
         os.chdir('../inputs/')
         if self.chem_software == 'pyscf':
             self.etot_opt, self.grad_opt = Pyscf.do_geomopt(self, name, theory, basis)
+        if self.chem_software == 'psi4':
+            Psi4.energy_gradient(self)
+            #self.etot_opt, self.grad_opt = Psi4.do_geomopt(self, name, theory, basis)
         else:
             raise Exception("NoChemicalSoftwareImplemented")
 
@@ -313,7 +312,7 @@ print(H_f(x_value))
 if __name__ == "__main__":
     carbonylavo = Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
-    frag = Fragmentation(carbonylavo, 'pyscf')
+    frag = Fragmentation(carbonylavo, 'psi4')
     frag.do_fragmentation(1, 'RHF', 'sto-3g')
     frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
     #frag.compute_Hessian('MP2', 'sto-3g')

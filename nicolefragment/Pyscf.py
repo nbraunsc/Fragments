@@ -1,7 +1,5 @@
 import os
 import numpy as np
-import sys
-from sys import argv
 from runpie import *
 from runpyscf import *
 from Fragment import *
@@ -12,14 +10,12 @@ from pyscf.geomopt import berny_solver, as_pyscf_method
 from pyscf.geomopt.berny_solver import optimize
 from itertools import cycle
 
-
 class Pyscf():
     """
     Virtual class to run pyscf in the energy_gradient() and geom_opt()
     """
     def __init__(self, molecule):
         self.molecule = molecule
-
 
     def energy_gradient(self, theory, basis, newcoords):
         """
