@@ -8,8 +8,7 @@ from runpyscf import *
 from runpsi4 import *
 from Fragment import *
 from Molecule import *
-from Pyscf import *
-from Psi4 import *
+from itertools import cycle
 
 class Fragmentation():
     """
