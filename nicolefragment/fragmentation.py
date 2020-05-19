@@ -267,7 +267,7 @@ if __name__ == "__main__":
     carbonylavo = Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
     frag = Fragmentation(carbonylavo, 'pyscf')
-    frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.do_geomopt('carbonylavo', 'RHF', 'sto-3g')
+    frag.do_fragmentation(1, 'MP2', 'sto-3g')
+    frag.do_geomopt('carbonylavo', 'MP2', 'sto-3g')
     #frag.compute_Hessian('MP2', 'sto-3g')
 
