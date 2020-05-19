@@ -1,4 +1,5 @@
 from runpyscf import *
+from runpsi4 import *
 import string
 import numpy as np
 #import torch
@@ -81,19 +82,7 @@ class Fragment():
             self.notes[-1].append(self.attached[pair][0])
             self.notes[-1].append(self.attached[pair][1])
         return inputxyz
-
-    def run_pyscf(self, theory, basis):
-        """
-        Runs pyscf and returns the fragments energy and gradient
-        :theory - theory for pyscf wanted, right now only 'RHF' and MP2 implemented
-        :basis - basis set for pyscf
-        """
-        inputxyz = self.build_xyz()
-        self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
-        self.build_jacobian_Grad()
-        self.grad = self.jacobian_grad.dot(self.grad)
-        return self.grad
-
+    
     def build_jacobian_Grad(self):
         """Builds Jacobians for gradient link atom projections
         :entries are floats and not matrices
@@ -129,6 +118,34 @@ class Fragment():
             np.fill_diagonal(x, factor_h)
             full_array[self.notes[j][3]][position] = x
         self.jacobian_hess = full_array
+
+    def run_pyscf(self, theory, basis):
+        """
+        Runs pyscf and returns the fragments energy and gradient
+        :theory - theory for pyscf wanted, right now only 'RHF' and MP2 implemented
+        :basis - basis set for pyscf
+        """
+        inputxyz = self.build_xyz()
+        self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
+        self.build_jacobian_Grad()
+        self.grad = self.jacobian_grad.dot(self.grad)
+        return self.grad
+
+    def run_psi4(self, theory, basis, name):
+        """
+        Runs psi4 and returns individual fragments and gradients
+        """
+        inputxyz = self.build_xyz()
+        self.energy = do_psi4(inputxyz, self.theory, self.basis, name)
+        #self.energy, self.grad  = do_psi4(inputxyz, self.theory, self.basis, name)
+        print("psi4 energy: ", self.energy)
+        #print("psi4 grad: ", self.grad, self.grad.shape)
+        #self.build_jacobian_Grad()
+        #self.grad = self.jacobian_grad.dot(self.grad)
+        #return self.grad
+
+    
+#-----------------------------------------------------------------------------------------------
 
     def example_func(self, y):
         return y

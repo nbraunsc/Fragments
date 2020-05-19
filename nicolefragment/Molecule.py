@@ -91,7 +91,6 @@ class Molecule():
             z = self.bond_table[2]
             self.A[x][y] = z
             self.A[y][x] = z
-        print(self.atomtable)
         self.build_prims()
         self.build_primchart()
     
