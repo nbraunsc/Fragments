@@ -7,13 +7,15 @@ from cov_rad import *
 
 class Molecule():
     """
-    Class to sort through cml input of molecule, compute attributes that will not change for molecule
-    :makes into xyz format
-    :builds primatives
-    :builds connectivity charts of atom-atom and prim-prim
-    :parse_cml(filename), file path needs to be specified
+    Molecule class is the parent class for the MIM code.
+    
+    Responsible for obtaining input file of molecule, changing into
+    appropriate file format
+    
+    Holds molecule information that will not change througout fragmentation
+    code.
     """
-
+    
     def __init__(self):
     #def __init__(self, mol_class=str()):
         #number of atoms
@@ -48,10 +50,17 @@ class Molecule():
         self.build_molmatrix(2)
 
     def parse_cml(self, filename):
+        """ Finds file location, runs parse_cml(), runs build_matrix()
+        
+        This the only funciton that needs to be called within the Molecule() class
+        
+        Parameters
+        ----------
+        file_name : str
+            This is the molecule name as it appears in its .cml file
+        
         """
-        Takes the cml file and converts it into xyz coords still keeping the bonding information
-        :filename - name of the file name for the molecule wanted to run
-        """
+
         #self.filename = filename
         tree = ET.parse(filename)
         #self.tree = tree
@@ -95,12 +104,22 @@ class Molecule():
         self.build_primchart()
     
     def build_prims(self):
+        """ Builds the primiative fragments (smallest possible fragments)
+        
+        Primiatives are initalized with heavy atoms (all other than hydrogen), no double or 
+        triple bonds are cut, no hydrogen bonds are cut.
+        
+        Parameters
+        ----------
+        none
+        
+        Returns
+        ------
+        self.prims : set
+            This is a set of sets containing the atom indexes that are within each primitive
+        
         """
-        Builds the primiative fragments (smallest possible fragments)
-        :these primiatitves are made by not cutting hydrogen bonds or higher than single bonds
-        :funciton gets called in parse_cml()
-        :returns a list of primiataives
-        """
+        
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
                 self.prims.append([i])
@@ -118,12 +137,25 @@ class Molecule():
         for i in range(0, len(self.prims)):
             self.prims[i] = tuple(sorted(self.prims[i]))
         self.prims = set(self.prims)
+        return self.prims
     
     def build_primchart(self):
+        """ Builds a connectivity ndarray between primitaves
+        
+        Ndarray contains only single-linkage connectivity.  Thus if one primative is 
+        connected to another primitave there will be a 1 in the row/column index of the array.
+       
+       Parameters
+        ----------
+        none
+        
+        Returns
+        -------
+        self.primchart : ndarray
+            Ndarray of shape (# of primitaves, # of primitaves)
+        
         """
-        Builds a primiative array (nd array) where row and column are associated with each primative
-        :returns a matrix called A where if the primiatives are connected it adds a 1 in that spot
-        """
+        
         self.prims = list(self.prims)
         self.primsleng = len(self.prims)
         self.primchart = np.zeros( (self.primsleng,self.primsleng))
@@ -136,14 +168,32 @@ class Molecule():
                         if self.A[atomi][atomj] != 0:
                             self.primchart[prim1][prim2] = 1
                             self.primchart[prim2][prim1] = 1
-    
+        return self.primchart
+
     def build_molmatrix(self, i):
+        """ Builds the full connectivity array
+        
+        Ndarray contains all connectivity between primiatives. Thus row index and column index entry
+        correspond to number of primiatives away column prim is from row prim. 
+        
+        Built through a series of matrix manipulations using self.primchart and self.molchart
+        
+        Parameters
+        ----------
+        i : int
+            This must be the value 2 to start the recursive funciton for the matrix manipulations. This
+            is set within the initalize_molecule() funciton
+        
+        Returns
+        -------
+        self.molchart : ndarray
+            Ndarray of shape (# of prims, # of prims)
+        
         """
-        Builds the whole molecule matrix (nd array) where it shows what order each prim is connected: to eachtother
-        :built through a series of matrix manipulations (need to review this)
-        :i must be 2 to start the recursive funciton correctly
-        :returns nd array that is used for fragment building
-        """
+        
+        if i != 2:
+            raise ValueError("Parameter i needs to be set to 2")
+
         eta = self.natoms
         if i == 2:
             self.molchart = self.primchart.dot(self.primchart)
@@ -176,6 +226,7 @@ class Molecule():
         if i < eta:     #recursive part of function
             i = i+1
             self.build_molmatrix(i)
+        return self.molchart
 
 if __name__ == "__main__":
     ethanol = Molecule()
