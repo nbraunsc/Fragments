@@ -1,5 +1,8 @@
 def form_covalent_radii():
-    #   Store as a lookup dictionary of immutable tuples
+    """ 
+    Dictonary of immutable tuples for link atom factor determination
+    """
+    
     covalent_radii = {}
     covalent_radii["H"]  =  (.32, -100, -100)
     covalent_radii["He"] =  (.46, -100, -100)

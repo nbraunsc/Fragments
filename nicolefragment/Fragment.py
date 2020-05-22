@@ -54,12 +54,28 @@ class Fragment():
         return str(self)
 
     def add_linkatoms(self, atom1, attached_atom, molecule):
+        """ Adds H as a link atom
+        
+        This link atoms adds at a distance ratio between the supporting and host atom to each fragment where a previous atom was cut
+        
+        Parameters
+        ----------
+        atom1 : int
+            This is the integer corresponding to the supporting atom (real atom)
+        attached_atom : int
+            This is the integer corresponiding to the host atom (ghost atom)
+        molecule : <class> instance
+            This is the molecule class instance
+
+        Returns
+        -------
+        new_xyz : list
+            This is the list of the new link atom with atom label and xyz coords
+        factor : float
+            The factor between the supporting and host atom. Used in building Jacobians for link atom projections.
+
         """
-        Adds H as a link atom at a distance ratio between the supporting and host atom to each fragment where a previous atom was cut
-        :supporting atom is the one in the fragment
-        :host atom is the one that was cut during fragmention
-        :returns the new xyx of link atom and the factor used to pick the position
-        """
+
         atom1_element = molecule.atomtable[atom1][0]
         attached_atom_element = molecule.atomtable[attached_atom][0]
         cov_atom1 = molecule.covrad[atom1_element][0]
@@ -110,9 +126,20 @@ class Fragment():
         return inputxyz
     
     def build_jacobian_Grad(self):
-        """Builds Jacobians for gradient link atom projections
-        :entries are floats and not matrices
+        """Builds Jacobian matrix for gradient link atom projections
+        
+        Parameters
+        ----------
+        none
+        
+        Returns
+        -------
+        self.jacobian_grad : ndarray
+            Array where entries are floats on the diagonal with the corresponding factor. 
+            Array has size (# of atoms in full molecule + all link atoms, # of atoms in primiative)
+        
         """
+        
         array = np.zeros((self.molecule.natoms, len(self.prims)))
         linkarray = np.zeros((self.molecule.natoms, len(self.notes)))
         for i in range(0, len(self.prims)):
@@ -124,11 +151,20 @@ class Fragment():
         self.jacobian_grad = np.concatenate((array, linkarray), axis=1)
     
     def build_jacobian_Hess(self, shape):
+        """ Builds Jacobian matrix for hessian link atom projections.
+
+        Parameters
+        ----------
+        shape : tuple
+            Shape of the gradient for the fragment
+
+        Returns
+        -------
+        self.jacobian_hess : ndarray (tensor)
+            Array where the entries are matrices corresponding factor.
+            
         """
-        Builds Jacobian matrix that is full system x subsystem.
-        :entires are matrices
-        :will be used for Hessian link atom projections
-        """
+        
         zero_list = []
         full_array = np.zeros((self.molecule.natoms, shape, 3, 3))
 
@@ -146,11 +182,26 @@ class Fragment():
         self.jacobian_hess = full_array
 
     def run_pyscf(self, theory, basis):
+        """ Runs pyscf.  This gets called in Fragmentation().
+
+        do_pyscf() is just a virtual funciton in runpysf.py that interfaces with pyscf.
+        
+        Parameters
+        ----------
+        theory : str
+            Level of theory for the calculation
+        basis : str
+            Basis set name for calculations
+            
+        Returns
+        -------
+        self.energy : float
+            Energy for the individual fragment after link atom porjection
+        self.grad : ndarray
+            Gradient for the individual fragment after link atom projection
+        
         """
-        Runs pyscf and returns the fragments energy and gradient
-        :theory - theory for pyscf wanted, right now only 'RHF' and MP2 implemented
-        :basis - basis set for pyscf
-        """
+        
         inputxyz = self.build_xyz()
         self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
         self.build_jacobian_Grad()
@@ -158,9 +209,26 @@ class Fragment():
         return self.grad
 
     def run_psi4(self, theory, basis, name):
+        """ Runs psi4.  This gets called in Fragmentation().
+
+        do_psi4() is just a virtual funciton in runpsi4.py that interfaces with psi4.
+        
+        Parameters
+        ----------
+        theory : str
+            Level of theory for the calculation
+        basis : str
+            Basis set name for calculations
+            
+        Returns
+        -------
+        self.energy : float
+            Energy for the individual fragment after link atom porjection
+        self.grad : ndarray
+            Gradient for the individual fragment after link atom projection
+        
         """
-        Runs psi4 and returns individual fragments and gradients
-        """
+        
         inputxyz = self.build_xyz()
         self.energy = do_psi4(inputxyz, self.theory, self.basis, name)
         #self.energy, self.grad  = do_psi4(inputxyz, self.theory, self.basis, name)
