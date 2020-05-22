@@ -191,9 +191,6 @@ class Molecule():
         
         """
         
-        if i != 2:
-            raise ValueError("Parameter i needs to be set to 2")
-
         eta = self.natoms
         if i == 2:
             self.molchart = self.primchart.dot(self.primchart)

@@ -11,7 +11,22 @@ import numpy as np
 class Fragment():
     """
     Class to store a list of primitives corresponding to a molecular fragment
+    
+    Parameters
+    ----------
+    theory : str
+        Level of theory for calculation
+    basis : str
+        Basis set name for calculations
+    prims : list
+        List of fragments from Fragmentation class with atom indexes in list
+    attached : list
+        List of attached pairs with the atom that is in the fragment and its corresponding atom pair that was cut
+    coeff : int
+        Coefficent of fragment.  This will either be 1 or -1.
+    
     """
+    
     def __init__(self, theory, basis, prims, molecule, attached=[], coeff=1):
         self.prims = prims 
         self.molecule = molecule 
@@ -60,11 +75,22 @@ class Fragment():
         return new_xyz, factor
     
     def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms as a string
+        """ Builds the xyz input with the atom labels, xyz coords, and link atoms as a string
+        
+        Parameters
+        ----------
+        none
+        
+        Returns
+        -------
+        inputxyz : str
+            String with atom index then corresonding xyz coordinates.  This input includes the link atoms.
+        self.notes: list of lists
+            List of lists that is created with len = number of link atoms. Each sub list corresponds to one link atom.
+            (i.e. [index of link atom, factor, supporting atom number, host atom number])
+        
         """
-        Builds the xyz input with the atom labels, xyz coords, and link atoms as a string
-        :returns the inputxyz as a string
-        :returns a list called self.notes that has the form [index of link atom, factor, supporting atom, host atom]
-        """
+
         atomxyz = str()   #makes sure strings are empty, unsure if I need this
         inputxyz = str()
         self.notes = []

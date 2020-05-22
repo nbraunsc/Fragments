@@ -12,10 +12,13 @@ from itertools import cycle
 
 class Fragmentation():
     """
-    Class to do the building of molecular fragments and derivatives
-
+    Fragmentation is a child class of Molecule().
+    
+    Used to build the molecular fragments and their derivatives.
+    
     An instance of this class represents a mapping between a large molecule and a list of independent fragments with the appropriate coefficients needed to reassemble expectation values of observables. 
     """
+    
     def __init__(self, molecule, chem_software):
         self.fragment = []
         self.molecule = molecule
@@ -35,11 +38,23 @@ class Fragmentation():
         self.chem_software = chem_software
 
     def build_frags(self, deg):    #deg is the degree of monomers wanted
+        """ Performs the initalize fragmmentation 
+        
+        This will fragment the full molecule at the level of deg specified.
+        Also runs self.compress_frags() to delete repeating fragments.
+        
+        Parameters
+        ----------
+        deg : int
+            The degree of fragmentation wanted. Larger deg results in larger fragments.
+        
+        Returns
+        -------
+        self.fragment : list
+            List of fragments containing index of primiatives that are within deg
+        
         """
-        Does the initalize fragmmentation 
-        :deg - the degree of monomers wanted
-        :returns the list of fragments
-        """
+        
         for x in range(0, len(self.molecule.molchart)):
             for y in range(0, len(self.molecule.molchart)):
                 if self.molecule.molchart[x][y] <= deg and self.molecule.molchart[x][y] != 0:
@@ -57,11 +72,21 @@ class Fragmentation():
         self.compress_frags()
         
     def compress_frags(self): #takes full list of frags, compresses to unique frags
+        """ Takes the full list of fragments and compresses them to only the unique fragments.
+        
+        This functions compresses self.fragment into self.uniquefrag. 
+        
+        Parameters
+        ----------
+        none
+        
+        Returns
+        -------
+        self.unique_frag : list
+            List of sets containing only the unqie fragments 
+        
         """
-        Takes the full list of fragments and compresses them to only the unique fragments
-        :this function is called in build_frags()
-        :returns the unquie list of fragments
-        """
+        
         self.fragment = [set(i) for i in self.fragment]
         sign = 1
         uniquefrags = []
@@ -77,10 +102,20 @@ class Fragmentation():
         self.unique_frag = uniquefrags
     
     def find_attached(self):    #finding all the attached atoms that were cut during fragmentation
+        """ Finds the atoms that were cut during the fragmentation.
+        
+        Parameters
+        ----------
+        none
+        
+        Returns
+        -------
+        self.attached : list of lists
+            List of pairs of atoms (a, b) len of # of fragments, where a is in fragment and atom b was the 
+            atom that was cut.
+        
         """
-        Finds the atoms that were cut during the fragmentation
-        :returns a list of pairs of atoms (1, 2) so atom 2 was attached to atom 1
-        """
+        
         self.attached = []
         for frag in range(0, len(self.atomlist)):
             fragi = []
@@ -96,9 +131,24 @@ class Fragmentation():
             self.attached.append(fragi) 
 
     def initalize_Frag_objects(self, theory, basis):
+        """ Initalizes the Fragment() objects
+        
+        Fragment is another child class of Fragmentaion() where link atoms get added, 
+        fragment energy, gradient and hessian is calcuated.
+        
+        Parameters
+        ----------
+        theory : str
+            Level of theory each fragment should be run at
+        basis : str
+            Basis set wanted for calculation
+        
+        Returns
+        -------
+        none
+        
         """
-        Initalizes the Fragment objects where link atoms get added and fragment gets run
-        """
+
         self.frags = []
         for fi in range(0, len(self.atomlist)):
             coeffi = self.coefflist[fi]
@@ -106,10 +156,24 @@ class Fragmentation():
             self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
 
     def remove_repeatingfrags(self, oldcoeff):
+        """ Removes the repeating derivates. Function gets called in self.do_fragmentation().
+        
+        The repeating derivates are the exact same derivates that would be added then subtracted
+        again during the principle of inclusion-exculsion process of MIM.  This also updates teh self.derivs
+        and self.coefflist that are using with Fragment() class instances.
+        
+        Parameters
+        ----------
+        oldcoeff : list
+            List of coefficients that is the output of runpie() function that is called in self.do_fragmentation().
+        
+        Returns
+        -------
+        self.coefflist : list
+            List of coefficents where index of coeff correlates to that fragment
+            
         """
-        Funciton removes the repeating derivates that would be subtracted then added back again during the principle of inclusion-exculsion process
-        :updates the self.derivs list and self.coefflist list that get used to intialize Fragment objects with correct attributes
-        """
+
         compressed = []
         coeff_position = []
         self.coefflist = []
@@ -128,17 +192,29 @@ class Fragmentation():
                 self.coefflist.append(oldcoeff[i])
     
     def energy_gradient(self, theory, basis, newcoords, name):
-        """
-        Function returns total energy (scalar) and gradient (nd.array) of molecule
-
-        :theory is RHF or MP2
-        :basis is basis set for pyscf
-        :newcoords - np.array with xyz coords for the molecule, these update after each geom opt cycle
+        """ Function returns total energy and gradient of global molecule.
         
-        self.gradient = np.zeros((self.molecule.natoms, 3)) 
-        self.etot = 0
-        for atom in range(0, len(self.molecule.atomtable)): #updates coords in Molecule class
+        This function holds virtual functions for different chemical software.  A software
+        must be implemented inorder to run this function.  
+        
+        Parameters
+        ----------
+        theory : str
+            Theory of calculation wanted
+        basis : str
+            Basis set wanted for calculations
+        newcoords : npdarray
+            Contains xyz coords for the full molecule. These get updated after each geometry optimization cycle.
+        
+        Returns
+        -------
+        self.etot : float
+            Energy of the full molecule
+        self.gradient : ndarray
+            Gradient of the full molecule
+        
         """
+
         self.gradient = np.zeros((self.molecule.natoms, 3)) #setting them back to zero
         self.etot = 0
 
@@ -163,14 +239,22 @@ class Fragmentation():
                 #return self.etot, self.gradient
             else:
                 raise Exception("NoChemicalSoftwareImplemented_energy_gradient")
-        print(self.etot)
         return self.etot#, self.gradient
 
     def write_xyz(self, name):
+        """ Writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords
+
+        Parameters
+        ----------
+        name : str
+            Name of the molecule, must be same name as input.cml file
+        
+        Returns
+        -------
+        none
+        
         """
-        Function that writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords
-        :name - name of the Molecule class or molecule in fragmentation
-        """
+
         molecule = np.array(self.molecule.atomtable)
         atomlabels = []
         for j in range(0, len(molecule)):
@@ -192,9 +276,26 @@ class Fragmentation():
         f.close()
 
     def do_fragmentation(self, deg, theory, basis):
+        """ Main executeable for Fragmentation () class
+
+        This function fragments the molecule, runs principle of inclusion-exculsion,
+        removes repeating fragments, creates attached pairs list, initalizes instances of Fragment() class.
+        
+        Parameters
+        ----------
+        deg : int
+            Degree of fragmentation wanted, gets used in self.build_frags()
+        theory : str
+            Level of theory wanted to be used in calculation
+        basis : str
+            Basis set name for calculation
+        
+        Returns
+        -------
+        none
+        
         """
-        Funciton to fragment the molecule, make molecule xyz file for geom opt, do the principle of inculusion-exculsion
-        """
+
         self.build_frags(deg)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)
@@ -221,15 +322,25 @@ class Fragmentation():
         self.initalize_Frag_objects(theory, basis)
         
     def do_geomopt(self, name, theory, basis):
-        """
-        Completes the geometry optimization using pyberny from pyscf
-        :name - name of Molecule() object to help with file path
-        :theory - theory for pyscf either RHF or MP2
-        :basis - basis set for pyscf
-        :returns the optimized geometry of the full molecule
-        :I will eventually set it up where you can change different parameters for geomopt
-        """
+        """ Completes the geometry optimization using pyberny from pyscf.
         
+        Parameters
+        ----------
+        name : str
+            Name of Molecule() object to help with file path
+        theory : str
+            Level of theory for calculation
+        basis : str
+            Basis set name for calculation
+        
+        Returns
+        -------
+        self.etot_opt : float
+            Optimized energy for full molecule
+        self.grad_opt : ndarray
+            Optimized gradient for full molecule
+        
+        """
         self.write_xyz(name)
         os.path.abspath(os.curdir)
         #os.chdir('../inputs/' + self.molecule.mol_class)
