@@ -218,7 +218,7 @@ class Fragmentation():
         self.gradient = np.zeros((self.molecule.natoms, 3)) #setting them back to zero
         self.etot = 0
 
-        for atom in range(0, len(self.molecule.atomtable)):
+        for atom in range(0, len(self.molecule.atomtable)): #makes newcoords = self.molecule.atomtable
             x = list(newcoords[atom])
             self.molecule.atomtable[atom][1:] = x
 
