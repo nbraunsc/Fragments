@@ -29,7 +29,7 @@ class Fragmentation():
         self.frags = []
         self.etot = 0
         self.gradient = []
-        self.hessian = []
+        #self.hessian = []
         self.fullgrad = {}  #dictonary for full molecule gradient
         self.fullhess = {}
         self.moleculexyz = []   #full molecule xyz's
