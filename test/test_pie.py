@@ -22,9 +22,9 @@ def test_energy():
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1, 'RHF', 'sto-3g')
-    frag.write_xyz('aspirin_test')
-    e, g = frag.energy_gradient('RHF', 'sto-3g', frag.moleculexyz)
+    frag.do_fragmentation(frag_type='graphical', value=1)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
+    #e, g = frag.energy_gradient('RHF', 'sto-3g', frag.moleculexyz)
     value = -636.6280880465254 - e
     assert(value <= 1.0e-10) #will sometimes fail bec last decimal point is wrong
 
@@ -45,9 +45,10 @@ if __name__ == "__main__":
     aspirin = Molecule()
     aspirin.initalize_molecule('aspirin')
     frag = Fragmentation(aspirin)
-    frag.do_fragmentation(1, 'RHF', 'sto-3g')
+    frag.do_fragmentation(frag_type='graphical', value=1)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
     test_pie()
     test_energy()
-    test_geomopt()
+    #test_geomopt()
 
 #Need to write tests to test the first gradient, the optimized gradient, and the different MIM levels (or maybe just MIM2)

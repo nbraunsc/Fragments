@@ -1,3 +1,4 @@
+import time
 import os
 import numpy as np
 import sys
@@ -9,6 +10,7 @@ from runpsi4 import *
 from Fragment import *
 from Molecule import *
 from itertools import cycle
+from Pyscf import *
 
 class Fragmentation():
     """
@@ -19,25 +21,24 @@ class Fragmentation():
     An instance of this class represents a mapping between a large molecule and a list of independent fragments with the appropriate coefficients needed to reassemble expectation values of observables. 
     """
     
-    def __init__(self, molecule, chem_software):
+    def __init__(self, molecule): 
         self.fragment = []
         self.molecule = molecule
         self.unique_frag = []
         self.derivs = []
         self.coefflist = []
         self.atomlist = []
-        self.frags = []
+        self.frags = []     #list of Fragment class instances
         self.etot = 0
         self.gradient = []
         #self.hessian = []
         self.fullgrad = {}  #dictonary for full molecule gradient
-        self.fullhess = {}
+        #self.fullhess = {}
         self.moleculexyz = []   #full molecule xyz's
         self.etot_opt = 0
         self.grad_opt = []
-        self.chem_software = chem_software
 
-    def build_frags(self, deg):    #deg is the degree of monomers wanted
+    def build_frags(self, frag_type=None, value=None):    #deg is the degree of monomers wanted
         """ Performs the initalize fragmmentation 
         
         This will fragment the full molecule at the level of deg specified.
@@ -45,32 +46,48 @@ class Fragmentation():
         
         Parameters
         ----------
-        deg : int
-            The degree of fragmentation wanted. Larger deg results in larger fragments.
+        frag_type : str
+            This is the type of fragmentation wanted either distance or graphical.
+
+        value : int
+            The degree of fragmentation wanted. Larger deg results in larger fragments. For distance type it will
+            be the largest radius cuttoff. For graphical it will be the number of bonds away from a center.
         
         Returns
         -------
         self.fragment : list
-            List of fragments containing index of primiatives that are within deg
+            List of fragments containing index of primiatives that are within the value
         
         """
-        
-        for x in range(0, len(self.molecule.molchart)):
-            for y in range(0, len(self.molecule.molchart)):
-                if self.molecule.molchart[x][y] <= deg and self.molecule.molchart[x][y] != 0:
-                    if x not in self.fragment:
-                        self.fragment.append([x])
-                        self.fragment[-1].append(y)
-        for z in range(0, len(self.fragment)):
-            for w in range(0, len(self.fragment)):
-                if z == w:
-                    continue
-                if self.fragment[z][0] == self.fragment[w][0]:
-                    self.fragment[z].extend(self.fragment[w][:])    #combines all prims with frag connectivity <= eta
+        self.fragment = []
+        if frag_type == 'graphical':
+            for x in range(0, len(self.molecule.molchart)):
+                for y in range(0, len(self.molecule.molchart)):
+                    if self.molecule.molchart[x][y] <= value and self.molecule.molchart[x][y] != 0:
+                        if x not in self.fragment:
+                            self.fragment.append([x])
+                            self.fragment[-1].append(y)
+            for z in range(0, len(self.fragment)):
+                for w in range(0, len(self.fragment)):
+                    if z == w:
+                        continue
+                    if self.fragment[z][0] == self.fragment[w][0]:
+                        self.fragment[z].extend(self.fragment[w][:])    #combines all prims with frag connectivity <= eta
+            
+       # if frag_type == 'distance':
+       #     for a in range(0, len(self.molecule.prims)):
+       #         for b in range(0, len(self.molecule.prims)):
+       #             if a != b:
+       #                 #dist = np.linalg.norm(x_center-y_center)
+       #                 if dist <= value and 
 
+        else:
+            raise NotImplementedError
+        
         # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
-        
+
+
     def compress_frags(self): #takes full list of frags, compresses to unique frags
         """ Takes the full list of fragments and compresses them to only the unique fragments.
         
@@ -130,36 +147,11 @@ class Fragmentation():
                             continue
             self.attached.append(fragi) 
 
-    def initalize_Frag_objects(self, theory, basis):
-        """ Initalizes the Fragment() objects
-        
-        Fragment is another child class of Fragmentaion() where link atoms get added, 
-        fragment energy, gradient and hessian is calcuated.
-        
-        Parameters
-        ----------
-        theory : str
-            Level of theory each fragment should be run at
-        basis : str
-            Basis set wanted for calculation
-        
-        Returns
-        -------
-        none
-        
-        """
-
-        self.frags = []
-        for fi in range(0, len(self.atomlist)):
-            coeffi = self.coefflist[fi]
-            attachedlist = self.attached[fi]
-            self.frags.append(Fragment(theory, basis, self.atomlist[fi], self.molecule, attachedlist, coeff=coeffi))
-
     def remove_repeatingfrags(self, oldcoeff):
         """ Removes the repeating derivates. Function gets called in self.do_fragmentation().
         
         The repeating derivates are the exact same derivates that would be added then subtracted
-        again during the principle of inclusion-exculsion process of MIM.  This also updates teh self.derivs
+        again during the principle of inclusion-exculsion process of MIM.  This also updates the self.derivs
         and self.coefflist that are using with Fragment() class instances.
         
         Parameters
@@ -168,7 +160,7 @@ class Fragmentation():
             List of coefficients that is the output of runpie() function that is called in self.do_fragmentation().
         
         Returns
-        -------
+        -------v
         self.coefflist : list
             List of coefficents where index of coeff correlates to that fragment
             
@@ -191,7 +183,65 @@ class Fragmentation():
             if i not in coeff_position:
                 self.coefflist.append(oldcoeff[i])
     
-    def energy_gradient(self, theory, basis, newcoords, name):
+    def initalize_Frag_objects(self, theory=None, basis=None, qc_backend=None, spin=None, tol=None, active_space=None, nelec=None, nelec_alpha=None, nelec_beta=None, max_memory=None):
+        """ Initalizes the Fragment() objects
+        
+        Fragment is another child class of Fragmentaion() where link atoms get added, 
+        fragment energy, gradient and hessian is calcuated.
+        
+        Parameters
+        ----------
+        theory : str
+            Level of theory each fragment should be run at
+        basis : str
+            Basis set wanted for calculation
+        
+        Returns
+        -------
+        none
+        
+        """
+        
+        self.frags = [] #list of Fragment instances as ray Actor ids
+        for fi in range(0, len(self.atomlist)):
+            coeffi = self.coefflist[fi]
+            attachedlist = self.attached[fi]
+            qc_fi = qc_backend(theory=theory, basis=basis, spin=spin, tol=tol, active_space=active_space, nelec_alpha=nelec_alpha, nelec_beta=nelec_beta, max_memory=max_memory)
+            self.frags.append(Fragment(qc_fi, self.molecule, self.atomlist[fi], attachedlist, coeff=coeffi))
+    
+    def qc_params(self, frag_index=[], qc_backend=None, theory=None, basis=None, spin=0, tol=0, active_space=0, nelec=0, nelec_alpha=0, nelec_beta=0, max_memory=0):
+        """ Funciton that is optional
+        
+        Use if a certain fragment or list of fragments need to be run with a different qc backend, or theory, or needs specific params.
+
+        Parameters
+        ----------
+        frag_index : list
+            The location of the specific fragment within the fragment list
+        qc_backend : str
+            Quantum chemistry backend wanted for this fragment
+        theory : str
+            Theory wanted
+        basis : str
+            Basis set wanted
+        spin : int
+            Spin state for fragment
+        tol : int
+            Tolerance wanted
+        active_space : int
+            Size of active space for CASSCF etc.
+        nelec_alpha : int
+            Number of alpha electrons
+        nelec_beta : int
+            Number of beta electrons
+        max_memory : int
+            Max memory for this calculation
+        """
+        for fi in frag_index:
+            qc_fi = qc_backend(theory=theory, basis=basis, spin=spin, tol=tol, active_space=active_space, nelec_alpha=nelec_alpha, nelec_beta=nelec_beta, max_memory=max_memory)
+            
+    
+    def energy_gradient(self, newcoords):
         """ Function returns total energy and gradient of global molecule.
         
         This function holds virtual functions for different chemical software.  A software
@@ -199,10 +249,6 @@ class Fragmentation():
         
         Parameters
         ----------
-        theory : str
-            Theory of calculation wanted
-        basis : str
-            Basis set wanted for calculations
         newcoords : npdarray
             Contains xyz coords for the full molecule. These get updated after each geometry optimization cycle.
         
@@ -215,34 +261,23 @@ class Fragmentation():
         
         """
 
-        self.gradient = np.zeros((self.molecule.natoms, 3)) #setting them back to zero
+        #for atom in range(0, len(self.molecule.atomtable)): #makes newcoords = self.molecule.atomtable
+        #    x = list(newcoords[atom])
+        #    self.molecule.atomtable[atom][1:] = x
+
+
+        self.gradient = np.zeros((self.molecule.natoms,3)) #setting them back to zero
         self.etot = 0
 
-        for atom in range(0, len(self.molecule.atomtable)): #makes newcoords = self.molecule.atomtable
-            x = list(newcoords[atom])
-            self.molecule.atomtable[atom][1:] = x
-
-        self.initalize_Frag_objects(theory, basis)  #reinitalizing Fragment objects with new coords
-        
         for i in self.frags:
-            if self.chem_software == 'pyscf':
-                i.run_pyscf(theory, basis)
-                self.etot += i.coeff*i.energy
-                self.gradient += i.coeff*i.grad
-                #return self.etot, self.gradient
-                #self.etot, self.gradient = py.energy_gradient(theory, basis, newcoords)
-            if self.chem_software == 'psi4':
-                i.run_psi4(theory, basis, name)
-                self.etot += i.coeff*i.energy
-                #self.gradient += i.coeff*i.grad
-                #self.etot, self.gradient = Psi4.energy_gradient(theory, basis, newcoords)
-                #return self.etot, self.gradient
-            else:
-                raise Exception("NoChemicalSoftwareImplemented_energy_gradient")
-        return self.etot#, self.gradient
-
+            #i.molecule.atomtable = self.molecule.atomtable  #setting newcoords
+            i.qc_backend()
+            self.etot += i.energy
+            self.gradient += i.grad 
+        return self.etot, self.gradient
+           
     def write_xyz(self, name):
-        """ Writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords
+        """ Writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords for geom_opt().
 
         Parameters
         ----------
@@ -259,10 +294,10 @@ class Fragmentation():
         atomlabels = []
         for j in range(0, len(molecule)):
             atomlabels.append(molecule[j][0])
-        coords = molecule[:,[1,2,3]]
+        coords = molecule[:][1:]
         self.moleculexyz = []
         for i in coords:
-            x = (i[0], i[1], i[2])
+            x = [i[1], i[2], i[3]]
             y = np.array(x)
             z = y.astype(float)
             self.moleculexyz.append(z)
@@ -275,7 +310,7 @@ class Fragmentation():
             f.write("%s %.18g %.18g %.18g\n" % (atomtype, x[0], x[1], x[2]))
         f.close()
 
-    def do_fragmentation(self, deg, theory, basis):
+    def do_fragmentation(self, frag_type=None, value=None):
         """ Main executeable for Fragmentation () class
 
         This function fragments the molecule, runs principle of inclusion-exculsion,
@@ -283,12 +318,10 @@ class Fragmentation():
         
         Parameters
         ----------
-        deg : int
-            Degree of fragmentation wanted, gets used in self.build_frags()
-        theory : str
-            Level of theory wanted to be used in calculation
-        basis : str
-            Basis set name for calculation
+        frag_type : str
+            Either 'graphical' to do covalent network or 'radius' to do spacial fragmentation
+        value : int
+            Degree or radius of fragmentation wanted, gets used in self.build_frags()
         
         Returns
         -------
@@ -296,7 +329,7 @@ class Fragmentation():
         
         """
 
-        self.build_frags(deg)
+        self.build_frags(frag_type=frag_type, value=value)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)
         self.atomlist = [None] * len(self.derivs)
@@ -317,9 +350,7 @@ class Fragmentation():
         
         for i in range(0, len(self.atomlist)):  #sorted atom numbers
             self.atomlist[i] = list(sorted(self.atomlist[i]))
-        
         self.find_attached()
-        self.initalize_Frag_objects(theory, basis)
         
     def do_geomopt(self, name, theory, basis):
         """ Completes the geometry optimization using pyberny from pyscf.
@@ -343,7 +374,6 @@ class Fragmentation():
         """
         self.write_xyz(name)
         os.path.abspath(os.curdir)
-        #os.chdir('../inputs/' + self.molecule.mol_class)
         os.chdir('../inputs/')
         optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
         for geom in optimizer:
@@ -369,43 +399,45 @@ class Fragmentation():
             i.do_Hessian()
             self.hessian += i.hess*i.coeff
 
-        #x = np.reshape(self.hessian, (self.hessian.shape[0]*3, self.hessian.shape[1]*3))
-        #hess_values, hess_vectors = LA.eigh(x)
-        #print(hess_vectors, "eigenvectors aka directions of normal modes")
-        #print(hess_values, "eigenvalues, aka frequencies"
         return self.hessian, hess_values, hess_vectors
 
-############################################################# 
-# IDEAS TO MAKE OWN HESSIANS:                               #
-# - use psi4 but then i would have to convert everything to #
-#   psi4 format, these are numerical Hessians anyway        #
-# - use autograd like in the example below, these pretty    #
-#   much just computes the jacobian which is the same thing #
-#   as the hessian (need to check the theory on this)       #
-# - also need to check if my mp2 gradients are actual mp2   #
-#   gradients, vibin thinks pyscf is just giving hf grads   #
-# - autograd will also be able to give me the analytical    #
-#   gradients and hessians for higher levels of theory      #
-# - i also need to do finite difference to check hessians   #
-#############################################################
-"""
-from autograd import elementwise_grad as egrad
-from autograd import jacobian
-import autograd.numpy as np
-
-def func(x):
-    return np.sin(x[0]) * np.sin(x[1])
-
-x_value = np.array([0.0, 0.0])  # note inputs have to be floats
-H_f = jacobian(egrad(func))  # returns a function
-print(H_f(x_value))
-"""
-
 if __name__ == "__main__":
-    carbonylavo = Molecule()
-    carbonylavo.initalize_molecule('carbonylavo')
-    frag = Fragmentation(carbonylavo, 'psi4')
-    frag.do_fragmentation(1, 'MP2', 'sto-3g')
-    frag.do_geomopt('carbonylavo', 'MP2', 'sto-3g')
-    #frag.compute_Hessian('MP2', 'sto-3g')
+    diamond = Molecule()
+    diamond.initalize_molecule('diamond')
+    print(diamond.atomtable)
+    print(diamond.molchart)
+    frag = Fragmentation(diamond)
+    frag.do_fragmentation(frag_type='graphical', value=6)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
+   
+    import ray
+    start_time = time.time()
+    ray.init()
 
+    frags_id = ray.put(frag)    #future for Fragmentation instance, putting in object store
+
+    @ray.remote
+    def get_frag_stuff(f,_frags):
+        f_current = _frags.frags[f]
+        return f_current.qc_backend()
+    result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag.frags)) ]
+    out = ray.get(result_ids)
+    etot = 0
+    gtot = 0
+    for o in out:
+        etot += o[0]
+        gtot += o[1]
+    total_time = time.time() - start_time 
+    
+    start_fragtime = time.time()
+    frag.energy_gradient(frag.moleculexyz)
+    end_time = time.time() - start_fragtime
+    print("Final converged energy = ", etot)
+    print("Final gradient = ", '\n', gtot)
+    print(" ray time: ", total_time, "\n energy_grad time: ", end_time)
+
+    #frag.write_xyz('diamond')
+
+    #run qc_params only if you want some fragments with different params
+    #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+    

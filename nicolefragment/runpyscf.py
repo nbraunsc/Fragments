@@ -1,8 +1,8 @@
-import numpy as np
-from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad
-from pyscf.grad.rhf import GradientsBasics
-from pyscf.geomopt.berny_solver import optimize
-from berny import Berny, geomlib
+##import numpy as np
+#from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad
+#from pyscf.grad.rhf import GradientsBasics
+#from pyscf.geomopt.berny_solver import optimize
+#from berny import Berny, geomlib
 #from berny.solvers import MopacSolver
 #from pyscf.geomopt import berny_solver
 

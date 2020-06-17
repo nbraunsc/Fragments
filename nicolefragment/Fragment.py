@@ -2,11 +2,7 @@ from runpyscf import *
 from runpsi4 import *
 import string
 import numpy as np
-#import torch
-#import autograd.numpy as np
-#from autograd import grad as a_grad
-#from autograd import hessian as a_hess
-
+from Pyscf import *
 
 class Fragment():
     """
@@ -27,7 +23,7 @@ class Fragment():
     
     """
     
-    def __init__(self, theory, basis, prims, molecule, attached=[], coeff=1):
+    def __init__(self, qc_class, molecule, prims, attached=[], coeff=1):
         self.prims = prims 
         self.molecule = molecule 
         self.coeff = coeff 
@@ -37,21 +33,21 @@ class Fragment():
         self.hess_dict = {}
         self.grad = []
         self.hess = []
-        self.theory = theory
-        self.basis = basis
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
         self.jacobian_grad = [] #array for gradient link atom projections
         self.jacobian_hess = []  #ndarray shape of full system*3 x fragment(with LA)*3
+        self.qc_class = qc_class
+        
 
-    def __str__(self):
-        out = "Frag:"
-        out += str(self.prims)
-        out += str(self.coeff)
-        out += str(self.attached)
-        return out 
+    #def __str__(self):
+    #    out = "Frag:"
+    #    out += str(self.prims)
+    #    out += str(self.coeff)
+    #    out += str(self.attached)
+    #    return out 
 
-    def __repr__(self):
-        return str(self)
+    #def __repr__(self):
+    #    return str(self)
 
     def add_linkatoms(self, atom1, attached_atom, molecule):
         """ Adds H as a link atom
@@ -150,6 +146,28 @@ class Fragment():
             linkarray[self.notes[j][3]][j] = self.notes[j][1]
         self.jacobian_grad = np.concatenate((array, linkarray), axis=1)
     
+
+    def qc_backend(self):
+        """ Runs the quantum chemistry backend.
+        """
+        
+        inputxyz = self.build_xyz()
+        self.energy, self.grad = self.qc_class.energy_gradient(inputxyz)
+        self.energy = self.coeff*self.energy
+        self.build_jacobian_Grad()
+        self.grad = self.coeff*self.jacobian_grad.dot(self.grad)
+        return self.energy, self.grad
+
+
+
+
+
+
+
+
+
+####################################################################################
+
     def build_jacobian_Hess(self, shape):
         """ Builds Jacobian matrix for hessian link atom projections.
 
@@ -237,8 +255,9 @@ class Fragment():
         #self.build_jacobian_Grad()
         #self.grad = self.jacobian_grad.dot(self.grad)
         #return self.grad
-
     
+        
+
 #-----------------------------------------------------------------------------------------------
 
     def example_func(self, y):
@@ -318,4 +337,3 @@ class Fragment():
     #        self.hess_dict[j[2]] = old_hess + self.hess[int(j[0])]*((1-j[1])**2)    #link to real
     #    #After i project, I need to insert np.zeros(3,3) at indices not in the fragment, but that are in full molecule
     #    for k in range(0, len(self.molecule.atomtable)):
-    #        pass

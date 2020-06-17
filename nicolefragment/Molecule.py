@@ -3,6 +3,9 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
+import pandas as pd
+from pandas.io.json import json_normalize
+import json
 from cov_rad import *
 
 class Molecule():
@@ -19,7 +22,7 @@ class Molecule():
     def __init__(self):
     #def __init__(self, mol_class=str()):
         #number of atoms
-        self.natoms = {} 
+        self.natoms = int() 
         #atom coords with index and element, type:list
         self.atomtable = []
         #table with labels of integers for atoms, starting at 0, type: np array
@@ -39,11 +42,12 @@ class Molecule():
         self.covrad = form_covalent_radii()
         self.optxyz = []
         #self.mol_class = mol_class
+        self.prim_dist = []
         
     def initalize_molecule(self, file_name):
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         x = "../inputs/" + file_name + ".cml"
-        current_dir = os.getcwd()
+        #current_dir = os.getcwd()
         #x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         self.parse_cml(x)
@@ -61,20 +65,20 @@ class Molecule():
         
         """
 
-        #self.filename = filename
         tree = ET.parse(filename)
-        #self.tree = tree
         root = tree.getroot()
-        molecule = root
-        self.molecule = molecule
-        atomArray = root[0]
-        #atomArray = root[3]
-        self.atomArray = atomArray
-        #bondArray = root[4]
-        bondArray = root[1]
-        self.bondArray = bondArray        
-        self.natoms = len(self.atomArray)
-        self.A = np.zeros( (self.natoms,self.natoms)) 
+        #following is to find atomarray and bondarray for different formatted cml files
+        rows = []
+        for node in root:
+            rows.append(str(node.tag))
+        for i in range(0, len(rows)):
+            if rows[i].endswith('atomArray'):
+                atomArray = root[i]
+            if rows[i].endswith('bondArray'):
+                bondArray = root[i]
+        
+        self.natoms = len(atomArray)
+        self.A = np.zeros((self.natoms,self.natoms)) 
         self.atomtable = [[0 for x in range(4)] for y in range(self.natoms)]
         for atomi in range(0, self.natoms):
             self.atomtable[atomi][0] = atomArray[atomi].attrib['elementType']
@@ -82,7 +86,6 @@ class Molecule():
             self.atomtable[atomi][2] = float(atomArray[atomi].attrib['y3'])
             self.atomtable[atomi][3] = float(atomArray[atomi].attrib['z3'])
         #start extracting bond order
-        print(self.atomtable)
         for bondi in bondArray:
             a12 = bondi.attrib['atomRefs2'].split()
             #assert is making all first part of indexes = a
@@ -102,6 +105,13 @@ class Molecule():
             self.A[y][x] = z
         self.build_prims()
         self.build_primchart()
+        
+        #pandas testing
+        path = "../inputs/" + 'aspirin.json'
+        dataframe = pd.read_json(path, orient='index')
+        #print(dataframe)
+        arr = dataframe.to_numpy()
+        #df_cols = ['atomArray', 'bondArray']
     
     def build_prims(self):
         """ Builds the primiative fragments (smallest possible fragments)
@@ -119,7 +129,6 @@ class Molecule():
             This is a set of sets containing the atom indexes that are within each primitive
         
         """
-        
         for i in range(0, len(self.atomtable)):
             if self.atomtable[i][0] != "H":
                 self.prims.append([i])
@@ -138,6 +147,102 @@ class Molecule():
             self.prims[i] = tuple(sorted(self.prims[i]))
         self.prims = set(self.prims)
         return self.prims
+
+    def build_atom_dist(self):
+        """ Builds a matrix with atom to atom distances
+
+        Returns
+        -------
+        atom_dist = np.ndarray
+            Ndarray of shape(# atoms, # atoms) with the Euclidean distance as the elements.
+        """
+
+        atom_dist = np.zeros((self.natoms, self.natoms))
+        for i in range(0, len(self.atomtable)):
+            for j in range(0, len(self.atomtable)):
+                if i < j:
+                    x = np.array(self.atomtable[i][1:])
+                    y = np.array(self.atomtable[j][1:])
+                    dist = np.linalg.norm(x - y)
+                    atom_dist[i][j] = dist
+                    atom_dist[j][i] = dist
+        return atom_dist
+
+    def build_prim_dist(self):
+        """ Builds a matrix with prim to prims distances.
+
+        Distance is determined by the minimum distance between each pair of atoms in their respective prims.
+        """
+        atom_dist = self.build_atom_dist()
+        self.prim_dist = np.zeros((len(self.prims), len(self.prims)))
+        print(atom_dist, "atom distance")
+        #print(self.prims, "prims list")
+        for i in range(0, len(atom_dist)):
+            for prim_index in range(0, len(self.prims)):
+               # print(np.nonzero(atom_dist[i]))  #x is the dist (float)
+                x = np.min(atom_dist[i][np.nonzero(atom_dist[i])])  #x is the dist (float)
+                row_list = list(atom_dist[i])
+                min_index = row_list.index(x)
+                if i in self.prims[prim_index] and min_index not in self.prims[prim_index]:
+                    conn_prim = self.prims.index(min_index)
+                    #print(i, conn_prim)
+                    self.prim_dist[prim_index][min_index] = x
+                    self.prim_dist[min_index][prim_index] = x
+                else:
+                    continue
+       
+        #for primi in range(0, len(self.prims)):
+        #    for primj in range(0, len(self.prims)):
+        #        if primi < primj:
+        #            prim_min_index = []
+        #            for atomi in prim:
+        #                for atomj in prim:
+        #                    if atomi == atomj:
+        #                        continue
+        #                    else:
+        #                        atom_dist[atomi][atomj] = 0
+        #                        x = np.min(atom_dist[atomi][np.nonzero(atom_dist[atomi])])  #x is the dist (float)
+        #                        row_list = list(atom_dist[atomi])
+        #                        prim_min_index.append(row_list.index(x))
+        #                        atom = row_list.index(x)
+        #                        #print("Prim atoms:", prim)
+        #                        #print("atomi:", atomi, "smallest distance to atom:", atom, "with a distance of", atom_dist[atomi][atom])
+        #                        #print("Atom dist row:", atom_dist[atomi])
+        #            
+        #            #print("prim list", prim_min_index)
+        #    
+        print(self.prims)
+        for prim in range(0, len(self.prims)):
+            prim_list = []
+            dist_list = []
+            short_prim = 0
+            for atom in self.prims[prim]:
+                arr = np.argsort(atom_dist[atom])   #sorting indexes from low to high values
+                prim_list.append(arr[len(self.prims[prim])])    #appending smallest index that is not itself or in the prim
+                dist_list.append(atom_dist[atom][len(self.prims[prim])])
+            min_index = np.argmin(dist_list)
+            x = prim_list[min_index]
+            for prim2 in self.prims:
+                try:
+                    short_prim = prim2.index(x)
+                except:
+                    continue
+            self.prim_dist[prim][short_prim] = atom_dist[atom][x]
+            self.prim_dist[short_prim][prim] = atom_dist[atom][x]
+            print(prim, "prim=row", short_prim, "second prim=column") 
+
+            #prim_output = [item for item in self.prims if x in item]
+            #for prim_other in range(0, len(self.prims)):
+            #    prim_sub = list(self.prims[prim_other])
+            #    if x in prim_sub:
+            #        print(x, "atom indes")
+            #        print(self.prims[prim_other])
+            #        self.prim_dist[prim][prim_other] = atom_dist[atom][x]
+            #        self.prim_dist[prim_other][prim] = atom_dist[atom][x]
+
+            print(prim_list)
+            print(dist_list)
+        print(self.prim_dist)
     
     def build_primchart(self):
         """ Builds a connectivity ndarray between primitaves
@@ -226,6 +331,6 @@ class Molecule():
         return self.molchart
 
 if __name__ == "__main__":
-    ethanol = Molecule()
-    ethanol.initalize_molecule('ethanol')
-    print(ethanol.atomtable)
+    carbonylavo = Molecule()
+    carbonylavo.initalize_molecule('carbonylavo')
+    carbonylavo.build_prim_dist()
