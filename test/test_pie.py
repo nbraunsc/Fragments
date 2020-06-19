@@ -1,6 +1,7 @@
-from Molecule import *
-from fragmentation import *
-from Fragment import *
+#from Molecule import *
+#from fragmentation import *
+#from Fragment import *
+from nicolefragment import Molecule, fragmentation, Fragment, cov_rad, runpie
 
 def test_pie():
     """

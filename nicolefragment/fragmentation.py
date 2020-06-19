@@ -51,7 +51,7 @@ class Fragmentation():
 
         value : int
             The degree of fragmentation wanted. Larger deg results in larger fragments. For distance type it will
-            be the largest radius cuttoff. For graphical it will be the number of bonds away from a center.
+            be the largest radius cuttoff. For covalent_net it will be the number of bonds away from a center.
         
         Returns
         -------
@@ -61,6 +61,7 @@ class Fragmentation():
         """
         self.fragment = []
         if frag_type == 'graphical':
+            self.molecule.molchart = self.molecule.build_molmatrix(2)
             for x in range(0, len(self.molecule.molchart)):
                 for y in range(0, len(self.molecule.molchart)):
                     if self.molecule.molchart[x][y] <= value and self.molecule.molchart[x][y] != 0:
@@ -74,15 +75,16 @@ class Fragmentation():
                     if self.fragment[z][0] == self.fragment[w][0]:
                         self.fragment[z].extend(self.fragment[w][:])    #combines all prims with frag connectivity <= eta
             
-       # if frag_type == 'distance':
-       #     for a in range(0, len(self.molecule.prims)):
-       #         for b in range(0, len(self.molecule.prims)):
-       #             if a != b:
-       #                 #dist = np.linalg.norm(x_center-y_center)
-       #                 if dist <= value and 
-
-        else:
-            raise NotImplementedError
+        if frag_type == 'distance':
+            self.molecule.prim_dist = self.molecule.build_prim_dist()
+            for a in range(0, len(self.molecule.prims)):
+                prim = list(self.molecule.prims[a])
+                arr = self.molecule.prim_dist[a]
+                self.fragment.append([a])
+                x = np.where(arr<=value)
+                for i in x[0]:
+                    if arr[i] != 0:
+                        self.fragment[a].extend([i])
         
         # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
@@ -328,7 +330,6 @@ class Fragmentation():
         none
         
         """
-
         self.build_frags(frag_type=frag_type, value=value)
         self.derivs, oldcoeff = runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)
@@ -336,12 +337,11 @@ class Fragmentation():
         
         for i in range(0, len(self.derivs)):
             self.derivs[i] = list(self.derivs[i])
-
         for fragi in range(0, len(self.derivs)):    #changes prims into atoms
             x = len(self.derivs[fragi])
             for primi in range(0, x):
-                value = self.derivs[fragi][primi]
-                atoms = list(self.molecule.prims[value])
+                y = self.derivs[fragi][primi]
+                atoms = list(self.molecule.prims[y])
                 self.derivs[fragi][primi] = atoms
         
         for y in range(0, len(self.derivs)):
@@ -402,14 +402,27 @@ class Fragmentation():
         return self.hessian, hess_values, hess_vectors
 
 if __name__ == "__main__":
-    diamond = Molecule()
-    diamond.initalize_molecule('diamond')
-    print(diamond.atomtable)
-    print(diamond.molchart)
-    frag = Fragmentation(diamond)
-    frag.do_fragmentation(frag_type='graphical', value=6)
+    #largermol = Molecule()
+    #largermol.initalize_molecule('largermol')
+    #frag = Fragmentation(largermol)
+    #frag.do_fragmentation(frag_type='graphical', value=2)
+    #frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
+    #frag.energy_gradient(frag.moleculexyz)
+  
+    largermol1 = Molecule()
+    largermol1.initalize_molecule('largermol')
+    frag = Fragmentation(largermol1)
+    frag.do_fragmentation(frag_type='distance', value=3)
     frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
-   
+    frag.energy_gradient(frag.moleculexyz)
+    
+    #print("Graphical unique derivs \n", frag.derivs)
+    #print("\n Distance cutoff derivs \n", frag1.derivs)
+    #print("Graphical energy:", frag.etot)
+    #print("Distance energy:", frag1.etot)
+    #print("Graphical gradient \n", frag.gradient)
+    #print("Distance gradient \n", frag1.gradient)
+
     import ray
     start_time = time.time()
     ray.init()
@@ -436,7 +449,7 @@ if __name__ == "__main__":
     print("Final gradient = ", '\n', gtot)
     print(" ray time: ", total_time, "\n energy_grad time: ", end_time)
 
-    #frag.write_xyz('diamond')
+    #frag.write_xyz('largermol')
 
     #run qc_params only if you want some fragments with different params
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
