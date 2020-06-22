@@ -103,4 +103,5 @@ venv.bak/
 *.e
 *.o
 *.out
+*.DS_Store
 

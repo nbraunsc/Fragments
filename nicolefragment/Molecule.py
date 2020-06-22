@@ -6,7 +6,9 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 from pandas.io.json import json_normalize
 import json
-from cov_rad import *
+
+import nicolefragment
+from nicolefragment import cov_rad
 
 class Molecule():
     """
@@ -39,7 +41,7 @@ class Molecule():
         self.primchart = []
         #higher order prim conn chart
         self.molchart = []
-        self.covrad = form_covalent_radii()
+        self.covrad = cov_rad.form_covalent_radii()
         self.optxyz = []
         #self.mol_class = mol_class
         self.prim_dist = []

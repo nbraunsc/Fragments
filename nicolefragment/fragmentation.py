@@ -4,13 +4,10 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-from runpie import *
-from runpyscf import *
-from runpsi4 import *
-from Fragment import *
-from Molecule import *
 from itertools import cycle
-from Pyscf import *
+
+import nicolefragment
+from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 class Fragmentation():
     """
@@ -78,14 +75,13 @@ class Fragmentation():
         if frag_type == 'distance':
             self.molecule.prim_dist = self.molecule.build_prim_dist()
             for a in range(0, len(self.molecule.prims)):
-                prim = list(self.molecule.prims[a])
+                #prim = list(self.molecule.prims[a])
                 arr = self.molecule.prim_dist[a]
                 self.fragment.append([a])
                 x = np.where(arr<=value)
                 for i in x[0]:
                     if arr[i] != 0:
                         self.fragment[a].extend([i])
-        
         # Now get list of unique frags, running compress_frags function below
         self.compress_frags()
 
@@ -209,7 +205,7 @@ class Fragmentation():
             coeffi = self.coefflist[fi]
             attachedlist = self.attached[fi]
             qc_fi = qc_backend(theory=theory, basis=basis, spin=spin, tol=tol, active_space=active_space, nelec_alpha=nelec_alpha, nelec_beta=nelec_beta, max_memory=max_memory)
-            self.frags.append(Fragment(qc_fi, self.molecule, self.atomlist[fi], attachedlist, coeff=coeffi))
+            self.frags.append(Fragment.Fragment(qc_fi, self.molecule, self.atomlist[fi], attachedlist, coeff=coeffi))
     
     def qc_params(self, frag_index=[], qc_backend=None, theory=None, basis=None, spin=0, tol=0, active_space=0, nelec=0, nelec_alpha=0, nelec_beta=0, max_memory=0):
         """ Funciton that is optional
@@ -331,7 +327,7 @@ class Fragmentation():
         
         """
         self.build_frags(frag_type=frag_type, value=value)
-        self.derivs, oldcoeff = runpie(self.unique_frag)
+        self.derivs, oldcoeff = runpie.runpie(self.unique_frag)
         self.remove_repeatingfrags(oldcoeff)
         self.atomlist = [None] * len(self.derivs)
         
@@ -409,12 +405,12 @@ if __name__ == "__main__":
     #frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
     #frag.energy_gradient(frag.moleculexyz)
   
-    largermol1 = Molecule()
-    largermol1.initalize_molecule('largermol')
-    frag = Fragmentation(largermol1)
+    carbonylavo = Molecule.Molecule()
+    carbonylavo.initalize_molecule('carbonylavo')
+    frag = fragmentation.Fragmentation(carbonylavo)
     frag.do_fragmentation(frag_type='distance', value=3)
-    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
-    frag.energy_gradient(frag.moleculexyz)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf)
+    #frag.energy_gradient(frag.moleculexyz)
     
     #print("Graphical unique derivs \n", frag.derivs)
     #print("\n Distance cutoff derivs \n", frag1.derivs)
@@ -442,12 +438,12 @@ if __name__ == "__main__":
         gtot += o[1]
     total_time = time.time() - start_time 
     
-    start_fragtime = time.time()
-    frag.energy_gradient(frag.moleculexyz)
-    end_time = time.time() - start_fragtime
+    #start_fragtime = time.time()
+    #frag.energy_gradient(frag.moleculexyz)
+    #end_time = time.time() - start_fragtime
     print("Final converged energy = ", etot)
     print("Final gradient = ", '\n', gtot)
-    print(" ray time: ", total_time, "\n energy_grad time: ", end_time)
+    #print(" ray time: ", total_time, "\n energy_grad time: ", end_time)
 
     #frag.write_xyz('largermol')
 

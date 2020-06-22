@@ -1,8 +1,6 @@
-from runpyscf import *
-from runpsi4 import *
 import string
 import numpy as np
-from Pyscf import *
+from .Pyscf import *
 
 class Fragment():
     """
