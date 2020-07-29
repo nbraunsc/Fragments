@@ -1,32 +1,73 @@
-from Molecule import *
-from Fragment import *
-from fragmentation import *
+import nicolefragment
+from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
+import numpy as np
+import ray
 
-def do_MIM1(deg, theory, basis, Molecule, name):
+np.set_printoptions(suppress=True, precision=5)
+
+def global_props(frag_obj):
+    ray.init()
+    frags_id = ray.put(frag_obj)    #future for Fragmentation instance, putting in object store
+    
+    @ray.remote
+    def get_frag_stuff(f,_frags):
+        f_current = _frags.frags[f]
+        return f_current.qc_backend()
+    
+    result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag_obj.frags)) ]
+    out = ray.get(result_ids)
+    etot = 0
+    gtot = 0
+    htot = 0
+    for o in out:
+        etot += o[0]
+        gtot += o[1]
+        htot += o[2]
+    ray.shutdown()
+    return etot, gtot, htot
+
+def do_MIM1(deg, frag_type, theory, basis, Molecule):
     """
     MIM1 is only one level of fragmentation and one level of theory.
-    :deg - degree of fragmentation
-    :bsis - basis set
-    :Molecule - Molecule class object
-    :name - the name of the Molecule class object without being a class, used in geomopt
+   
+    Parameters
+    ----------
+    deg : float
+        Degree of fragmentation
+    frag_type : str
+        Type of fragmentation wanted. Either "distance" or "graphical"
+    theory : str
+        Theory wanted
+    Molecule : Molecule class instance
+    name : str 
+        String of the molecule class instance
+    
+    Returns
+    -------
+    etot : float
+    gtot : ndarray
+    htot : ndarray
+    freq : ndarray
+        Frequencies for the full molecule
+    modes : ndarray 
+        Normal modes for the full molecule
     """
-    frag = Fragmentation(Molecule)
-    frag.do_fragmentation(deg, theory, basis)
-    MIM1_energy, grad = frag.do_geomopt(name, theory, basis)
-    MIM1_results = str(MIM1_energy) + str(grad)
-    f = open("mim1_results", "w")
-    f.write(MIM1_results)
-    f.close()
-    #MIM1_hess, MIM1_freq, MIM1_vectors = frag.compute_Hessian(theory, basis)
-    #norm = np.linalg.norm(grad)
-    print('E(MIM1) =', MIM1_energy, 'Hartree')
-    print('Grad(MIM1):', '\n', grad)
-    #print('Hess(MIM1):', '\n', MIM1_hess)
-    #print('Frequencies:', '\n', MIM1_freq)
-    #print('Norm(grad) =', norm)
-    return MIM1_energy, grad # , MIM1_hess, MIM1_freq, MIM1_vectors
+    frag = fragmentation.Fragmentation(Molecule)
+    frag.do_fragmentation(frag_type=str(frag_type), value=deg)
+    frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf)
+    #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+    
+    etot, gtot, htot = global_props(frag)
+    freq, modes = frag.mw_hessian(htot)
+    print("Frequencies: ", freq, "cm-1")
+    print("Normal Modes: ", modes)
+    print("Final converged energy = ", etot, "Hartree")
+    print("Final gradient = ", '\n', gtot)
+    #print("Final hessian = ", '\n', htot)
+    print("Hessian shape = ", htot.shape)
+    return etot, gtot, htot, freq, modes
 
-def do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name):
+def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule):
     """
     MIM2 is two levels of theory with two levels of fragmentation.
     :frag_deg - smaller fragments
@@ -37,36 +78,40 @@ def do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_bas
     :Molecule - Molecule class object
     :name - the name of the Molecule class object without being a class, used in geomopt
     """
-    frag1 = Fragmentation(Molecule)
-    frag1.do_fragmentation(frag_deg, high_theory, high_basis)
-    E_high_highdeg, grad1 = frag1.do_geomopt(name, high_theory, high_basis)
-    frag1_hess, frag1_freq, frag1_vectors = frag1.compute_Hessian(high_theory, high_basis)
-    
-    frag2 = Fragmentation(Molecule)
-    frag2.do_fragmentation(frag_deg, low_theory, low_basis)
-    E_low_highdeg, grad2 = frag2.do_geomopt(name, low_theory, low_basis)
-    frag2_hess, frag2_freq, frag2_vectors = frag2.compute_Hessian(low_theory, low_basis)
-    
-    frag3 = Fragmentation(Molecule)
-    frag3.do_fragmentation(infinite_deg, low_theory, low_basis)
-    E_infinite, grad3 = frag3.do_geomopt(name, low_theory, low_basis)
-    frag3_hess, frag3_freq, frag3_vectors = frag3.compute_Hessian(low_theory, low_basis)
-    
-    MIM2_energy = E_high_highdeg - E_low_highdeg + E_infinite
-    MIM2_grad = grad1 - grad2 + grad3
-    MIM2_hess = frag1_hess - frag2_hess + frag3_hess
-    
-    ####################################################################
-    # do i diagnolize hessian here? or for each frag1, frag2, frag3??? #
-    ####################################################################
 
-    norm = np.linalg.norm(MIM2_grad)
-    print('E(MIM2) =', MIM2_energy, 'Hartree')
-    print('Grad(MIM2):', '\n', MIM2_grad)
-    print('Hess(MIM2):', '\n', MIM2_hess)
-    print('Norm(grad) =', norm)
+    """ MIM high theory, small fragments"""
+    frag1 = fragmentation.Fragmentation(Molecule)
+    frag1.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
+    frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
+    #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+    etot1, gtot1, htot1 = global_props(frag1)
+    freq1, modes1 = frag1.mw_hessian(htot1)
+    
+    """ MIM low theory, small fragments"""
+    frag2 = fragmentation.Fragmentation(Molecule)
+    frag2.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
+    frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(low_basis), qc_backend=Pyscf.Pyscf)
+    #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+    etot2, gtot2, htot2 = global_props(frag2)
+    freq2, modes2 = frag2.mw_hessian(htot2)
+    
+    """ MIM low theory, large fragments (inifinte system)"""
+    frag3 = fragmentation.Fragmentation(Molecule)
+    frag3.do_fragmentation(frag_type=str(frag_type), value=infinite_deg)
+    frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(low_basis), qc_backend=Pyscf.Pyscf)
+    #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+    etot3, gtot3, htot3 = global_props(frag3)
+    freq3, modes3 = frag3.mw_hessian(htot3)
+    
+    MIM2_energy = etot1 - etot2 + etot3
+    MIM2_grad = gtot1 - gtot2 + gtot3
+    MIM2_hess = htot1 - htot2 + htot3
+    print("Frequency 1:", freq1)
+    print("Frequency 2:", freq2)
+    print("Frequency 3:", freq3)
     return MIM2_energy, MIM2_grad, MIM2_hess
-
+        
+    
 def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule, name):
     """
     MIM3 is three different levels of theory with three fragmentations.
@@ -114,14 +159,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule()
-    largermol.initalize_molecule('largermol') #argument is input file name without any extension
+    carbonylavo = Molecule.Molecule()
+    carbonylavo.initalize_molecule('carbonylavo')
         
-    """do_MIM1(deg, theory, basis, Molecule)"""
-    do_MIM1(1, 'RHF', 'sto-3g', largermol, 'largermol')        #uncomment to run MIM1
+    """do_MIM1(deg, frag_type,  theory, basis, Molecule)"""
+    #do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', carbonylavo)        #uncomment to run MIM1
     
-    """do_MIM2(frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM2(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin') #uncomment to run MIM2
+    """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
+    do_MIM2('distance', 1.8, 'RHF', '631g', 3, 'RHF', 'sto-3g', carbonylavo) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
     #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin')     #uncomment to run MIM3

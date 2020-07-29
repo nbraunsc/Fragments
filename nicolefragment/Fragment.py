@@ -1,6 +1,8 @@
 import string
 import numpy as np
 from .Pyscf import *
+from ase import Atoms
+from ase.vibrations import Infrared  
 
 class Fragment():
     """
@@ -27,9 +29,8 @@ class Fragment():
         self.coeff = coeff 
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
         self.energy = 1
-        self.grad_dict = {}#dictonary for atom gradients in prim after link atom projections, no link atoms included
-        self.hess_dict = {}
         self.grad = []
+        self.hessian = []
         self.hess = []
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
         self.jacobian_grad = [] #array for gradient link atom projections
@@ -144,35 +145,11 @@ class Fragment():
             linkarray[self.notes[j][3]][j] = self.notes[j][1]
         self.jacobian_grad = np.concatenate((array, linkarray), axis=1)
     
-
-    def qc_backend(self):
-        """ Runs the quantum chemistry backend.
-        """
-        
-        inputxyz = self.build_xyz()
-        self.energy, self.grad = self.qc_class.energy_gradient(inputxyz)
-        self.energy = self.coeff*self.energy
-        self.build_jacobian_Grad()
-        self.grad = self.coeff*self.jacobian_grad.dot(self.grad)
-        return self.energy, self.grad
-
-
-
-
-
-
-
-
-
-####################################################################################
-
-    def build_jacobian_Hess(self, shape):
+    def build_jacobian_Hess(self):
         """ Builds Jacobian matrix for hessian link atom projections.
 
         Parameters
         ----------
-        shape : tuple
-            Shape of the gradient for the fragment
 
         Returns
         -------
@@ -182,7 +159,7 @@ class Fragment():
         """
         
         zero_list = []
-        full_array = np.zeros((self.molecule.natoms, shape, 3, 3))
+        full_array = np.zeros((self.molecule.natoms, self.hess.shape[0], 3, 3))
 
         for i in range(0, len(self.prims)):
             full_array[self.prims[i], i] = np.identity(3)
@@ -196,6 +173,72 @@ class Fragment():
             np.fill_diagonal(x, factor_h)
             full_array[self.notes[j][3]][position] = x
         self.jacobian_hess = full_array
+        return self.jacobian_hess
+
+
+    def qc_backend(self):
+        """ Runs the quantum chemistry backend.
+        
+        Returns
+        -------
+        self.energy : float
+            This is the energy for the fragment*its coeff
+        self.gradient : ndarray
+            This is the gradient for the fragment*its coeff
+        self.hessian : ndarray (4D tensor)
+            This is the hessian for the fragement*its coeff
+        """
+        
+        inputxyz = self.build_xyz()
+        self.energy, self.grad, self.hess, dipole = self.qc_class.energy_gradient(inputxyz)
+        g = np.gradient(self.grad)
+        print("gradient shape", self.grad.shape)
+        print("gradient of gradient", g, np.array(g).shape)
+        
+
+        def hessian(x_grad):
+            hessian = np.empty((x_grad.shape[0], x_grad.shape[0]))#, dtype=x.dtype)
+            for k, grad_k in enumerate(x_grad):
+                # iterate over dimensions
+                # apply gradient again to every component of the first derivative.
+                tmp_grad = np.gradient(grad_k)
+                for l, grad_kl in enumerate(tmp_grad):
+                    hessian[k, l, :, :] = grad_kl
+            return hessian
+
+        #hess_finite = hessian(self.grad.reshape(3*self.grad.shape[0], 1))  
+        
+        #print("analytical hessian", self.hess, self.hess.shape)
+        #print("auto hessian", auto_hess, auto_hess.shape)
+        self.energy = self.coeff*self.energy
+        self.build_jacobian_Grad()
+        self.grad = self.coeff*self.jacobian_grad.dot(self.grad)
+       
+        #build frag_hess, do link atom projection for hessian
+        self.jacobian_hess = self.build_jacobian_Hess()
+        j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
+        y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
+        self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
+        return g, self.grad, self.hess, hess_finite
+        #return self.energy, self.grad, self.hessian
+    
+    def get_IR(self):
+        inputxyz = self.build_xyz()
+        print(inputxyz, type(inputxyz))
+        molecule = Atoms(inputxyz)
+        print(molecule.get_positions())
+        ir = Infrared(molecule)
+        ir.run()
+        ir.summary()
+
+
+
+
+
+
+
+####################################################################################
+
 
     def run_pyscf(self, theory, basis):
         """ Runs pyscf.  This gets called in Fragmentation().

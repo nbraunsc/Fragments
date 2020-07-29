@@ -1,10 +1,12 @@
 import time
 import os
 import numpy as np
+from numpy import linalg as LA 
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
 from itertools import cycle
+from mendeleev import element
 
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
@@ -28,9 +30,9 @@ class Fragmentation():
         self.frags = []     #list of Fragment class instances
         self.etot = 0
         self.gradient = []
-        #self.hessian = []
+        self.hessian = []
         self.fullgrad = {}  #dictonary for full molecule gradient
-        #self.fullhess = {}
+        self.fullhess = {}
         self.moleculexyz = []   #full molecule xyz's
         self.etot_opt = 0
         self.grad_opt = []
@@ -266,13 +268,19 @@ class Fragmentation():
 
         self.gradient = np.zeros((self.molecule.natoms,3)) #setting them back to zero
         self.etot = 0
+        self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
 
         for i in self.frags:
             #i.molecule.atomtable = self.molecule.atomtable  #setting newcoords
-            i.qc_backend()
+            e, grad, i_hess, i_hess2 = i.qc_backend()
+            print(e, e.shape)
+            print(grad, grad.shape)
+            print(e-grad)
+            print("hessian diff = ", i_hess-i_hess2)
             self.etot += i.energy
-            self.gradient += i.grad 
-        return self.etot, self.gradient
+            self.gradient += i.grad
+            self.hessian += i.hessian
+        return self.etot, self.gradient, self.hessian
            
     def write_xyz(self, name):
         """ Writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords for geom_opt().
@@ -373,7 +381,7 @@ class Fragmentation():
         os.chdir('../inputs/')
         optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
         for geom in optimizer:
-            solver = self.energy_gradient(theory, basis, geom.coords, name)
+            solver = self.energy_gradient(geom.coords)
             optimizer.send(solver)
             self.etot_opt = solver[0]
             #self.grad_opt = solver[1]
@@ -385,40 +393,75 @@ class Fragmentation():
         os.chdir('../')
         return self.etot_opt#, self.grad_opt
        
-    def compute_Hessian(self, theory, basis):
-        """
-        Computes the overall Hessian for the molecule after the geometry optimization is completed.
-        :Also does link atom projects for the Hessians
-        """
-        self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
-        for i in self.frags:
-            i.do_Hessian()
-            self.hessian += i.hess*i.coeff
+   # def compute_Hessian(self):
+   #     """
+   #     Computes the overall Hessian for the molecule after the geometry optimization is completed.
+   #     :Also does link atom projects for the Hessians
+   #     """
+   #     self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
+   #     for i in self.frags:
+   #         self.hessian += i.hess*i.coeff
 
-        return self.hessian, hess_values, hess_vectors
+   #     return self.hessian, hess_values, hess_vectors
+
+    def mw_hessian(self, full_hessian):
+        """
+        Will compute the mass-weighted hessian, frequencies, and 
+        normal modes for the full system.
+        
+        Parameters
+        ----------
+        full_hessian : ndarray
+            This is the full hessian for the full molecule.
+
+        Returns
+        -------
+        freq : ndarray
+            1D np array holding the frequencies
+        modes : ndarray
+            2D ndarray holding normal modes in the columns
+        """
+        mass_xyz = np.zeros((self.molecule.natoms, 3))
+        mass_array = np.zeros((self.molecule.natoms))
+        for row in range(0, self.molecule.natoms):
+            #adding 1/np.sqrt(amu) units to xyz coords
+            x = element(self.molecule.atomtable[row][0])
+            value = np.sqrt(x.atomic_weight)
+            mass_array[row] = value
+            mass_xyz[row] = np.array(self.molecule.atomtable[row][1:])*(1/value)   #mass weighted coordinates
+            for column in range(0, len(self.molecule.atomtable)):    
+                y = element(self.molecule.atomtable[column][0])
+                z = x.atomic_weight*y.atomic_weight
+                value = np.sqrt(z)**-1
+                term = full_hessian[row][column]*value
+                full_hessian[row][column] = term
+                
+        reshape_mass_hess = full_hessian.transpose(0, 2, 1, 3)
+        x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
+        e_values, modes = LA.eigh(x)
+
+        #unit conversion of freq from H/A**2 amu -> 1/s**2
+        factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)
+        freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10)
+        return freq, modes
+        
+
 
 if __name__ == "__main__":
-    #largermol = Molecule()
-    #largermol.initalize_molecule('largermol')
-    #frag = Fragmentation(largermol)
+    #carbonylavo = Molecule()
+    #carbonylavo.initalize_molecule('carbonylavo')
+    #frag = Fragmentation(carbonylavo)
     #frag.do_fragmentation(frag_type='graphical', value=2)
     #frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
     #frag.energy_gradient(frag.moleculexyz)
-  
+    np.set_printoptions(suppress=True, precision=5)
     carbonylavo = Molecule.Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
     frag = fragmentation.Fragmentation(carbonylavo)
-    frag.do_fragmentation(frag_type='distance', value=3)
+    frag.do_fragmentation(frag_type='distance', value=1.8)
     frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf)
-    #frag.energy_gradient(frag.moleculexyz)
-    
-    #print("Graphical unique derivs \n", frag.derivs)
-    #print("\n Distance cutoff derivs \n", frag1.derivs)
-    #print("Graphical energy:", frag.etot)
-    #print("Distance energy:", frag1.etot)
-    #print("Graphical gradient \n", frag.gradient)
-    #print("Distance gradient \n", frag1.gradient)
-
+    frag.energy_gradient(frag.moleculexyz)
+   
     import ray
     start_time = time.time()
     ray.init()
@@ -433,20 +476,29 @@ if __name__ == "__main__":
     out = ray.get(result_ids)
     etot = 0
     gtot = 0
+    htot = 0
     for o in out:
         etot += o[0]
         gtot += o[1]
+        htot += o[2]
     total_time = time.time() - start_time 
-    
+    ray.shutdown()
+    e, v = frag.mw_hessian(htot)
+    print("e", e)
+    print("modes", v)
+
     #start_fragtime = time.time()
+    #frag.write_xyz('carbonylavo')
     #frag.energy_gradient(frag.moleculexyz)
     #end_time = time.time() - start_fragtime
     print("Final converged energy = ", etot)
     print("Final gradient = ", '\n', gtot)
-    #print(" ray time: ", total_time, "\n energy_grad time: ", end_time)
+    #print("Final hessian = ", '\n', htot)
+    print("Hessian shape = ", htot.shape)
+    #print(htot[0][1])
+    #print(htot[1][0])
 
-    #frag.write_xyz('largermol')
 
-    #run qc_params only if you want some fragments with different params
+    ### run qc_params only if you want some fragments with different params
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
     

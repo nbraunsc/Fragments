@@ -1,8 +1,15 @@
 import numpy as np
 from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf
+from pyscf.prop.freq import rhf
+from pyscf.prop.polarizability import rhf
 from pyscf.grad.rhf import GradientsBasics
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
+
+import autograd.numpy as np_auto
+#from autograd import grad as grad_auto
+from autograd import hessian as hess_auto
+from autograd import jacobian
 
 class Pyscf():
     """ Pyscf quantum chemistry backend class
@@ -27,7 +34,6 @@ class Pyscf():
         mol.atom = input_xyz
         mol.basis = self.basis
         mol.build()
-        #m = int() 
         if self.theory == 'full':
             hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
             e, g = hf_scanner(mol)
@@ -38,11 +44,12 @@ class Pyscf():
             hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
             e, g = hf_scanner(mol)
             #if hess == True:
-            #    mf = mol.RHF().run()
-            #    h = mf.Hessian().kernel()
+            mf = mol.RHF().run()
+            h = mf.Hessian().kernel()
+            dipole = mf.dip_moment(mol)
             #if hess == False:
             #    h = 0
-            return e, g#, h
+            return e, g, h, dipole#, val#, w, modes
     
         if self.theory == 'MP2': #Perturbation second order calc
             mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
@@ -84,6 +91,8 @@ class Pyscf():
             mc_grad_scanner = mcscf.CASCI(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
             e, g = mc_grad_scanner(mol, spin=self.spin)
             return e, g
+    
+
 
 
 
