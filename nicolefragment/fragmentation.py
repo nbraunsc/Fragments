@@ -300,11 +300,12 @@ class Fragmentation():
         atomlabels = []
         for j in range(0, len(molecule)):
             atomlabels.append(molecule[j][0])
-        coords = molecule[:][1:]
+        coords = molecule[:, [1,2,3]]
+        print("coords thing", coords, coords.shape)
         self.moleculexyz = []
         for i in coords:
-            x = [i[1], i[2], i[3]]
-            y = np.array(x)
+            #x = [i[1], i[2], i[3]]
+            y = np.array(i)
             z = y.astype(float)
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
@@ -460,7 +461,7 @@ if __name__ == "__main__":
     frag = fragmentation.Fragmentation(carbonylavo)
     frag.do_fragmentation(frag_type='distance', value=1.8)
     frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf)
-    frag.energy_gradient(frag.moleculexyz)
+    #frag.energy_gradient(frag.moleculexyz)
    
     import ray
     start_time = time.time()

@@ -134,7 +134,7 @@ class Fragment():
             Array has size (# of atoms in full molecule + all link atoms, # of atoms in primiative)
         
         """
-        
+        self.jacobian_grad = 0
         array = np.zeros((self.molecule.natoms, len(self.prims)))
         linkarray = np.zeros((self.molecule.natoms, len(self.notes)))
         for i in range(0, len(self.prims)):
@@ -144,6 +144,8 @@ class Fragment():
             linkarray[self.notes[j][2]][j] = factor
             linkarray[self.notes[j][3]][j] = self.notes[j][1]
         self.jacobian_grad = np.concatenate((array, linkarray), axis=1)
+        jacob = self.jacobian_grad
+        return jacob
     
     def build_jacobian_Hess(self):
         """ Builds Jacobian matrix for hessian link atom projections.
@@ -188,39 +190,41 @@ class Fragment():
         self.hessian : ndarray (4D tensor)
             This is the hessian for the fragement*its coeff
         """
-        
+        self.energy = 0
+        self.grad = np.zeros((self.molecule.natoms, 3))
         inputxyz = self.build_xyz()
-        self.energy, self.grad, self.hess, dipole = self.qc_class.energy_gradient(inputxyz)
-        g = np.gradient(self.grad)
-        print("gradient shape", self.grad.shape)
-        print("gradient of gradient", g, np.array(g).shape)
+        energy, grad, self.hess, dipole = self.qc_class.energy_gradient(inputxyz)
+        #g = np.gradient(self.grad)
+        #print("gradient shape", self.grad.shape)
+        #print("gradient of gradient", g, np.array(g).shape)
         
 
-        def hessian(x_grad):
-            hessian = np.empty((x_grad.shape[0], x_grad.shape[0]))#, dtype=x.dtype)
-            for k, grad_k in enumerate(x_grad):
+        #def hessian(x_grad):
+        #    hessian = np.empty((x_grad.shape[0], x_grad.shape[0]))#, dtype=x.dtype)
+        #    for k, grad_k in enumerate(x_grad):
                 # iterate over dimensions
                 # apply gradient again to every component of the first derivative.
-                tmp_grad = np.gradient(grad_k)
-                for l, grad_kl in enumerate(tmp_grad):
-                    hessian[k, l, :, :] = grad_kl
-            return hessian
+        #        tmp_grad = np.gradient(grad_k)
+        #        for l, grad_kl in enumerate(tmp_grad):
+        #            hessian[k, l, :, :] = grad_kl
+        #    return hessian
 
         #hess_finite = hessian(self.grad.reshape(3*self.grad.shape[0], 1))  
         
-        #print("analytical hessian", self.hess, self.hess.shape)
-        #print("auto hessian", auto_hess, auto_hess.shape)
-        self.energy = self.coeff*self.energy
-        self.build_jacobian_Grad()
-        self.grad = self.coeff*self.jacobian_grad.dot(self.grad)
-       
+        print("Input xyz", inputxyz)
+        
+        self.energy = self.coeff*energy
+        jacob = self.build_jacobian_Grad()
+        print("jacobian shape", jacob.shape, len(self.notes)+len(self.prims)) 
+        print("gradient shape", jacob.shape, "x", grad.shape)
+        self.grad = self.coeff*jacob.dot(grad)
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
-        return g, self.grad, self.hess, hess_finite
-        #return self.energy, self.grad, self.hessian
+        #self.hessian = 0
+        return self.energy, self.grad, self.hessian
     
     def get_IR(self):
         inputxyz = self.build_xyz()

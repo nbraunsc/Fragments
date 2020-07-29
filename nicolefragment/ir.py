@@ -166,8 +166,6 @@ def normal_modes(labels, xyz):
         mass_array[atom] = value
         mass_xyz[atom] = xyz[atom]*(1/value)   #mass weighted coordinates
    
-    ###t_mass = mass_matrix.transpose(0, 2, 1, 3)
-    ###flat_mass = t_mass.reshape(t_mass.shape[0]*t_mass.shape[1], t_mass.shape[2]*t_mass.shape[3])
     reshape_mass_hess = hess.transpose(0, 2, 1, 3)
     x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
     e_values, e_vectors = LA.eigh(x)

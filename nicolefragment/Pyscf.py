@@ -54,11 +54,13 @@ class Pyscf():
         if self.theory == 'MP2': #Perturbation second order calc
             mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
             e, g = mp2_scanner(mol) 
+            h = 0
+            dipole = 0
             #if hess == True:
             #    pass
             #if hess == False:
             #    h = 0
-            return e, g#, h
+            return e, g, h, dipole#, val#, w, modes
     
         if self.theory == 'CISD':    #CI for singles and double excitations
             ci_scanner = ci.CISD(scf.RHF(mol)).nuc_grad_method().as_scanner()

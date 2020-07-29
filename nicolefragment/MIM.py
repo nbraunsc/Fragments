@@ -2,10 +2,29 @@ import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
 import ray
+import os
+from pyscf.geomopt.berny_solver import optimize
+from berny import Berny, geomlib
 
 np.set_printoptions(suppress=True, precision=5)
 
 def global_props(frag_obj):
+    """ This is a global func that is called within each MIM calculation.
+    This is also doing the ray parallezation for the energy, gradient, hessians.
+
+    Parameters 
+    ----------
+    frag_obj : Fragmentation object
+
+    Returns 
+    -------
+    etot : float
+        Global energy
+    gtot : ndarray
+        Global gradient
+    htot : ndarray
+        Global hessian
+    """
     ray.init()
     frags_id = ray.put(frag_obj)    #future for Fragmentation instance, putting in object store
     
@@ -26,7 +45,7 @@ def global_props(frag_obj):
     ray.shutdown()
     return etot, gtot, htot
 
-def do_MIM1(deg, frag_type, theory, basis, Molecule):
+def do_MIM1(deg, frag_type, theory, basis, Molecule, name, opt=False):
     """
     MIM1 is only one level of fragmentation and one level of theory.
    
@@ -56,8 +75,40 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule):
     frag.do_fragmentation(frag_type=str(frag_type), value=deg)
     frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
+
+    if opt == False:
+        etot, gtot, htot = global_props(frag)
     
-    etot, gtot, htot = global_props(frag)
+    else:
+        #start of geom_optimization
+        def opt_fnc(newcoords):
+            for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
+                x = list(newcoords[atom])
+                frag.molecule.atomtable[atom][1:] = x
+            
+            frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf)
+            etot, gtot, htot = global_props(frag)
+            return etot, gtot 
+        
+        frag.write_xyz(name)
+        os.path.abspath(os.curdir)
+        os.chdir('../inputs/')
+        optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
+        x = 0
+        etot_opt = 0
+        grad_opt = 0
+        for geom in optimizer:
+            x = x+1
+            print("\n############# opt cycle:", x, "##################\n")
+            solver = opt_fnc(geom.coords)
+            optimizer.send(solver)
+            etot_opt = solver[0]
+            grad_opt = solver[1]
+        relaxed = geom
+        print("\n", "##########################", '\n', "#       Converged!       #", '\n', "##########################") 
+        print('\n', "Energy = ", etot_opt)
+        print('\n', "Converged_Gradient:", "\n", grad_opt)
+    
     freq, modes = frag.mw_hessian(htot)
     print("Frequencies: ", freq, "cm-1")
     print("Normal Modes: ", modes)
@@ -67,16 +118,39 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule):
     print("Hessian shape = ", htot.shape)
     return etot, gtot, htot, freq, modes
 
-def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule):
+def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name, opt=False):
     """
     MIM2 is two levels of theory with two levels of fragmentation.
-    :frag_deg - smaller fragments
-    :infinite_deg - larger fragments (could be whole molecule)
-    :high_theory - higher level of theory
-    :low_theory - lower level of theory
-    :high and low basis follow same trend as theory
-    :Molecule - Molecule class object
-    :name - the name of the Molecule class object without being a class, used in geomopt
+    Parameters
+    ----------
+    frag_type : str
+        Type of fragmentation wanted. Either "distance" or "graphical"
+    frag_deg : float
+        Degree of fragmentation
+    high_theory : str
+        higher level of theory
+    high_basis : str
+        larger basis set
+    infinite_deg : float
+        larger degree of fragmentation resultig in larger fragments
+    low_theory : str
+        lower level of theory
+    low_basis : str
+        smaller basis set
+    Molecule : Molecule class instance
+    name : str 
+        String of molecule name
+    opt : boolean
+        False (default) for no geometry opt, True for geom_opt
+    
+    Returns
+    -------
+    MIM2_energy : float
+        Global MIM2 energy
+    MIM2_grad : ndarray
+        Global MIM2 gradient
+    MIM2_hess : ndarray
+        Global MIM2 hessian
     """
 
     """ MIM high theory, small fragments"""
@@ -84,36 +158,83 @@ def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theo
     frag1.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
     frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
-    etot1, gtot1, htot1 = global_props(frag1)
-    freq1, modes1 = frag1.mw_hessian(htot1)
+    #freq1, modes1 = frag1.mw_hessian(htot1)
     
     """ MIM low theory, small fragments"""
     frag2 = fragmentation.Fragmentation(Molecule)
     frag2.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
-    frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(low_basis), qc_backend=Pyscf.Pyscf)
+    frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
-    etot2, gtot2, htot2 = global_props(frag2)
-    freq2, modes2 = frag2.mw_hessian(htot2)
+    #freq2, modes2 = frag2.mw_hessian(htot2)
     
     """ MIM low theory, large fragments (inifinte system)"""
     frag3 = fragmentation.Fragmentation(Molecule)
     frag3.do_fragmentation(frag_type=str(frag_type), value=infinite_deg)
-    frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(low_basis), qc_backend=Pyscf.Pyscf)
+    frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
-    etot3, gtot3, htot3 = global_props(frag3)
-    freq3, modes3 = frag3.mw_hessian(htot3)
+    #freq3, modes3 = frag3.mw_hessian(htot3)
+    if opt == False:
+        etot1, gtot1, htot1 = global_props(frag1)
+        etot2, gtot2, htot2 = global_props(frag2)
+        etot3, gtot3, htot3 = global_props(frag3)
+        MIM2_energy = etot1 - etot2 + etot3
+        MIM2_grad = gtot1 - gtot2 + gtot3
     
-    MIM2_energy = etot1 - etot2 + etot3
-    MIM2_grad = gtot1 - gtot2 + gtot3
-    MIM2_hess = htot1 - htot2 + htot3
-    print("Frequency 1:", freq1)
-    print("Frequency 2:", freq2)
-    print("Frequency 3:", freq3)
-    return MIM2_energy, MIM2_grad, MIM2_hess
+    else:
+        #start of geom_optimization
+        def opt_fnc(newcoords):
+            for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
+                x = list(newcoords[atom])
+                frag1.molecule.atomtable[atom][1:] = x
+            frag2.molecule.atomtable = frag1.molecule.atomtable 
+            frag3.molecule.atomtable = frag1.molecule.atomtable 
+            
+            frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
+            frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
+            frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf)
+            
+            MIM2_energy = 0
+            MIM2_grad = np.zeros((frag1.molecule.natoms, 3))
+            
+            etot1, gtot1, htot1 = global_props(frag1)
+            etot2, gtot2, htot2 = global_props(frag2)
+            etot3, gtot3, htot3 = global_props(frag3)
+            MIM2_energy = etot1 - etot2 + etot3
+            MIM2_grad = gtot1 - gtot2 + gtot3
+            return MIM2_energy, MIM2_grad
+        
+        frag1.write_xyz(name)
+        os.path.abspath(os.curdir)
+        os.chdir('../inputs/')
+        optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + name + '.xyz'), debug=True)
+        x = 0
+        etot_opt = 0
+        grad_opt = 0
+        for geom in optimizer:
+            x = x+1
+            print("opt cycle:", x)
+            solver = opt_fnc(geom.coords)
+            optimizer.send(solver)
+            etot_opt = solver[0]
+            grad_opt = solver[1]
+        relaxed = geom
+        print("\n", "##########################", '\n', "#       Converged!       #", '\n', "##########################") 
+        print('\n', "Energy = ", etot_opt)
+        print('\n', "Converged_Gradient:", "\n", grad_opt)
+    
+    
+
+
+    #MIM2_hess = htot1 - htot2 + htot3
+    #print("Frequency 1:", freq1)
+    #print("Frequency 2:", freq2)
+    #print("Frequency 3:", freq3)
+    return MIM2_energy, MIM2_grad#, MIM2_hess
         
     
 def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule, name):
     """
+    NEED TO STILL IMPLEMENT MIM3 STUFF WITH THE IR STUFF
     MIM3 is three different levels of theory with three fragmentations.
     :frag_highdeg - smaller fragments
     :frag_meddeg - medium sized fragments
@@ -162,11 +283,11 @@ if __name__ == "__main__":
     carbonylavo = Molecule.Molecule()
     carbonylavo.initalize_molecule('carbonylavo')
         
-    """do_MIM1(deg, frag_type,  theory, basis, Molecule)"""
-    #do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', carbonylavo)        #uncomment to run MIM1
+    """do_MIM1(deg, frag_type,  theory, basis, Molecule, name, opt=False)"""
+    do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', carbonylavo, 'carbonylavo', opt=False)        #uncomment to run MIM1
     
-    """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    do_MIM2('distance', 1.8, 'RHF', '631g', 3, 'RHF', 'sto-3g', carbonylavo) #uncomment to run MIM2
+    """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, name, opt=False)"""
+    #do_MIM2('distance', 1.2, 'MP2', '631g', 2.0, 'RHF', '631g', carbonylavo, "carbonylavo", opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
     #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', aspirin, 'aspirin')     #uncomment to run MIM3
