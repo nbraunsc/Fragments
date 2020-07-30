@@ -184,6 +184,7 @@ def get_dipole(coords_new):
     dipole1 = mfx.dip_moment(mol2)
     return dipole1
 
+np.set_printoptions(suppress=True, precision=5)
 def test_apt(step):
     """ xyz atomic displacement function.
     """
@@ -196,47 +197,38 @@ def test_apt(step):
     #xyz[1] = [-0.7631844707, 0.000000, -0.4446133658]
     #xyz[2] = [0.7631844707, 0.000000, -0.4446133658]
     
-    modes, freq_cm, values, xyz, mass_array = normal_modes(labels, xyz_org)
+    modes, freq_cm, values, xyz = normal_modes(labels, xyz_org)
     apt = []
-    for atom in range(0, len(labels)):
-        storing_vec = np.zeros(3)
-        for comp in range(0, len(xyz[atom])):
+    for atom in range(0, len(labels)):  #atom interation
+        storing_vec = np.zeros((3,3))
+        for comp in range(0, len(xyz[atom])):   #xyz interation
             dip1 = get_dipole(xyz)
             value = xyz[atom][comp]+step
             xyz[atom][comp] = value
             dip2 = get_dipole(xyz)
             xyz[atom][comp] = xyz[atom][comp]-step
-            vec = (dip1[comp] - dip2[comp])/step
+            vec = (dip1 - dip2)/step
             storing_vec[comp] = vec
-        apt.append(np.array(storing_vec))
-    apt_array = np.array(apt)
-    print(apt_array.shape, apt_array, "after reshaping")
+        x = storing_vec.T
+        apt.append(x)
     intensity = []
-    for i in modes:
-        mode_i = i.reshape(3,3)
-        x = np.dot(mode_i.T, apt_array)
-        print("apt matric", x)
-        z = x.sum(axis=0)
-        print("sum of rows", z)
-        y = np.sum(np.square(z))
-        print("should be an intensity", y)
-        #y = LA.norm(x)*42.2561
-        value = (6.022*10**23)*np.pi/(3*(2.9979*10**10)**2) #aobut 701.6735
-        int_i = y*value   #e/u^1/2 -> km/mol
-        intensity.append(int_i)
-    print("intensity list", intensity)
-
-
+    
+    px = np.vstack(apt)
+    pq = np.dot(px.T, modes)
+    print("pq = ", pq.shape, pq)
+    pq_pq = np.dot(pq.T, pq)
+    print(pq_pq.shape)
+    intense = np.diagonal(pq_pq)
+    print("intensities in other units", intense)
+    intense_kmmol = intense*42.2561*0.529177
+    print("intensities in km/mol", intense_kmmol)
     webmo_int = [77.298, 19.019, 51.071]
-    diff_int = np.array(intensity[6:]) - webmo_int
-    factor_int = np.array(intensity[6:])/webmo_int
+    print('Webmo intensites', webmo_int)
+    diff_int = np.array(intense_kmmol[6:]) - webmo_int
+    factor_int = webmo_int/np.array(intense_kmmol[6:])
     print("apt int factors", factor_int)
     print("intensity diff", diff_int)
-    #factor = 701.6735
-    #factor_tensor = np.zeros((9,9))
-    #np.fill_diagonal(factor_tensor, factor)
-    #absorb = np.dot(factor_tensor, pqpq)
-    #print(np.diagonal(absorb))
+    
 
 def testing(step):
     """ this one displaces the coords along nomral mode, 
@@ -322,5 +314,5 @@ if __name__ == "__main__":
     #get_IR()
     #normal_modes()
     #num_diff(0.01)
-    testing(0.0001)
+    #testing(0.0001)
     test_apt(0.0001)

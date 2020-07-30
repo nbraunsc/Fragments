@@ -221,6 +221,7 @@ class Fragment():
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
+        print("hessian jacobian", j_reshape.shape)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
         #self.hessian = 0
