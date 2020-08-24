@@ -6,11 +6,6 @@ from pyscf.grad.rhf import GradientsBasics
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
 
-import autograd.numpy as np_auto
-#from autograd import grad as grad_auto
-from autograd import hessian as hess_auto
-from autograd import jacobian
-
 class Pyscf():
     """ Pyscf quantum chemistry backend class
     
@@ -43,56 +38,49 @@ class Pyscf():
         if self.theory == 'RHF': #Restricted HF calc
             hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
             e, g = hf_scanner(mol)
-            #if hess == True:
             mf = mol.RHF().run()
             h = mf.Hessian().kernel()
-            dipole = mf.dip_moment(mol)
-            #if hess == False:
-            #    h = 0
-            return e, g, h, dipole#, val#, w, modes
+            return e, g, h
     
         if self.theory == 'MP2': #Perturbation second order calc
             mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
             e, g = mp2_scanner(mol) 
             h = 0
-            dipole = 0
-            #if hess == True:
-            #    pass
-            #if hess == False:
-            #    h = 0
-            return e, g, h, dipole#, val#, w, modes
+            return e, g, h
     
         if self.theory == 'CISD':    #CI for singles and double excitations
             ci_scanner = ci.CISD(scf.RHF(mol)).nuc_grad_method().as_scanner()
             e, g = ci_scanner(mol)
-            #if hess == True:
-            #    mf = ci.CISD(scf.RHF(mol)).run()
-            #    h = mf.Hessian().kernel()
-            #else:
-            #    h = 0
-            return e, g#, h
+            h = 0
+            return e, g, h
     
         if self.theory == 'CCSD':    #Couple Cluster for singles and doubles
             cc_scanner = cc.CCSD(scf.RHF(mol)).nuc_grad_method().as_scanner()
             e, g = cc_scanner(mol)
-            #if hess == True:
-            #    mf = cc.CCSD(scf.RHF(mol)).run()
-            #    h = mf.Hessian().kernel()
-            #else:
-            #    h = 0
-            return e, g#, h
+            h = 0
+            return e, g, h
 
         if self.theory == 'CASSCF':
             
             mc_grad_scanner = mcscf.CASSCF(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
             e, g = mc_grad_scanner(mol, spin=self.spin)
-            
-            return e, g
+            h = 0
+            return e, g, h
 
         if self.theory == 'CASCI':
             mc_grad_scanner = mcscf.CASCI(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
             e, g = mc_grad_scanner(mol, spin=self.spin)
-            return e, g
+            h = 0
+            return e, g, h
+    
+    def get_dipole(self, coords_new):
+        mol2 = gto.Mole()
+        mol2.atom = coords_new
+        mol2.basis = self.basis
+        mol2.build()
+        mfx = scf.RHF(mol2).run()
+        dipole1 = mfx.dip_moment(mol2)
+        return dipole1
     
 
 

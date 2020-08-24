@@ -228,6 +228,7 @@ def test_apt(step):
     factor_int = webmo_int/np.array(intense_kmmol[6:])
     print("apt int factors", factor_int)
     print("intensity diff", diff_int)
+    print("frequenies:", freq_cm)
     
 
 def testing(step):
