@@ -25,8 +25,8 @@ def global_props(frag_obj, step=0.001):
     htot : ndarray
         Global hessian
     """
-    ray.init()
-    #ray.init(address='auto')
+    #ray.init()
+    ray.init(address='auto')
     frags_id = ray.put(frag_obj)    #future for Fragmentation instance, putting in object store
     
     @ray.remote

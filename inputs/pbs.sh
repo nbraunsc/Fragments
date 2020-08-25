@@ -1,5 +1,5 @@
 #PBS -l walltime=00:1:00:00
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=2:ppn=1
 #PBS -l mem=10GB
 #PBS -q nmayhall_lab
 #PBS -A qcvt_doe
@@ -23,19 +23,19 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=frag_practice
+FILE=mim
 
 # every so often, copy the output file back here!!
-#touch ./$FILE.out
-#while true
-#do
-#   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
-#   sleep 60
-#done&
+touch ./$FILE.out
+while true
+do
+   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
+   sleep 60
+done&
 
 # run python job
 
 python $FILE.py  >> $FILE.out
 # copy data back
-#cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
 exit;

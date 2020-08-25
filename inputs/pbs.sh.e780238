@@ -1,0 +1,19 @@
+/opt/torque/torque/spool/mom_priv/jobs/780238.master.cluster.SC: line 17: =: command not found
+ERROR: Exception:
+Traceback (most recent call last):
+  File "/home/nbraunsc/.conda/envs/pyconda/lib/python3.7/site-packages/pip/_internal/cli/base_command.py", line 186, in _main
+    status = self.run(options, args)
+  File "/home/nbraunsc/.conda/envs/pyconda/lib/python3.7/site-packages/pip/_internal/commands/install.py", line 404, in run
+    use_user_site=options.use_user_site,
+  File "/home/nbraunsc/.conda/envs/pyconda/lib/python3.7/site-packages/pip/_internal/req/__init__.py", line 64, in install_given_reqs
+    auto_confirm=True
+  File "/home/nbraunsc/.conda/envs/pyconda/lib/python3.7/site-packages/pip/_internal/req/req_install.py", line 686, in uninstall
+    uninstalled_pathset = UninstallPathSet.from_dist(dist)
+  File "/home/nbraunsc/.conda/envs/pyconda/lib/python3.7/site-packages/pip/_internal/req/req_uninstall.py", line 544, in from_dist
+    '(at %s)' % (link_pointer, dist.project_name, dist.location)
+AssertionError: Egg-link /home/nbraunsc/machine_learning/Fragments does not match installed location of nicolefragment (at /home/nbraunsc/Projects/Fragments)
+Traceback (most recent call last):
+  File "mim.py", line 2, in <module>
+    from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
+ImportError: cannot import name 'Pyscf' from 'nicolefragment' (/home/nbraunsc/machine_learning/Fragments/nicolefragment/__init__.py)
+cp: './mim.out' and '/home/nbraunsc/Projects/Fragments/inputs/mim.out' are the same file
