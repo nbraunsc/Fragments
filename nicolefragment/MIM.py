@@ -8,7 +8,7 @@ from berny import Berny, geomlib
 
 np.set_printoptions(suppress=True, precision=5)
 
-def global_props(frag_obj, step=0.001):
+def global_props(frag_obj, nodes, step=0.001):
     """ This is a global func that is called within each MIM calculation.
     This is also doing the ray parallezation for the energy, gradient, hessians.
 
@@ -26,7 +26,8 @@ def global_props(frag_obj, step=0.001):
         Global hessian
     """
     #ray.init()
-    ray.init(address='auto')
+    ray.init(address='nrlogin1:10.31.1.1')
+    nodes = 0
     frags_id = ray.put(frag_obj)    #future for Fragmentation instance, putting in object store
     
     @ray.remote
@@ -48,7 +49,7 @@ def global_props(frag_obj, step=0.001):
     ray.shutdown()
     return etot, gtot, htot, apt
 
-def do_MIM1(deg, frag_type, theory, basis, Molecule,  opt=False, step=0.001):
+def do_MIM1(deg, frag_type, theory, basis, Molecule, nodes,  opt=False, step=0.001):
     """
     MIM1 is only one level of fragmentation and one level of theory.
    
@@ -107,7 +108,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule,  opt=False, step=0.001):
         print('\n', "Energy = ", etot_opt)
         print('\n', "Converged_Gradient:", "\n", grad_opt)
     
-    etot, gtot, htot, apt = global_props(frag, step=0.001)
+    etot, gtot, htot, apt = global_props(frag, nodes, step=0.001)
     freq, modes = frag.mw_hessian(htot)
     pq = np.dot(apt.T, modes)   #shape 3x3N
     print("pq = ", pq.shape, pq)    
