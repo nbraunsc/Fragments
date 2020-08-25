@@ -47,11 +47,14 @@ for file_name in os.listdir(directory):
 for i in range(0, len(filenames)):
     print(filenames[i], "", "Best k value:", "", best_list[i])
 
+
+
+
 #x = np.argmin(ratio_list)      #smaller time to error = best fragmentation level
-f = open("molecule_class", "a")
-f.write("Drugs\n")
-f.write("Best k value =")
-f.write(x)
-f.close()
+#f = open("molecule_class", "a")
+#f.write("Drugs\n")
+#f.write("Best k value =")
+#f.write(x)
+#f.close()
 
 

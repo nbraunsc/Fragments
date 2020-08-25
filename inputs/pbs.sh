@@ -20,7 +20,7 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=frag_practice
+FILE=diamond
 
 # every so often, copy the output file back here!!
 #touch ./$FILE.out

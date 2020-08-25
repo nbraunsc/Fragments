@@ -1,4 +1,4 @@
-#PBS -l walltime=00:1:00:00
+#PBS -l walltime=00:10:00:00
 #PBS -l nodes=1:ppn=24
 #PBS -l mem=20GB
 #PBS -n
@@ -20,7 +20,7 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=frag_practice
+FILE=drugs_ml
 
 # every so often, copy the output file back here!!
 #touch ./$FILE.out
