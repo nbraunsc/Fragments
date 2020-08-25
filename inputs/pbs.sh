@@ -5,6 +5,9 @@
 #PBS -A qcvt_doe
 #PBS -W group_list=nmayhall_lab
 
+#this is the environment varible for name of nodes
+#$PBS_NODEFILE
+
 module purge
 module load gcc/5.2.0
 module load Anaconda/5.2.0

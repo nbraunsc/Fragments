@@ -124,7 +124,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule,  opt=False, step=0.001):
     #print("Final hessian = ", '\n', htot)
     print("Hessian shape = ", htot.shape)
     for i in range(0, len(freq)):
-        print("Freq w/corr:", freq[i], "int :", intense_kmmol[i])
+        print("Freq:", freq[i], "int :", intense_kmmol[i])
     return etot, gtot, htot, freq, modes
 
 def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule,  opt=False):
@@ -245,7 +245,7 @@ def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theo
     print("Final gradient = ", '\n', gtot)
     print("Hessian shape = ", htot.shape)
     for i in range(0, len(freq)):
-        print("Freq w/corr:", freq[i], "int :", intense_kmmol[i])
+        print("Freq:", freq[i], "int :", intense_kmmol[i])
     return etot, gtot, htot, apt, freq, intense_kmmol
         
     
