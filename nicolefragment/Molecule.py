@@ -3,9 +3,9 @@ import numpy as np
 import sys
 from sys import argv
 import xml.etree.ElementTree as ET
-import pandas as pd
-from pandas.io.json import json_normalize
-import json
+#import pandas as pd
+#from pandas.io.json import json_normalize
+#import json
 
 import nicolefragment
 from nicolefragment import cov_rad
@@ -109,10 +109,10 @@ class Molecule():
         self.build_prims()
         
         #pandas testing
-        path = "../inputs/" + 'aspirin.json'
-        dataframe = pd.read_json(path, orient='index')
+        #path = "../inputs/" + 'aspirin.json'
+        #dataframe = pd.read_json(path, orient='index')
         #print(dataframe)
-        arr = dataframe.to_numpy()
+        #arr = dataframe.to_numpy()
         #df_cols = ['atomArray', 'bondArray']
     
     def build_prims(self):

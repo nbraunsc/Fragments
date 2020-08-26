@@ -1,6 +1,6 @@
 #PBS -l walltime=00:1:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -l mem=10GB
+#PBS -l nodes=2:ppn=4
+#PBS -l mem=20GB
 #PBS -q nmayhall_lab
 #PBS -A qcvt_doe
 #PBS -W group_list=nmayhall_lab
@@ -23,19 +23,36 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=frag_practice
+#Display the contents of PBS_NODEFILE
+echo ""
+echo "Contents of PBS_NODEFILE:"
+echo ""
+cat $PBS_NODEFILE
+
+#Display unique elements in PBS_NODEFILE
+echo ""
+echo "Unique node names:"
+echo ""
+uniq $PBS_NODEFILE
+
+mynodes = `cat $PBS_NODEFILE | uniq`
+echo "my own nodes"
+echo $mynodes
+echo ""
+
+FILE=mim
 
 # every so often, copy the output file back here!!
-#touch ./$FILE.out
-#while true
-#do
-#   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
-#   sleep 60
-#done&
+touch ./$FILE.out
+while true
+do
+   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
+   sleep 60
+done&
 
 # run python job
 
-python $FILE.py  >> $FILE.out
+python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
 # copy data back
-#cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
 exit;
