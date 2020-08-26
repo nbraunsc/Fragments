@@ -5,15 +5,12 @@
 #PBS -A qcvt_doe
 #PBS -W group_list=nmayhall_lab
 
-#this is the environment varible for name of nodes
-#$PBS_NODEFILE
-
 module purge
 module load gcc/5.2.0
 module load Anaconda/5.2.0
 
 
-#need num of threads for python jobs, keep one until parallizing
+#need num of threads for python jobs, keep one until parallizing on single node
 $MKL_NUM_THREADS = 1
 
 cd $PBS_O_WORKDIR
@@ -35,11 +32,6 @@ echo "Unique node names:"
 echo ""
 uniq $PBS_NODEFILE
 
-mynodes = `cat $PBS_NODEFILE | uniq`
-echo "my own nodes"
-echo $mynodes
-echo ""
-
 FILE=mim
 
 # every so often, copy the output file back here!!
@@ -51,7 +43,6 @@ do
 done&
 
 # run python job
-
 python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
 # copy data back
 cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
