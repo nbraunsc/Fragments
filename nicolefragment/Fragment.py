@@ -221,47 +221,24 @@ class Fragment():
         hess = hess_py
 
         #If not analytical hess, not do numerical below
-        #if type(hess_py) is int:
-        #    hess = np.zeros(((len(self.prims)+len(self.notes))*3, (len(self.prims)+len(self.notes))*3))
-        #    for atom in range(0, len(inputxyz)):
-        #        for xyz in range(0, 3):
-        #            inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
-        #            grad1 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-        #            inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step
-        #            grad2 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-        #            inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
-        #            vec = (grad1 - grad2)/(4*step)
-        #            hess[atom] = vec
-        #            hess[:,atom] = vec
+        if type(hess_py) is int:
+            hess = np.zeros(((len(inputxyz))*3, (len(inputxyz))*3))
+            i = -1
+            for atom in range(0, len(inputxyz)):
+                for xyz in range(0, 3):
+                    i = i+1
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
+                    grad1 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step
+                    grad2 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
+                    vec = (grad1 - grad2)/(4*step)
+                    hess[i] = vec
+                    hess[:,i] = vec
        
-        #    hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
-        #    hess = hess.transpose(0, 2, 1, 3)
+            hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
+            hess = hess.transpose(0, 2, 1, 3)
         
-        hess_num = np.zeros(((len(inputxyz))*3, (len(inputxyz))*3))
-        i=-1
-        for atom in range(0, len(inputxyz)):
-            for xyz in range(0, 3):
-                i = i+1
-                inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
-                grad1 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step
-                grad2 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
-                vec = (grad1 - grad2)/(4*step)
-                hess_num[i] = vec
-                hess_num[:,i] = vec
-       
-        print("pyscf hessian")
-        #x = hess.transpose(0, 2, 1, 3)
-        #y = x.reshape(x.shape[0]*x.shape[1], x.shape[2]*x.shape[3])
-        print(hess)
-        hess_num = hess_num.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
-        hess_num = hess_num.transpose(0, 2, 1, 3)
-        print("numerical hessian")
-        print(hess_num)
-        print("difference")
-        print(hess-hess_num)
-        exit()
         self.energy = self.coeff*energy
         jacob = self.build_jacobian_Grad()
         self.grad = self.coeff*jacob.dot(grad)
@@ -276,8 +253,6 @@ class Fragment():
     
     def build_apt(self):
         #build xyz with link atoms in ndarray format, not string type like function
-        #inputxyz = self.build_xyz()
-        #self.jacobian_hess = self.build_jacobian_Hess()
         x = np.zeros((len(self.prims)+len(self.notes), 3))
         labels = []
         for i in range(0, len(self.prims)):

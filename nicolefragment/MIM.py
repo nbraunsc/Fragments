@@ -8,7 +8,7 @@ from berny import Berny, geomlib
 
 np.set_printoptions(suppress=True, precision=5)
 
-def global_props(frag_obj, nodes, step=0.001):
+def global_props(frag_obj, step=0.001):
     """ This is a global func that is called within each MIM calculation.
     This is also doing the ray parallezation for the energy, gradient, hessians.
 
@@ -25,9 +25,8 @@ def global_props(frag_obj, nodes, step=0.001):
     htot : ndarray
         Global hessian
     """
-    #ray.init()
-    ray.init(address='nrlogin1:10.31.1.1')
-    nodes = 0
+    ray.init()
+    #ray.init(address='nrlogin1:10.31.1.1')
     frags_id = ray.put(frag_obj)    #future for Fragmentation instance, putting in object store
     
     @ray.remote
@@ -49,7 +48,7 @@ def global_props(frag_obj, nodes, step=0.001):
     ray.shutdown()
     return etot, gtot, htot, apt
 
-def do_MIM1(deg, frag_type, theory, basis, Molecule, nodes,  opt=False, step=0.001):
+def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step=0.001):
     """
     MIM1 is only one level of fragmentation and one level of theory.
    
@@ -108,7 +107,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, nodes,  opt=False, step=0.0
         print('\n', "Energy = ", etot_opt)
         print('\n', "Converged_Gradient:", "\n", grad_opt)
     
-    etot, gtot, htot, apt = global_props(frag, nodes, step=0.001)
+    etot, gtot, htot, apt = global_props(frag, step=0.001)
     freq, modes = frag.mw_hessian(htot)
     pq = np.dot(apt.T, modes)   #shape 3x3N
     print("pq = ", pq.shape, pq)    
@@ -303,7 +302,7 @@ if __name__ == "__main__":
     water.initalize_molecule('water')
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    do_MIM1(3, 'distance', 'RHF', 'sto-3g', water, opt=False, step=0.001)        #uncomment to run MIM1
+    do_MIM1(3, 'distance', 'MP2', 'sto-3g', water, opt=False, step=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
     #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', water, opt=False) #uncomment to run MIM2
