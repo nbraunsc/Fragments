@@ -195,9 +195,9 @@ def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theo
             MIM2_energy = 0
             MIM2_grad = np.zeros((frag1.molecule.natoms, 3))
             
-            etot1, gtot1, htot1, apt1 = global_props(frag1)
-            etot2, gtot2, htot2, apt2 = global_props(frag2)
-            etot3, gtot3, htot3, apt3 = global_props(frag3)
+            etot1, gtot1, htot1, apt1 = global_props(frag1, step=0.001)
+            etot2, gtot2, htot2, apt2 = global_props(frag2, step=0.001)
+            etot3, gtot3, htot3, apt3 = global_props(frag3, step=0.001)
             MIM2_energy = etot1 - etot2 + etot3
             MIM2_grad = gtot1 - gtot2 + gtot3
             return MIM2_energy, MIM2_grad
@@ -298,14 +298,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule.Molecule()
-    largermol.initalize_molecule('largermol')
+    water = Molecule.Molecule()
+    water.initalize_molecule('water')
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step=0.001)        #uncomment to run MIM1
+    do_MIM1(3, 'distance', 'RHF', 'sto-3g', water, opt=False, step=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    #do_MIM2('distance', 1.0, 'MP2', 'sto-3g', 1.8, 'RHF', 'sto-3g', largermol, opt=False) #uncomment to run MIM2
+    #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', water, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
+    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', water, 'ethanol')     #uncomment to run MIM3
