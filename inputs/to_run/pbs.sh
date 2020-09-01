@@ -15,7 +15,7 @@ $MKL_NUM_THREADS = 1
 
 cd $PBS_O_WORKDIR
 source activate pyconda
-cd ../
+cd ../../
 python -m pip install -e .
 
 cd $PBS_O_WORKDIR
@@ -32,18 +32,22 @@ echo "Unique node names:"
 echo ""
 uniq $PBS_NODEFILE
 
-FILE=mim
+echo "file location test"
+echo ""
+
+FILE=first
 
 # every so often, copy the output file back here!!
-touch ./$FILE.out
-while true
-do
-   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
-   sleep 60
-done&
+#touch ./$FILE.out
+#while true
+#do
+#   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
+#   sleep 60
+#done&
 
 # run python job
-python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
+python $FILE.py >> $FILE.out
+#python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
 # copy data back
-cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+#cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
 exit;

@@ -183,7 +183,7 @@ class Fragmentation():
             if i not in coeff_position:
                 self.coefflist.append(oldcoeff[i])
     
-    def initalize_Frag_objects(self, theory=None, basis=None, qc_backend=None, spin=None, tol=None, active_space=None, nelec=None, nelec_alpha=None, nelec_beta=None, max_memory=None, step=0.001):
+    def initalize_Frag_objects(self, theory=None, basis=None, qc_backend=None, spin=None, tol=None, active_space=None, nelec=None, nelec_alpha=None, nelec_beta=None, max_memory=None, step_size=0.001):
         """ Initalizes the Fragment() objects
         
         Fragment is another child class of Fragmentaion() where link atoms get added, 
@@ -207,7 +207,7 @@ class Fragmentation():
             coeffi = self.coefflist[fi]
             attachedlist = self.attached[fi]
             qc_fi = qc_backend(theory=theory, basis=basis, spin=spin, tol=tol, active_space=active_space, nelec_alpha=nelec_alpha, nelec_beta=nelec_beta, max_memory=max_memory)
-            self.frags.append(Fragment.Fragment(qc_fi, self.molecule, self.atomlist[fi], attachedlist, coeff=coeffi, step=step))
+            self.frags.append(Fragment.Fragment(qc_fi, self.molecule, self.atomlist[fi], attachedlist, coeff=coeffi, step_size=step_size))
     
     def qc_params(self, frag_index=[], qc_backend=None, theory=None, basis=None, spin=0, tol=0, active_space=0, nelec=0, nelec_alpha=0, nelec_beta=0, max_memory=0):
         """ Funciton that is optional
