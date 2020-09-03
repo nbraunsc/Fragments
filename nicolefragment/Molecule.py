@@ -48,7 +48,7 @@ class Molecule():
         
     def initalize_molecule(self, file_name):
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
-        x = "../../inputs/" + file_name + ".cml"
+        x = "../inputs/" + file_name + ".cml"
         #current_dir = os.getcwd()
         #x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
         #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
