@@ -100,8 +100,9 @@ venv.bak/
 #other files
 *.dat
 *.xyz
-*.e
-*.o
+*.e*
+*.o*
 *.out
+*.npy
 *.DS_Store
 
