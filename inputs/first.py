@@ -4,10 +4,10 @@ import numpy as np
 import os
 
 #starting fragmentation code
-largermol = Molecule.Molecule()
-largermol.initalize_molecule('largermol')
-frag = fragmentation.Fragmentation(largermol)
-frag.do_fragmentation(frag_type='distance', value=1.8)
+adamantane = Molecule.Molecule()
+adamantane.initalize_molecule('adamantane')
+frag = fragmentation.Fragmentation(adamantane)
+frag.do_fragmentation(frag_type='distance', value=1.3)
 frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
 
 #changing into the to_run directory

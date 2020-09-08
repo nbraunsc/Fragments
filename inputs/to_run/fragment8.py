@@ -12,7 +12,7 @@ from pyscf.grad.rhf import GradientsBasics
 
 np.set_printoptions(suppress=True, precision=5)
 mol = gto.Mole()
-mol.atom = [['C', [-0.545, 1.5247, 0.7236]], ['H', [-0.1677, 1.9815, 1.6469]], ['H', [-1.3238, 2.1915, 0.3335]], ['H', [0.26848533333333335, 1.4308253333333334, -0.007495333333333409]], ['H', [-0.97193, 0.5371613333333334, 0.941452]]]
+mol.atom = [['C', [1.1015, -0.917, 0.5761]], ['H', [1.8827, -1.5674, 0.9847]], ['H', [0.7046013333333333, -1.3504926666666668, -0.35101933333333346]], ['H', [1.5193706666666666, 0.0748186666666667, 0.3600313333333333]], ['H', [0.2859459999999999, -0.8137806666666667, 1.303628666666667]]]
 mol.basis = 'sto-3g'
 mol.build()
 hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
@@ -22,6 +22,6 @@ h = mf.Hessian().kernel()
 print('energy no coeff =', e)
 print('gradient =', g)
 print('hessian =', h)
-np.save(os.path.join('1', 'fragment1.pye.npy'), e)
-np.save(os.path.join('1', 'fragment1.pyg.npy'), g)
-np.save(os.path.join('1', 'fragment1.pyh.npy'), h)
+np.save(os.path.join('8', 'fragment8.pye.npy'), e)
+np.save(os.path.join('8', 'fragment8.pyg.npy'), g)
+np.save(os.path.join('8', 'fragment8.pyh.npy'), h)

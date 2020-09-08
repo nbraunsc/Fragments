@@ -13,9 +13,6 @@ source activate pyconda
 cd ../../
 python -m pip install -e . 
 cd $PBS_O_WORKDIR
-
-
-FILE=fragment5
-
+FILE=fragment9
 python $FILE.py >> $FILE.out
 exit;
