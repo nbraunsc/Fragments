@@ -38,8 +38,17 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
     f.writelines(imports)
     build = [
     "mol = gto.Mole()\n"
-    "mol.atom = ", str(inputxyz), "\n", "mol.basis = 'sto-3g'\n", "mol.build()\n", "hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()\n", "e, g = hf_scanner(mol)\n", "mf = mol.RHF().run()\n", "h = mf.Hessian().kernel()\n", "print('energy no coeff =', e)\n", "print('gradient =', g)\n", "print('hessian =', h)\n", "np.save(os.path.join('", str(x),"', '", name, "e.npy'), e)\n", "np.save(os.path.join('", str(x),"', '", name, "g.npy'), g)\n", "np.save(os.path.join('", str(x), "', '", name, "h.npy'), h)\n"]
+    "mol.atom = ", str(inputxyz), "\n", "mol.basis = 'sto-3g'\n", "mol.build()\n"]
     f.writelines(build) 
+    if i.qc_class.theory == 'RHF': 
+        scf_info = ["hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()\n", "e, g = hf_scanner(mol)\n", "mf = mol.RHF().run()\n", "h = mf.Hessian().kernel()\n", "print('energy no coeff =', e)\n", "print('gradient =', g)\n", "print('hessian =', h)\n", "np.save(os.path.join('", str(x),"', '", name, "e.npy'), e)\n", "np.save(os.path.join('", str(x),"', '", name, "g.npy'), g)\n", "np.save(os.path.join('", str(x), "', '", name, "h.npy'), h)\n"]
+        f.writelines(scf_info) 
+    if i.qc_class.theory == 'MP2':
+        scf_info = 
+        ["""mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()\n
+e, g = mp2_scanner(mol)\n 
+h = 0\n"""]
+        f.writelines(scf_info)
     f.close()
 
 files = os.listdir()
