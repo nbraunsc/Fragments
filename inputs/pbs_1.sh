@@ -11,7 +11,7 @@ module load Anaconda/5.2.0
 
 
 #need num of threads for python jobs, keep one until parallizing on single node
-$MKL_NUM_THREADS = 1
+MKL_NUM_THREADS=1
 
 cd $PBS_O_WORKDIR
 source activate pyconda
@@ -32,18 +32,29 @@ echo "Unique node names:"
 echo ""
 uniq $PBS_NODEFILE
 
-FILE=mim
-
-# every so often, copy the output file back here!!
-touch ./$FILE.out
-while true
-do
-   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
-   sleep 60
-done&
+FILE=first
 
 # run python job
-python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
-# copy data back
-cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+python $FILE.py
+
+
 exit;
+
+
+
+
+
+
+
+# every so often, copy the output file back here!!
+#touch ./$FILE.out
+#while true
+#do
+#   cp ./$FILE.out $PBS_O_WORKDIR/$FILE.running.out
+#   sleep 60
+#done&
+
+#python $FILE.py `cat $PBS_NODEFILE | uniq` >> $FILE.out
+# copy data back
+#cp ./$FILE.out $PBS_O_WORKDIR/$FILE.out
+

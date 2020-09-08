@@ -24,13 +24,13 @@ class Fragment():
     
     """
     
-    def __init__(self, qc_class, molecule, prims, attached=[], coeff=1, step=0.001):
+    def __init__(self, qc_class, molecule, prims, attached=[], coeff=1, step_size=0.001):
         self.prims = prims 
         self.molecule = molecule 
         self.coeff = coeff 
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
         self.apt = []
-        self.step = step
+        self.step = step_size
         self.energy = 1
         self.grad = []
         self.hessian = []
@@ -199,7 +199,7 @@ class Fragment():
         self.jacobian_hess = full_array
         return self.jacobian_hess
 
-    def qc_backend(self, step=0.001):
+    def qc_backend(self, step_size=0.001):
         """ Runs the quantum chemistry backend.
         
         Returns
@@ -227,12 +227,12 @@ class Fragment():
             for atom in range(0, len(inputxyz)):
                 for xyz in range(0, 3):
                     i = i+1
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step_size
                     grad1 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step_size
                     grad2 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step
-                    vec = (grad1 - grad2)/(4*step)
+                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step_size
+                    vec = (grad1 - grad2)/(4*step_size)
                     hess[i] = vec
                     hess[:,i] = vec
        
@@ -285,11 +285,11 @@ class Fragment():
             value = 1/(np.sqrt(y.atomic_weight))
             for comp in range(0,3):   #xyz interation
                 dip1 = self.qc_class.get_dipole(coords_xyz)
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]+self.step
+                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]+step_size
                 dip2 = self.qc_class.get_dipole(coords_xyz)
-                vec = (dip1 - dip2)/self.step
+                vec = (dip1 - dip2)/step_size
                 storing_vec[comp] = vec
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-self.step
+                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-step_size
             a = storing_vec.T*value
             apt.append(a)
         px = np.vstack(apt)
