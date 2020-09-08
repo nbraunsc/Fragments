@@ -32,7 +32,7 @@ echo "Unique node names:"
 echo ""
 uniq $PBS_NODEFILE
 
-FILE=first
+FILE=mim1
 
 # run python job
 python $FILE.py
