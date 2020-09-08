@@ -1,5 +1,4 @@
 
-hi
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
