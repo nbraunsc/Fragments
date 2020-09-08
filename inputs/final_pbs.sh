@@ -20,8 +20,8 @@ python -m pip install -e .
 
 cd $PBS_O_WORKDIR
 
-FILE=last
+FILE=global
 
 # run python job
-python $FILE.py >> $FILE.out
+python $FILE.py >> $FILE.log
 exit;

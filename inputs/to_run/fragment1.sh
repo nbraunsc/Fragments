@@ -14,5 +14,5 @@ cd ../../
 python -m pip install -e . 
 cd $PBS_O_WORKDIR
 FILE=fragment1
-python $FILE.py >> $FILE.out
+python $FILE.py >> $FILE.log
 exit;

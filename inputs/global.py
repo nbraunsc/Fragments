@@ -8,15 +8,12 @@ os.chdir('to_run/')
 
 numpy_list = [x[0] for x in os.walk('.')]
 numpy_list.pop(0)
-print("full list with os.walk", numpy_list)
 
 energy = 0
 grad = 0
 hess = 0
 for i in numpy_list:
-    print(i)
     number = i.replace('./', '')
-    print("pulling out just number", number, type(number))
     os.path.abspath(os.curdir)
     os.chdir(number)
     coeff = np.load('coeff' + number + '.npy')

@@ -9,7 +9,7 @@ adamantane = Molecule.Molecule()
 adamantane.initalize_molecule('adamantane')
 frag = fragmentation.Fragmentation(adamantane)
 frag.do_fragmentation(frag_type='distance', value=1.3)
-frag.initalize_Frag_objects(theory='MP2', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
+frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
 
 #changing into the to_run directory
 os.path.abspath(os.curdir)
@@ -71,6 +71,6 @@ for i in files:
         x = i.replace('.py', '')
         filename = x + ".sh"
         file_name = open(filename, "w")
-        top = ["#PBS -l nodes=2:ppn=4\n", "#PBS -l mem=20GB\n", "#PBS -q nmayhall_lab\n", "#PBS -A qcvt_doe\n", "#PBS -W group_list=nmayhall_lab\n", " \n", "module purge\n", "module load gcc/5.2.0\n", "module load Anaconda/5.2.0\n", "$MKL_NUM_THREADS = 1\n", "cd $PBS_O_WORKDIR\n", "source activate pyconda\n", "cd ../../\n", "python -m pip install -e . \n", "cd $PBS_O_WORKDIR\n", "FILE=", x, "\n", "python $FILE.py >> $FILE.out\n", "exit;\n"]
+        top = ["#PBS -l nodes=2:ppn=4\n", "#PBS -l mem=20GB\n", "#PBS -q nmayhall_lab\n", "#PBS -A qcvt_doe\n", "#PBS -W group_list=nmayhall_lab\n", " \n", "module purge\n", "module load gcc/5.2.0\n", "module load Anaconda/5.2.0\n", "$MKL_NUM_THREADS = 1\n", "cd $PBS_O_WORKDIR\n", "source activate pyconda\n", "cd ../../\n", "python -m pip install -e . \n", "cd $PBS_O_WORKDIR\n", "FILE=", x, "\n", "python $FILE.py >> $FILE.log\n", "exit;\n"]
         file_name.writelines(top)
         file_name.close()
