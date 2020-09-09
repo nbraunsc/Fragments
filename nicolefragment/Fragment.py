@@ -252,6 +252,10 @@ class Fragment():
         return self.energy, self.grad, self.hessian, self.apt
     
     def build_apt(self):
+        """ Not currently using the mass weighted xyz coords,
+        had to rebuild xyz input to work with the apt stuff.
+        """
+        
         #build xyz with link atoms in ndarray format, not string type like function
         x = np.zeros((len(self.prims)+len(self.notes), 3))
         labels = []
@@ -262,21 +266,19 @@ class Fragment():
         for pair in range(0, len(self.attached)):
             linkatom_xyz = self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[0]
             x[self.notes[pair][0]] = linkatom_xyz[1]
-            #x[self.notes[pair][0]] = linkatom_xyz[1:]
             labels.append(linkatom_xyz[0])
         
-        #adding 1/np.sqrt(amu) units to xyz coords
-        mass_xyz = np.zeros(x.shape)
-        for atom in range(0, len(self.prims)+len(self.notes)):
-            y = element(labels[atom])
-            value = np.sqrt(y.atomic_weight)
-            mass_xyz[atom] = x[atom]*(1/value)   #mass weighted coordinates
+        ##adding 1/np.sqrt(amu) units to xyz coords
+        #mass_xyz = np.zeros(x.shape)
+        #for atom in range(0, len(self.prims)+len(self.notes)):
+        #    y = element(labels[atom])
+        #    value = np.sqrt(y.atomic_weight)
+        #    mass_xyz[atom] = x[atom]*(1/value)   #mass weighted coordinates
         
         #formatting xyz for pyscf coords input
         coords_xyz = []
         for atom in range(0, len(labels)):
             coords_xyz.append([labels[atom], x[atom]])
-            #coords_xyz.append([labels[atom], mass_xyz[atom]])
         
         apt = []
         for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
