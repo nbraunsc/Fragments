@@ -8,7 +8,7 @@ from berny import Berny, geomlib
 
 np.set_printoptions(suppress=True, precision=5)
 
-def global_props(frag_obj, step_size=step):
+def global_props(frag_obj, step_size=0.001):
     """ This is a global func that is called within each MIM calculation.
     This is also doing the ray parallezation for the energy, gradient, hessians.
 
@@ -32,7 +32,7 @@ def global_props(frag_obj, step_size=step):
     @ray.remote
     def get_frag_stuff(f,_frags):
         f_current = _frags.frags[f]
-        return f_current.qc_backend(step_size=step)
+        return f_current.qc_backend(step_size=0.001)
     
     result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag_obj.frags)) ]
     out = ray.get(result_ids)
@@ -48,7 +48,7 @@ def global_props(frag_obj, step_size=step):
     ray.shutdown()
     return etot, gtot, htot, apt
 
-def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=step):
+def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001):
     """
     MIM1 is only one level of fragmentation and one level of theory.
    
@@ -74,7 +74,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=step):
     """
     frag = fragmentation.Fragmentation(Molecule)
     frag.do_fragmentation(frag_type=str(frag_type), value=deg)
-    frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf, step_size=step)
+    frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf, step_size=0.001)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
 
     if opt == True:
@@ -107,7 +107,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=step):
         print('\n', "Energy = ", etot_opt)
         print('\n', "Converged_Gradient:", "\n", grad_opt)
     
-    etot, gtot, htot, apt = global_props(frag, step_size=step)
+    etot, gtot, htot, apt = global_props(frag, step_size=0.001)
     freq, modes = frag.mw_hessian(htot)
     pq = np.dot(apt.T, modes)   #shape 3x3N
     print("pq = ", pq.shape, pq)    

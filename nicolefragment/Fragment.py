@@ -39,6 +39,7 @@ class Fragment():
         self.jacobian_grad = [] #array for gradient link atom projections
         self.jacobian_hess = []  #ndarray shape of full system*3 x fragment(with LA)*3
         self.qc_class = qc_class
+        self.step_size = step_size
         
 
     #def __str__(self):
@@ -287,11 +288,11 @@ class Fragment():
             value = 1/(np.sqrt(y.atomic_weight))
             for comp in range(0,3):   #xyz interation
                 dip1 = self.qc_class.get_dipole(coords_xyz)
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]+step_size
+                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]+self.step_size
                 dip2 = self.qc_class.get_dipole(coords_xyz)
-                vec = (dip1 - dip2)/step_size
+                vec = (dip1 - dip2)/self.step_size
                 storing_vec[comp] = vec
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-step_size
+                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-self.step_size
             a = storing_vec.T*value
             apt.append(a)
         px = np.vstack(apt)
