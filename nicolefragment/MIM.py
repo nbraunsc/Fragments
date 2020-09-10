@@ -5,6 +5,7 @@ import ray
 import os
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
+import matplotlib.pyplot as plt
 
 np.set_printoptions(suppress=True, precision=5)
 
@@ -50,7 +51,8 @@ def global_props(frag_obj, step_size=0.001):
 
 def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001):
     """
-    MIM1 is only one level of fragmentation and one level of theory.
+
+
    
     Parameters
     ----------
@@ -126,6 +128,11 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     print("Hessian shape = ", htot.shape)
     for i in range(0, len(freq)):
         print("Freq:", freq[i], "int :", intense_kmmol[i])
+
+    plt.plot(freq, intense_kmmol)
+    plt.xlabel('frequency (cm-1)')
+    plt.ylabel('intensity (km/mol)')
+    plt.show()
     return etot, gtot, htot, freq, modes
 
 def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule,  opt=False):
@@ -298,14 +305,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule.Molecule()
-    largermol.initalize_molecule('largermol')
+    water = Molecule.Molecule()
+    water.initalize_molecule('water')
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
+    do_MIM1(4, 'distance', 'RHF', 'sto-3g', water, opt=False, step_size=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', largermol, opt=False) #uncomment to run MIM2
+    #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', water, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
+    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', water, 'ethanol')     #uncomment to run MIM3
