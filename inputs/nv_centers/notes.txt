@@ -1,0 +1,9 @@
+diamond.log = casscf on RHF/6-31g optimized diamond
+
+ci_nv.log = casci with 4 roots on RHF/6-31g optimized nv center with charge = -1
+
+cas_nv.log = casscf with 4 roots on RHF/6-31g optimized nv cneter with charge = -1
+
+cluster_cas  = casscf on C42H42NV cluster, Delany paper does CI on this cluster with ecp's and DZV(P) basis
+
+cluster_ci = casci with 5 roots on C42H42NV cluster (not optimized yet)

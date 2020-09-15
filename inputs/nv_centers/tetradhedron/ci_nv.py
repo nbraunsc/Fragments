@@ -1,5 +1,8 @@
-102
+import pyscf
+from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf
 
+mol = gto.Mole()
+mol.atom = '''
 C         -0.07146       -0.06796       -0.07402
 C         -1.77618        1.60787       -1.72099
 C         -0.12217        3.30250       -3.39944
@@ -102,3 +105,17 @@ H          1.03740        2.14907       -4.64537
 H         -2.97307        0.42671       -2.89966
 H          1.08874       -1.28108       -1.26136
 H         -1.21839       -1.30291        1.10352
+'''
+mol.basis = '6-31g*'
+mol.charge = -1
+mol.build()
+myhf = mol.RHF().run()
+
+# 6 orbitals, 8 electrons
+mycas = myhf.CASCI(6, 8)
+mycas.fcisolver.nroots = 5
+mo = mycas.mo_coeff
+print("mycas kernel:\n")
+mycas.kernel()
+emc = mycas.casci(mo)[0]
+print("emc mo[0]:", emc)

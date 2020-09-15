@@ -1,5 +1,9 @@
-103
+import pyscf
+from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf
+from pyscf.geomopt.berny_solver import optimize
 
+mol = gto.Mole()
+mol.atom = '''
 C         -0.07146       -0.06796       -0.07402
 C         -1.77618        1.60787       -1.72099
 C         -0.12217        3.30250       -3.39944
@@ -103,3 +107,16 @@ H          1.03740        2.14907       -4.64537
 H         -2.97307        0.42671       -2.89966
 H          1.08874       -1.28108       -1.26136
 H         -1.21839       -1.30291        1.10352
+'''
+mol.basis = '6-31g'
+mol.build()
+mf = scf.RHF(mol)
+mf.kernel()
+
+
+## 6 orbitals, 8 electrons
+#state_id : 0 is ground state, state_id=1 would be first excited state
+state_id = 0
+mc = mcscf.CASSCF(mf, 6, 8).state_specific_(state_id)
+mc.verbose = 5
+mc.kernel()
