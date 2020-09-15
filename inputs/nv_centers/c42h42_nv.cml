@@ -84,6 +84,7 @@
   <atom id="a82" elementType="H" x3="1.492906" y3="0.270179" z3="-1.560548"/>
   <atom id="a83" elementType="H" x3="0.249825" y3="1.517273" z3="-1.546673"/>
   <atom id="a84" elementType="H" x3="-0.641479" y3="-0.624187" z3="-0.669162"/>
+  <atom id="a85" elementType="H" x3="1.155200" y3="2.441023" z3="7.489367"/>
  </atomArray>
  <bondArray>
   <bond atomRefs2="a82 a2" order="1"/>
@@ -190,5 +191,6 @@
   <bond atomRefs2="a27 a59" order="1"/>
   <bond atomRefs2="a27 a51" order="1"/>
   <bond atomRefs2="a51 a52" order="1"/>
+  <bond atomRefs2="a51 a85" order="1"/>
  </bondArray>
 </molecule>
