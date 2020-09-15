@@ -18,6 +18,7 @@ os.chdir('to_run/')
 x = 0
 for i in frag.frags:
     x = x + 1
+    inputxyz = []
     inputxyz = i.build_xyz()
     #makes a directory for each fragment
     os.mkdir(str(x))

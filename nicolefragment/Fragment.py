@@ -218,6 +218,8 @@ class Fragment():
         hess_py = 0
         self.grad = np.zeros((self.molecule.natoms, 3))
         inputxyz = self.build_xyz()
+        print("len of prim = ", len(self.prims))
+        print("number of link atoms = ", len(self.notes))
         energy, grad, hess_py = self.qc_class.energy_gradient(inputxyz)
         hess = hess_py
 
