@@ -8,7 +8,7 @@ largermol = Molecule.Molecule()
 largermol.initalize_molecule('largermol')
 frag = fragmentation.Fragmentation(largermol)
 frag.do_fragmentation(frag_type='distance', value=1.8)
-frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
+frag.initalize_Frag_objects(theory='MP2', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
 
 #changing into the to_run directory
 os.path.abspath(os.curdir)
@@ -20,6 +20,10 @@ for i in frag.frags:
     x = x + 1
     inputxyz = []
     inputxyz = i.build_xyz()
+    len_prim = len(i.prims)
+    num_la = len(i.notes)
+    step_size = i.step_size
+    basis_set = i.qc_class.basis
     #makes a directory for each fragment
     os.mkdir(str(x))
     #computes the jacobians and saves as a .npy file in dir
@@ -40,31 +44,67 @@ from pyscf.prop.polarizability import rhf\n
 from pyscf.grad.rhf import GradientsBasics\n
 np.set_printoptions(suppress=True, precision=5)\n"""]
     f.writelines(imports)
+    info = ["len_prim =", str(len_prim), "\n"
+    "num_la =", str(num_la), "\n"
+    "step_size = ", str(step_size), "\n"]
+    f.writelines(info)
     build = [
     "mol = gto.Mole()\n"
-    "mol.atom = ", str(inputxyz), "\n", "mol.basis = 'sto-3g'\n", "mol.build()\n"]
+    "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n"]
     f.writelines(build) 
     pyscf = open('../../nicolefragment/Pyscf.py', 'r')
     lines = pyscf.readlines()
     
     #writes scf info depending on theory given
     emp = []
+    grad_line = str()
     if i.qc_class.theory == 'RHF': 
         indices = [38, 39, 40, 41]
+        grad_line = str('hf_scanner = scf.RHF(mol2).apply(grad.RHF).as_scanner()\n'+ '            e, g = hf_scanner(mol2)\n')
         for index in indices:
             emp.append(lines[index].lstrip())
     if i.qc_class.theory == 'MP2':
         indices = [45, 46, 47]
+        grad_line = str("mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
         for index in indices:
             emp.append(lines[index].lstrip())
     if i.qc_class.theory == 'CISD':
         indices = [51, 52, 53]
+        grad_line = str("ci_scanner = ci.CISD(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = ci_scanner(mol2)\n")
         for index in indices:
             emp.append(lines[index].lstrip())
     #dipole = ["mfx = scf.RHF(mol).run()\n, dipole = mfx.dip_moment(mol)\n"]
     f.writelines(x for x in emp)
     #f.writelines(dipole)
     pyscf.close()
+    num_hess = ["#If not analytical hess, not do numerical below\n",
+"if type(h) is int:\n",
+"    hess = np.zeros(((len(mol.atom))*3, (len(mol.atom))*3))\n",
+"    i = -1\n",
+"    for atom in range(0, len(mol.atom)):\n",
+"        for xyz in range(0, 3):\n",
+"            i = i+1\n",
+"            mol.atom[atom][1][xyz] = mol.atom[atom][1][xyz]+step_size\n",
+"            mol2 = gto.Mole()\n",
+"            mol2.atom = mol.atom\n",
+"            mol2.basis = mol.basis\n",
+"            mol2.build()\n",
+"            ", grad_line,
+"            grad1 = g.flatten()\n",
+"            mol.atom[atom][1][xyz] = mol.atom[atom][1][xyz]-2*step_size\n",
+"            mol2 = gto.Mole()\n",
+"            mol2.atom = mol.atom\n",
+"            mol2.basis = mol.basis\n",
+"            mol2.build()\n",
+"            ", grad_line,
+"            grad2 = g.flatten()\n",
+"            mol.atom[atom][1][xyz] = mol.atom[atom][1][xyz]+step_size\n",
+"            vec = (grad1 - grad2)/(4*step_size)\n",
+"            hess[i] = vec\n",
+"            hess[:,i] = vec\n",
+"    h = hess.reshape(len_prim+num_la, 3, len_prim+num_la, 3)\n",
+"    h = h.transpose(0, 2, 1, 3)\n"]
+    f.writelines(num_hess)
     scf_info = ["print('energy no coeff =', e)\n", "print('gradient =', g)\n", "print('hessian =', h)\n", "np.save(os.path.join('", str(x),"', '", name, "e.npy'), e)\n", "np.save(os.path.join('", str(x),"', '", name, "g.npy'), g)\n", "np.save(os.path.join('", str(x), "', '", name, "h.npy'), h)\n"]
     f.writelines(scf_info) 
     f.close()
