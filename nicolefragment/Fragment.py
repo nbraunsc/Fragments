@@ -253,10 +253,6 @@ class Fragment():
         return self.energy, self.grad, self.hessian, self.apt
     
     def build_apt(self):
-        """ Not currently using the mass weighted xyz coords,
-        had to rebuild xyz input to work with the apt stuff.
-        """
-        
         #build xyz with link atoms in ndarray format, not string type like function
         x = np.zeros((len(self.prims)+len(self.notes), 3))
         labels = []

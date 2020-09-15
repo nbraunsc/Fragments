@@ -1,4 +1,3 @@
-
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
@@ -20,7 +19,9 @@ x = 0
 for i in frag.frags:
     x = x + 1
     inputxyz = i.build_xyz()
+    #makes a directory for each fragment
     os.mkdir(str(x))
+    #computes the jacobians and saves as a .npy file in dir
     g_jacob = i.build_jacobian_Grad()
     h_jacob = i.build_jacobian_Hess()
     coeff = i.coeff
@@ -28,6 +29,7 @@ for i in frag.frags:
     np.save(os.path.join(str(x), 'jacob_hess'+ str(x) + '.npy'), h_jacob)
     np.save(os.path.join(str(x), 'coeff'+str(x) + '.npy'), coeff)
     name = "fragment" + str(x) + ".py"
+    #start of writing individual fragment files
     f = open(name, "w+")
     imports = ["""import numpy as np\n
 import os\n
@@ -44,6 +46,7 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
     pyscf = open('../../nicolefragment/Pyscf.py', 'r')
     lines = pyscf.readlines()
     
+    #writes scf info depending on theory given
     emp = []
     if i.qc_class.theory == 'RHF': 
         indices = [38, 39, 40, 41]
