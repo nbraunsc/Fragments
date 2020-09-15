@@ -20,9 +20,9 @@ mol.basis = 'sto-3g'
 mol.build()
 hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
 e, g = hf_scanner(mol)
-mf = mol.RHF().run()
-h = mf.Hessian().kernel()
-
+#mf = mol.RHF().run()
+#h = mf.Hessian().kernel()
+h=0
 #If not analytical hess, not do numerical below
 if type(h) is int:
     hess = np.zeros(((len(mol.atom))*3, (len(mol.atom))*3))
@@ -51,7 +51,7 @@ if type(h) is int:
             hess[i] = vec
             hess[:,i] = vec
     h = hess.reshape(len_prim+num_la, 3, len_prim+num_la, 3)
-    h = hess.transpose(0, 2, 1, 3)
+    h = h.transpose(0, 2, 1, 3)
 
 print('energy no coeff =', e)
 print('gradient =', g)
