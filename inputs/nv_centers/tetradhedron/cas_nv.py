@@ -108,6 +108,7 @@ H         -1.21839       -1.30291        1.10352
 '''
 mol.basis = '6-31g*'
 mol.charge = -1
+mol.spin = 2 #nelec_alpha - nelec_beta
 mol.build()
 mf = scf.RHF(mol)
 print("RHF kernel :\n")
@@ -119,5 +120,15 @@ mf.kernel()
 state_id = 1
 mc = mcscf.CASSCF(mf, 6, 8).state_specific_(state_id)
 mc.verbose = 5
-print("kernel :\n")
-mc.kernel()
+hartree = mc.kernel()[0]
+print("Energy =", hartree, "Hartree")
+energy = hartree*27.2114
+print("Energy =", energy, "eV")
+
+mc = mcscf.CASSCF(mf, 6, 8)
+mc.state_specific_(1)
+excited_grad = mc.nuc_grad_method().as_scanner()
+mol1 = excited_grad.optimizer().kernel()[0]*27.2114
+print('Energy of optmized strucutre = :', mol1, "eV")
+
+
