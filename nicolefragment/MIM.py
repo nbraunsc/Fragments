@@ -6,6 +6,7 @@ import os
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
 import matplotlib.pyplot as plt
+import scipy.stats
 
 np.set_printoptions(suppress=True, precision=5)
 
@@ -128,11 +129,47 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     print("Hessian shape = ", htot.shape)
     for i in range(0, len(freq)):
         print("Freq:", freq[i], "int :", intense_kmmol[i])
+    
+    #def model(position, width, height):
+    #    return  height * np.sqrt(2*np.pi) * width * scipy.stats.norm.pdf(x, position, width) 
+    def model(position, width, height):
+        return  (height / scipy.stats.norm.pdf(position,position,width)) * scipy.stats.norm.pdf(x, position, width)
 
-    plt.plot(freq, intense_kmmol)
+    for freq_i in range(6, len(freq)):
+        position = freq[freq_i]
+        x_min = position-300
+        x_max = position+300
+        height = intense_kmmol[freq_i]
+        width = 150/(height/2)
+        x=np.linspace(x_min, x_max, 100)
+        gauss = model(position, width, height)
+        plt.plot(x,gauss,color='red')
+        plt.fill_between(x, gauss, color='red')
+        #y=scipy.stats.norm.pdf(x, position, width)
+        #y_scaled = y*(1/height)
+        #if height > 3:
+            #plt.plot(x,gauss,color='red')
+            #plt.fill_between(x, gauss, color='red')
+        #else:
+        #    continue
+    
+    #y=scipy.stats.norm.pdf(x, mean, std)
+    #plt.plot(x, y, color='coral')
+    
     plt.xlabel('frequency (cm-1)')
     plt.ylabel('intensity (km/mol)')
+    
+    plt.gca().invert_xaxis()
+    plt.gca().invert_yaxis()
+    plt.xlim(4000, 500)
     plt.show()
+
+    #plt.plot(freq, intense_kmmol)
+    #plt.xlabel('frequency (cm-1)')
+    #plt.ylabel('intensity (km/mol)')
+    #plt.gca().invert_xaxis()
+    #plt.gca().invert_yaxis()
+    #plt.show()
     return etot, gtot, htot, freq, modes
 
 def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule,  opt=False):
