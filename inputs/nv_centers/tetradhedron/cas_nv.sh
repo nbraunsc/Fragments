@@ -22,7 +22,7 @@ cd $PBS_O_WORKDIR
 FILE=cas_nv
 
 # run python job
-python $FILE.py >> cas_excited.log
+python $FILE.py >> cas_sym.log
 
 
 exit;
