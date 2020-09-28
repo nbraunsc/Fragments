@@ -112,6 +112,8 @@ mol.charge = -1
 mol.spin = 2 #nelec_alpha - nelec_beta
 mol.build(symmetry=True)
 mf = scf.RHF(mol)
+mf.max_cycle = 100
+mf.conv_tol = 1e-8
 mol_eq = optimize(mf)
 mf.kernel()
 
