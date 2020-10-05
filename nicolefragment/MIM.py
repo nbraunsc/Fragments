@@ -52,9 +52,6 @@ def global_props(frag_obj, step_size=0.001):
 
 def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001):
     """
-
-
-   
     Parameters
     ----------
     deg : float

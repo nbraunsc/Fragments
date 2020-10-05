@@ -19,10 +19,10 @@ cd ../../../
 python -m pip install -e .
 
 cd $PBS_O_WORKDIR
-FILE=dft
+FILE=sixeight
 
 # run python job
-python $FILE.py >> casdft.log
+python $FILE.py >> $FILE.log
 
 
 exit;
