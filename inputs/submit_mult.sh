@@ -10,11 +10,16 @@
 
 
 cd to_run/
-for f in *.sh; do
-    two=$(qsub $f)
-    echo "Submitting $f"
-    echo $two
-    echo ""
+
+for i in directs:
+    os.chdir(i)
+    for f in *.sh; do
+        two=$(qsub $f)
+        echo "Submitting $f"
+        echo $two
+        echo ""
+        os.chdir$('../')
+    done
 done
 
 cd ../

@@ -36,6 +36,7 @@ class Fragmentation():
         self.moleculexyz = []   #full molecule xyz's
         self.etot_opt = 0
         self.grad_opt = []
+        self.name = hex(id(self))
 
     def build_frags(self, frag_type=None, value=None):    #deg is the degree of monomers wanted
         """ Performs the initalize fragmmentation 

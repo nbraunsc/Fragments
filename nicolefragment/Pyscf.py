@@ -28,7 +28,6 @@ class Pyscf():
         mol = gto.Mole()
         mol.atom = input_xyz
         mol.basis = self.basis
-        mol.unit = 'Angstrom'
         mol.build()
         if self.theory == 'full':
             hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
