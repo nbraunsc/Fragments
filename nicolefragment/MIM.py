@@ -112,16 +112,12 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     
     etot, gtot, htot, apt = global_props(frag, step_size=0.001)
     freq, modes = frag.mw_hessian(htot)
+    #freq = freq*0.817  #IR freq correction for HF/sto3g
     pq = np.dot(apt.T, modes)   #shape 3x3N
-    print("pq = ", pq.shape, pq)    
     pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
-    print(pq_pq.shape)
     intense = np.diagonal(pq_pq)
-    print("intensities in other units", intense)
     intense_kmmol = intense*42.2561
     #intense_kmmol = intense*42.2561*0.529177
-    print("intensities in km/mol", intense_kmmol)
-    print("Frequencies: ", freq, "cm-1")
     #print("Normal Modes: ", modes)
     print("Final converged energy = ", etot, "Hartree")
     print("Final gradient = ", '\n', gtot)
@@ -142,9 +138,11 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
         height = intense_kmmol[freq_i]
         width = 150/(height/2)
         x=np.linspace(x_min, x_max, 100)
+        #y=scipy.stats.norm.pdf(x, position, width)
         gauss = model(position, width, height)
-        plt.plot(x,gauss,color='red')
-        plt.fill_between(x, gauss, color='red')
+        #plt.plot(x,y,color='blue')
+        plt.plot(x,gauss,color='blue', label='My code')
+        #plt.fill_between(x, gauss, color='red')
         #y=scipy.stats.norm.pdf(x, position, width)
         #y_scaled = y*(1/height)
         #if height > 3:
@@ -155,13 +153,29 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     
     #y=scipy.stats.norm.pdf(x, mean, std)
     #plt.plot(x, y, color='coral')
+    ##water
+    #freq_webmo = [1898.21, 4297.36, 4682.91]
+    #int_webmo = [16.206, 25.957, 9.457]
+    #largermol
+    freq_webmo = [-86.44, 20.72, 104.69, 166.34, 233.85, 256.24, 272.87, 339.69, 426.62, 480.06, 558.28, 595.35, 642.87, 895.59, 948.17, 989.17, 1131.86, 1167.48, 1184.39, 1215.17, 1305.8,	1312.83, 1322.02, 1344.97, 1371.55, 1438.5, 1473.57, 1520.03, 1537.56, 1553.31, 1660.61, 1697.95, 1757.13, 1772.37, 1784.7, 1801.03, 1826.71, 1839.8, 1851.72, 1858.35, 2009.28, 2066.56, 3494.36, 3503.35, 3536.92, 3544.76, 3652.32, 3653.78, 3658.39, 3663.37, 3672.47, 3675.78, 3693.75, 3695.38]
+    int_webmo = [0.09,	1.437,	0.772,	0.171,	1.669,	0.598,	0.129,	1.438,	0.025,	0.399,	1.561,	9.894,	7.195,	0.099,	2.885,	5.524,	3.016,	3.476,	12.303,	10.651,	0.837,	2.29,	0.387,	4.465, 1.1, 62.728,	4.838,	2.657,	0.386,	2.463,	8.726,	4.908,	8.61,	0.271,	3.619,	0.768,	1.082,	1.689,	2.373,	2.68,	0.043,	24.006,	4.005,	2.439,	1.884,	0.61,	35.083,	5.614,	0.911, 0.732, 5.121, 1.68, 2.199, 0.351]
+    for freq_i in range(1, len(freq_webmo)):
+        position = freq_webmo[freq_i]
+        x_min = position-300
+        x_max = position+300
+        height = int_webmo[freq_i]
+        width = 150/(height/2)
+        x=np.linspace(x_min, x_max, 100)
+        gauss = model(position, width, height)
+        plt.plot(x,gauss,color='red', linestyle='dashed', label='WebMO')
     
-    plt.xlabel('frequency (cm-1)')
-    plt.ylabel('intensity (km/mol)')
-    
+
+    plt.xlabel('Wavenumber (cm-1)')
+    plt.ylabel('Intensity (km/mol)')
+    plt.text(4000, 50, 'Blue=My code, Red=WebMO')
     plt.gca().invert_xaxis()
     plt.gca().invert_yaxis()
-    plt.xlim(4000, 500)
+    plt.xlim(4500, 0)
     plt.show()
 
     #plt.plot(freq, intense_kmmol)
@@ -342,14 +356,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule.Molecule()
-    largermol.initalize_molecule('largermol')
+    water = Molecule.Molecule()
+    water.initalize_molecule('water')
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
+    do_MIM1(5, 'distance', 'RHF', 'sto-3g', water, opt=False, step_size=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', largermol, opt=False) #uncomment to run MIM2
+    #do_MIM2('distance', 1.3, 'MP2', 'ccpvdz', 1.8, 'RHF', 'ccpvdz', water, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
+    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', water, 'ethanol')     #uncomment to run MIM3

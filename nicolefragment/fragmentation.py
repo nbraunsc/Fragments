@@ -442,9 +442,10 @@ class Fragmentation():
         e_values, modes = LA.eigh(x)
         #e_values, modes = LA.eigh(x)
 
-        #unit conversion of freq from H/A**2 amu -> 1/s**2
-        factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)
-        freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10)
+        #unit conversion of freq from H/B**2 amu -> 1/s**2
+        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
+        factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
+        freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
         return freq, modes
 
     def global_apt(self):

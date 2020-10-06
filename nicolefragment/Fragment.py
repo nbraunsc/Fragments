@@ -2,6 +2,7 @@ import string
 import numpy as np
 from .Pyscf import *
 from ase import Atoms
+from ase.calculators.vasp import Vasp
 from ase.vibrations import Infrared  
 from mendeleev import element
 
@@ -29,6 +30,7 @@ class Fragment():
         self.molecule = molecule 
         self.coeff = coeff 
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
+        self.inputxyz = []
         self.apt = []
         self.step = step_size
         self.energy = 1
@@ -94,7 +96,7 @@ class Fragment():
         #return new_xyz, factor, coord
     
     def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms as a string
-        """ Builds the xyz input with the atom labels, xyz coords, and link atoms as a string
+        """ Builds the xyz input with the atom labels, xyz coords, and link atoms as a string or list 
         
         Parameters
         ----------
@@ -104,6 +106,8 @@ class Fragment():
         -------
         inputxyz : str
             String with atom label then corresonding xyz coordinates.  This input includes the link atoms.
+        input_list : list of lists
+            ie [[['H', [0, 0 ,0]], ['O', [x, y, z]], ... ] 
         self.notes: list of lists
             List of lists that is created with len = number of link atoms. Each sub list corresponds to one link atom.
             (i.e. [index of link atom, factor, supporting atom number, host atom number])
@@ -141,6 +145,7 @@ class Fragment():
             self.notes[-1].append(factor)
             self.notes[-1].append(self.attached[pair][0])
             self.notes[-1].append(self.attached[pair][1])
+        #self.input_list = input_list
         return input_list
     
     def build_jacobian_Grad(self):
@@ -217,24 +222,22 @@ class Fragment():
         #hess_py = np.zeros(((len(self.prims)+len(self.notes))*3, (len(self.prims)+len(self.notes))*3))
         hess_py = 0
         self.grad = np.zeros((self.molecule.natoms, 3))
-        inputxyz = self.build_xyz()
-        print("len of prim = ", len(self.prims))
-        print("number of link atoms = ", len(self.notes))
-        energy, grad, hess_py = self.qc_class.energy_gradient(inputxyz)
+        self.inputxyz = self.build_xyz()
+        energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
         hess = hess_py
 
         #If not analytical hess, not do numerical below
         if type(hess_py) is int:
-            hess = np.zeros(((len(inputxyz))*3, (len(inputxyz))*3))
+            hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
             i = -1
-            for atom in range(0, len(inputxyz)):
+            for atom in range(0, len(self.inputxyz)):
                 for xyz in range(0, 3):
                     i = i+1
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step_size
-                    grad1 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]-2*step_size
-                    grad2 = self.qc_class.energy_gradient(inputxyz)[1].flatten()
-                    inputxyz[atom][1][xyz] = inputxyz[atom][1][xyz]+step_size
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+step_size
+                    grad1 = self.qc_class.energy_gradient(self.inputxyz)[1].flatten()
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]-2*step_size
+                    grad2 = self.qc_class.energy_gradient(self.inputxyz)[1].flatten()
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+step_size
                     vec = (grad1 - grad2)/(4*step_size)
                     hess[i] = vec
                     hess[:,i] = vec
@@ -252,10 +255,12 @@ class Fragment():
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
         self.apt = self.build_apt()
+        #self.get_IR()
         return self.energy, self.grad, self.hessian, self.apt
     
     def build_apt(self):
-        #build xyz with link atoms in ndarray format, not string type like function
+        """build xyz with link atoms in ndarray format, not string type like function
+        """
         x = np.zeros((len(self.prims)+len(self.notes), 3))
         labels = []
         for i in range(0, len(self.prims)):
@@ -291,188 +296,40 @@ class Fragment():
                 vec = (dip1 - dip2)/self.step_size
                 storing_vec[comp] = vec
                 coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-self.step_size
-            a = storing_vec.T*value
+            a = storing_vec.T*value    ##mass weighting
             apt.append(a)
         px = np.vstack(apt)
+        print("shape of px", px.shape)
+        print("Link atoms", len(self.notes), "atoms in prim", len(self.prims))
+        print(self.jacobian_hess.shape, "shape before")
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
+        print("shape after", reshape_mass_hess.shape)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
+        print("shape of jac_apt", jac_apt.shape)
         self.apt = self.coeff*np.dot(jac_apt, px)
         return self.apt
         
-        #############
-        # stuff below is for the intensity stuff with normal modes
-        #############
-
-        #intensity = []
-        #pq = np.dot(px.T, modes)
-        #print("pq = ", pq.shape, pq)
-        #pq_pq = np.dot(pq.T, pq)
-        #print(pq_pq.shape)
-        #intense = np.diagonal(pq_pq)
-        #print("intensities in other units", intense)
-        #intense_kmmol = intense*42.2561*0.529177
-        #print("intensities in km/mol", intense_kmmol)
-        #webmo_int = [77.298, 19.019, 51.071]
-        #print('Webmo intensites', webmo_int)
-        #diff_int = np.array(intense_kmmol[6:]) - webmo_int
-        #factor_int = webmo_int/np.array(intense_kmmol[6:])
-        #print("apt int factors", factor_int)
-        #print("intensity diff", diff_int)
-        
-    
     def get_IR(self):
-        inputxyz = self.build_xyz()
-        print(inputxyz, type(inputxyz))
-        molecule = Atoms(inputxyz)
-        print(molecule.get_positions())
+        """ Atempt at getting IR spectra to compare to with different software
+        """
+        print("start of ir funciton")
+        symbols = str()
+        positions = []
+        for i in self.inputxyz:
+            symbols += i[0]
+            coord = tuple(i[1])
+            positions.append(coord)
+        print("sybmols", symbols)
+        print("positions", positions)
+        molecule = Atoms(str(symbols), positions)
+        calc = Vasp(prec='Accurate',
+                    ediff=1E-8,
+                    isym=0,
+                    idipol=4,       # calculate the total dipole moment
+                    dipol=molecule.get_center_of_mass(scaled=True),
+                    ldipol=True)
+        molecule.calc = calc
         ir = Infrared(molecule)
         ir.run()
         ir.summary()
 
-
-
-
-
-
-
-####################################################################################
-
-
-    def run_pyscf(self, theory, basis):
-        """ Runs pyscf.  This gets called in Fragmentation().
-
-        do_pyscf() is just a virtual funciton in runpysf.py that interfaces with pyscf.
-        
-        Parameters
-        ----------
-        theory : str
-            Level of theory for the calculation
-        basis : str
-            Basis set name for calculations
-            
-        Returns
-        -------
-        self.energy : float
-            Energy for the individual fragment after link atom porjection
-        self.grad : ndarray
-            Gradient for the individual fragment after link atom projection
-        
-        """
-        
-        inputxyz = self.build_xyz()
-        self.energy, self.grad, self.hess  = do_pyscf(inputxyz, self.theory, self.basis, hess=False)
-        self.build_jacobian_Grad()
-        self.grad = self.jacobian_grad.dot(self.grad)
-        return self.grad
-
-    def run_psi4(self, theory, basis, name):
-        """ Runs psi4.  This gets called in Fragmentation().
-
-        do_psi4() is just a virtual funciton in runpsi4.py that interfaces with psi4.
-        
-        Parameters
-        ----------
-        theory : str
-            Level of theory for the calculation
-        basis : str
-            Basis set name for calculations
-            
-        Returns
-        -------
-        self.energy : float
-            Energy for the individual fragment after link atom porjection
-        self.grad : ndarray
-            Gradient for the individual fragment after link atom projection
-        
-        """
-        
-        inputxyz = self.build_xyz()
-        self.energy = do_psi4(inputxyz, self.theory, self.basis, name)
-        #self.energy, self.grad  = do_psi4(inputxyz, self.theory, self.basis, name)
-        print("psi4 energy: ", self.energy)
-        #print("psi4 grad: ", self.grad, self.grad.shape)
-        #self.build_jacobian_Grad()
-        #self.grad = self.jacobian_grad.dot(self.grad)
-        #return self.grad
-    
-        
-
-#-----------------------------------------------------------------------------------------------
-
-    def example_func(self, y):
-        return y
-
-    def do_Hessian(self):   #"Need to work on dimesions for the matrix multiplication"
-        #self.hess = 0 #just to make sure it is zero to start 
-        inputxyz = self.build_xyz()
-        #self.hess = do_pyscf(inputxyz, self.theory, self.basis, hess=True)[2]
-        hessian_example = a_hess(self.example_func)
-        x = hessian_example(self.grad).diagonal(axis1=1, axis2=2)
-        print(self.grad, 'self.grad')
-        print(x, "hessian")
-        print(x.shape, "hessian shape")
-        
-        #self.build_jacobian_Hess(self.hess.shape[0])
-        #j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
-        #y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, self.hess) 
-        #self.hess = np.einsum('ijkl, jmln -> imkn', y, j_reshape) 
-
-"""Stuff after this point is just the old link atom projection without using the Jacobian matrix"""
-    
-    #def old jacobian hessian build:
-       # for l in range(0, self.molecule.natoms):    #making zero arrays len of full system
-       #     zeros = np.zeros((3,3))
-       #     zero_list.append(zeros)
-       # 
-       # for i in range(0, len(self.prims)): #adding in identity matrix in correct location (no link atoms yet)
-       #     i_list = zero_list
-       #     i_list[self.prims[i]] = np.identity(3)
-       #     i_array = np.vstack(i_list) #len molecule x 3 array
-       #     full_array.append(i_array)
-       #     i_list[self.prims[i]] = np.zeros((3,3)) #chaning back to all zeros
-       # 
-       # for j in range(0, len(self.notes)): #adding in factors on diag for support and host atoms
-       #     j_list = zero_list
-       #     factor_s = 1-self.notes[j][1]   #support factor on diag
-       #     factor_h = self.notes[j][1]     #host factor on diag
-       #     a = j_list[self.notes[j][2]]
-       #     np.fill_diagonal(a, factor_s)   #fillin with support factor
-       #     j_list[self.notes[j][2]] = a
-       #     b = j_list[self.notes[j][3]]
-       #     np.fill_diagonal(b, factor_h)   #filling with host factor
-       #     j_list[self.notes[j][3]] = b
-       #     j_array = np.vstack(j_list)
-       #     full_array.append(j_array)
-       # 
-       # self.jacobian_hess = np.concatenate(full_array, axis=1)
-    
-    #def distribute_linkgrad(self):     ####Old way of doing the gradient link atom projections###########
-    #    """
-    #    Projects link atom gradients back to its respective atoms (both supporting and host atoms)
-    #    :returns a dictonary with atom indexes as the keys and the corresponding gradient for each atom is stored
-    #    """
-    #    for i in range(0, len(self.prims)):
-    #        self.grad_dict[self.prims[i]] = self.grad[i]
-    #    for j in self.notes:
-    #        self.grad_dict[j[3]] = self.grad[int(j[0])]*j[1]    #link to ghost
-    #        old_grad = self.grad_dict[j[2]]
-    #        self.grad_dict[j[2]] = old_grad + self.grad[int(j[0])]*(1-j[1]) #link to real
-
-        #def distribute_linkhessian(self):
-    #    """Projects mass-weighted Hessian matrix elements of link atoms back to its respective atoms (both supporting and host atoms)
-    #    :WORK IN PROGRESS
-    #    """
-    #    ghost_list = []
-    #    print(len(self.hess), 'length of fragment hessian')
-    #    print(len(self.notes), 'number of link atoms')
-    #    print(len(self.prims), 'number of atoms in fragment')
-    #    for i in range(0, len(self.prims)):
-    #        self.hess_dict[self.prims[i]] = self.hess[i]
-    #        print(self.hess[i], 'indiviudal atom hess')
-    #    for j in self.notes:
-    #        ghost_list.append(j[3])
-    #        self.hess_dict[j[3]] = self.hess[int(j[0])]*(j[1]**2)   #link to ghost
-    #        old_hess = self.hess_dict[j[2]]
-    #        self.hess_dict[j[2]] = old_hess + self.hess[int(j[0])]*((1-j[1])**2)    #link to real
-    #    #After i project, I need to insert np.zeros(3,3) at indices not in the fragment, but that are in full molecule
-    #    for k in range(0, len(self.molecule.atomtable)):

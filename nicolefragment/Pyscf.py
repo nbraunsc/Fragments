@@ -28,6 +28,7 @@ class Pyscf():
         mol = gto.Mole()
         mol.atom = input_xyz
         mol.basis = self.basis
+        mol.unit = 'Angstrom'
         mol.build()
         if self.theory == 'full':
             hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
@@ -77,6 +78,7 @@ class Pyscf():
         mol2 = gto.Mole()
         mol2.atom = coords_new
         mol2.basis = self.basis
+        mol2.unit = 'Angstrom'
         mol2.build()
         mfx = scf.RHF(mol2).run()
         dipole1 = mfx.dip_moment(mol2)
