@@ -23,5 +23,5 @@ cd $PBS_O_WORKDIR
 FILE=global
 
 # run python job
-python $FILE.py >> $FILE.log
+python $FILE.py > $FILE.log
 exit;

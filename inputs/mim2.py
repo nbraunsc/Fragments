@@ -3,7 +3,7 @@ from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
 import os
 
-### things user defines ###
+############## things user defines ###############
 frag_type = 'distance'
 frag_deg = 1.8  #smaller fragments
 infinite_deg = 3        #larger fragments
@@ -12,25 +12,25 @@ low_theory = 'RHF'
 high_theory = 'MP2'
 software = Pyscf.Pyscf
 stepsize = 0.001        #for numerial difference for hessians
-#starting fragmentation code
-largermol = Molecule.Molecule()
+
+largermol = Molecule.Molecule()         #largermol is what is replaced
 largermol.initalize_molecule('largermol')
-##########################
+frag1 = fragmentation.Fragmentation(largermol)
+frag2 = fragmentation.Fragmentation(largermol)
+frag3 = fragmentation.Fragmentation(largermol)
+##################################################
 
 """ MIM high theory, small fragments"""
-frag1 = fragmentation.Fragmentation(largermol)
 frag1.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
 frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(basis), qc_backend=software, step_size=stepsize)
 #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
 
 """ MIM low theory, small fragments"""
-frag2 = fragmentation.Fragmentation(largermol)
 frag2.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
 frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(basis), qc_backend=software, step_size=stepsize)
 #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
 
 """ MIM low theory, large fragments (inifinte system)"""
-frag3 = fragmentation.Fragmentation(largermol)
 frag3.do_fragmentation(frag_type=str(frag_type), value=infinite_deg)
 frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(basis), qc_backend=software, step_size=stepsize)
 #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)

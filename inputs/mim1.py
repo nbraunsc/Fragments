@@ -3,12 +3,22 @@ from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
 import os
 
-#starting fragmentation code
+############## things user defines ###############
+frag_type = 'distance'
+frag_deg = 1.8  #smaller fragments
+basis = 'sto-3g'
+theory = 'MP2'
+software = Pyscf.Pyscf
+stepsize = 0.001        #for numerial difference for hessians
+
 largermol = Molecule.Molecule()
 largermol.initalize_molecule('largermol')
 frag = fragmentation.Fragmentation(largermol)
-frag.do_fragmentation(frag_type='distance', value=1.8)
-frag.initalize_Frag_objects(theory='MP2', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
+##################################################
+
+""" Setting up fragmentation for MIM1"""
+frag.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
+frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=software, step_size=stepsize)
 
 #changing into the to_run directory
 os.path.abspath(os.curdir)
@@ -59,7 +69,7 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
         "mol = gto.Mole()\n"
         "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n"]
         f.writelines(build) 
-        pyscf = open('../../nicolefragment/Pyscf.py', 'r')
+        pyscf = open('../../../nicolefragment/Pyscf.py', 'r')
         lines = pyscf.readlines()
     
         #writes scf info depending on theory given
