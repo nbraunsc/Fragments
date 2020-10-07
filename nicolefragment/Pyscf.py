@@ -73,6 +73,33 @@ class Pyscf():
             h = 0
             return e, g, h
     
+    def apply_field(self, E):
+        """ This will apply an electric field in a specific direction for pyscf. gives E vector
+        to make a new hcore.
+    
+        Parameters
+        ----------
+        E : np array
+            This is a 1D array of an x, y, z.  Put magintude of wanted E field in the position of the
+            direction wanted.
+    
+        Returns
+        -------
+        mos : ndarray?
+            This are the new mos in the core hamiltonian used for another SCF calculation.
+            Dont really need these
+    
+        """
+    
+        mol.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
+        h =(mol.intor('cint1e_kin_sph') + mol.intor('cint1e_nuc_sph')
+          + np.einsum('x,xij->ij', E, mol.intor('cint1e_r_sph', comp=3)))
+        mf = scf.RHF(mol)
+        mf.get_hcore = lambda *args: h
+        g = mf.nuc_grad_method()    #only gradient for RHF right now
+        return g
+
+    
     def get_dipole(self, coords_new):
         mol2 = gto.Mole()
         mol2.atom = coords_new

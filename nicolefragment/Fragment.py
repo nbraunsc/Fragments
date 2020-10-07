@@ -255,11 +255,20 @@ class Fragment():
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
         self.apt = self.build_apt()
-        #self.get_IR()
+        self.apt()
         return self.energy, self.grad, self.hessian, self.apt
+
+    def apt(self):
+        N = 50 # 50 samples in one period of the oscillated field
+        fields = numpy.sin((2*numpy.pi)/N * numpy.arange(N))*.2
+        gradient = [self.qc_class.apply_field((i+1e-5,0,0)) for i in fields]
+        print("apt first one", gradient[0], gradient.shape)
+""" pretty much want to have this apply_field as a dummie function in Pyscf. Then compute gradient with mol then do it again in other direciton """
     
     def build_apt(self):
-        """build xyz with link atoms in ndarray format, not string type like function
+        """
+            Builds the atomic polar tensor with numerical derivative of dipole moment w.r.t atomic Cartesian
+            coordinates. Function builds xyz input with link atoms in ndarray format, not string type or list like previous functions.
         """
         x = np.zeros((len(self.prims)+len(self.notes), 3))
         labels = []
@@ -307,6 +316,7 @@ class Fragment():
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
         print("shape of jac_apt", jac_apt.shape)
         self.apt = self.coeff*np.dot(jac_apt, px)
+        print("old apt", self.apt[0], self.apt.shape)
         return self.apt
         
     def get_IR(self):
