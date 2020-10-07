@@ -16,68 +16,75 @@ os.chdir('to_run/')
 
 #writing individual fragment input .py files to be run for RHF
 x = 0
-for i in frag.frags:
-    x = x + 1
-    inputxyz = []
-    inputxyz = i.build_xyz()
-    len_prim = len(i.prims)
-    num_la = len(i.notes)
-    step_size = i.step_size
-    basis_set = i.qc_class.basis
-    #makes a directory for each fragment
-    os.mkdir(str(x))
-    #computes the jacobians and saves as a .npy file in dir
-    g_jacob = i.build_jacobian_Grad()
-    h_jacob = i.build_jacobian_Hess()
-    coeff = i.coeff
-    np.save(os.path.join(str(x), 'jacob_grad'+ str(x) + '.npy'), g_jacob)
-    np.save(os.path.join(str(x), 'jacob_hess'+ str(x) + '.npy'), h_jacob)
-    np.save(os.path.join(str(x), 'coeff'+str(x) + '.npy'), coeff)
-    name = "fragment" + str(x) + ".py"
-    #start of writing individual fragment files
-    f = open(name, "w+")
-    imports = ["""import numpy as np\n
+mim_coeff = 1
+class_list = [frag]   #fragmentation instances
+fraglist = ['frag']
+for level in range(0, len(class_list)):
+    os.mkdir(fraglist[level])
+    os.chdir(fraglist[level])
+    np.save(os.path.join('mim_co.npy'), mim_coeff)
+    for i in class_list[level].frags:
+        x = x + 1
+        inputxyz = []
+        inputxyz = i.build_xyz()
+        len_prim = len(i.prims)
+        num_la = len(i.notes)
+        step_size = i.step_size
+        basis_set = i.qc_class.basis
+        #makes a directory for each fragment
+        os.mkdir(str(x))
+        #computes the jacobians and saves as a .npy file in dir
+        g_jacob = i.build_jacobian_Grad()
+        h_jacob = i.build_jacobian_Hess()
+        coeff = i.coeff
+        np.save(os.path.join(str(x), 'jacob_grad'+ str(x) + '.npy'), g_jacob)
+        np.save(os.path.join(str(x), 'jacob_hess'+ str(x) + '.npy'), h_jacob)
+        np.save(os.path.join(str(x), 'coeff'+str(x) + '.npy'), coeff)
+        name = "fragment" + str(x) + ".py"
+        #start of writing individual fragment files
+        f = open(name, "w+")
+        imports = ["""import numpy as np\n
 import os\n
 from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf\n
 from pyscf.prop.freq import rhf\n
 from pyscf.prop.polarizability import rhf\n
 from pyscf.grad.rhf import GradientsBasics\n
 np.set_printoptions(suppress=True, precision=5)\n"""]
-    f.writelines(imports)
-    info = ["len_prim =", str(len_prim), "\n"
-    "num_la =", str(num_la), "\n"
-    "step_size = ", str(step_size), "\n"]
-    f.writelines(info)
-    build = [
-    "mol = gto.Mole()\n"
-    "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n"]
-    f.writelines(build) 
-    pyscf = open('../../nicolefragment/Pyscf.py', 'r')
-    lines = pyscf.readlines()
+        f.writelines(imports)
+        info = ["len_prim =", str(len_prim), "\n"
+        "num_la =", str(num_la), "\n"
+        "step_size = ", str(step_size), "\n"]
+        f.writelines(info)
+        build = [
+        "mol = gto.Mole()\n"
+        "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n"]
+        f.writelines(build) 
+        pyscf = open('../../nicolefragment/Pyscf.py', 'r')
+        lines = pyscf.readlines()
     
-    #writes scf info depending on theory given
-    emp = []
-    grad_line = str()
-    if i.qc_class.theory == 'RHF': 
-        indices = [38, 39, 40, 41]
-        grad_line = str('hf_scanner = scf.RHF(mol2).apply(grad.RHF).as_scanner()\n'+ '            e, g = hf_scanner(mol2)\n')
-        for index in indices:
-            emp.append(lines[index].lstrip())
-    if i.qc_class.theory == 'MP2':
-        indices = [45, 46, 47]
-        grad_line = str("mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
-        for index in indices:
-            emp.append(lines[index].lstrip())
-    if i.qc_class.theory == 'CISD':
-        indices = [51, 52, 53]
-        grad_line = str("ci_scanner = ci.CISD(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = ci_scanner(mol2)\n")
-        for index in indices:
-            emp.append(lines[index].lstrip())
-    #dipole = ["mfx = scf.RHF(mol).run()\n, dipole = mfx.dip_moment(mol)\n"]
-    f.writelines(x for x in emp)
-    #f.writelines(dipole)
-    pyscf.close()
-    num_hess = ["#If not analytical hess, not do numerical below\n",
+        #writes scf info depending on theory given
+        emp = []
+        grad_line = str()
+        if i.qc_class.theory == 'RHF': 
+            indices = [38, 39, 40, 41]
+            grad_line = str('hf_scanner = scf.RHF(mol2).apply(grad.RHF).as_scanner()\n'+ '            e, g = hf_scanner(mol2)\n')
+            for index in indices:
+                emp.append(lines[index].lstrip())
+        if i.qc_class.theory == 'MP2':
+            indices = [45, 46, 47]
+            grad_line = str("mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
+            for index in indices:
+                emp.append(lines[index].lstrip())
+        if i.qc_class.theory == 'CISD':
+            indices = [51, 52, 53]
+            grad_line = str("ci_scanner = ci.CISD(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = ci_scanner(mol2)\n")
+            for index in indices:
+                emp.append(lines[index].lstrip())
+        #dipole = ["mfx = scf.RHF(mol).run()\n, dipole = mfx.dip_moment(mol)\n"]
+        f.writelines(x for x in emp)
+        #f.writelines(dipole)
+        pyscf.close()
+        num_hess = ["#If not analytical hess, not do numerical below\n",
 "if type(h) is int:\n",
 "    hess = np.zeros(((len(mol.atom))*3, (len(mol.atom))*3))\n",
 "    i = -1\n",
@@ -104,18 +111,21 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
 "            hess[:,i] = vec\n",
 "    h = hess.reshape(len_prim+num_la, 3, len_prim+num_la, 3)\n",
 "    h = h.transpose(0, 2, 1, 3)\n"]
-    f.writelines(num_hess)
-    scf_info = ["print('energy no coeff =', e)\n", "print('gradient =', g)\n", "print('hessian =', h)\n", "np.save(os.path.join('", str(x),"', '", name, "e.npy'), e)\n", "np.save(os.path.join('", str(x),"', '", name, "g.npy'), g)\n", "np.save(os.path.join('", str(x), "', '", name, "h.npy'), h)\n"]
-    f.writelines(scf_info) 
-    f.close()
+        f.writelines(num_hess)
+        scf_info = ["print('energy no coeff =', e)\n", "print('gradient =', g)\n", "print('hessian =', h)\n", "np.save(os.path.join('", str(x),"', '", name, "e.npy'), e)\n", "np.save(os.path.join('", str(x),"', '", name, "g.npy'), g)\n", "np.save(os.path.join('", str(x), "', '", name, "h.npy'), h)\n"]
+        f.writelines(scf_info) 
+        f.close()
+    os.chdir('../')
 
-files = os.listdir()
 #writing individual pbs scripts for each file
-for i in files:
-    if i.startswith("fragment"):
-        x = i.replace('.py', '')
-        filename = x + ".sh"
-        file_name = open(filename, "w")
-        top = ["#PBS -l nodes=2:ppn=4\n", "#PBS -l mem=20GB\n", "#PBS -q nmayhall_lab\n", "#PBS -A qcvt_doe\n", "#PBS -W group_list=nmayhall_lab\n", " \n", "module purge\n", "module load gcc/5.2.0\n", "module load Anaconda/5.2.0\n", "$MKL_NUM_THREADS = 1\n", "cd $PBS_O_WORKDIR\n", "source activate pyconda\n", "cd ../../\n", "python -m pip install -e . \n", "cd $PBS_O_WORKDIR\n", "FILE=", x, "\n", "python $FILE.py >> $FILE.log\n", "exit;\n"]
-        file_name.writelines(top)
-        file_name.close()
+for level in fraglist:
+    os.chdir(level)
+    files = os.listdir()
+    for i in files:
+        if i.startswith("fragment"):
+            x = i.replace('.py', '')
+            filename = x + ".sh"
+            file_name = open(filename, "w")
+            top = ["#PBS -l nodes=2:ppn=4\n", "#PBS -l mem=20GB\n", "#PBS -q nmayhall_lab\n", "#PBS -A qcvt_doe\n", "#PBS -W group_list=nmayhall_lab\n", " \n", "module purge\n", "module load gcc/5.2.0\n", "module load Anaconda/5.2.0\n", "$MKL_NUM_THREADS = 1\n", "cd $PBS_O_WORKDIR\n", "source activate pyconda\n", "cd ../../\n", "python -m pip install -e . \n", "cd $PBS_O_WORKDIR\n", "FILE=", x, "\n", "python $FILE.py >> $FILE.log\n", "exit;\n"]
+            file_name.writelines(top)
+            file_name.close()

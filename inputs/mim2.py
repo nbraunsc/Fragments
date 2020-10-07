@@ -43,9 +43,11 @@ os.chdir('to_run/')
 x = 0
 class_list = [frag1, frag2, frag3]   #fragmentation instances
 fraglist = ['frag1', 'frag2', 'frag3']
+mim_coeffs = [1, -1, 1]
 for level in range(0, len(class_list)):
     os.mkdir(fraglist[level])
     os.chdir(fraglist[level])
+    np.save(os.path.join('mim_co.npy'), mim_coeffs[level])
     for i in class_list[level].frags:
         x = x + 1
         inputxyz = []
@@ -95,7 +97,7 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
                 emp.append(lines[index].lstrip())
         if i.qc_class.theory == 'MP2':
             indices = [45, 46, 47]
-            grad_line = str(" mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
+            grad_line = str("mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
             for index in indices:
                 emp.append(lines[index].lstrip())
         if i.qc_class.theory == 'CISD':
