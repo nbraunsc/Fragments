@@ -34,7 +34,7 @@ This will submit all individual fragment jobs to the cluster and queue the pytho
 ## Running on local machine
 ### Sow/Reap method:
 
-In the command line submit one of these two python commands depending on which method desired (MIM1 or MIM2):
+Need to specify parameters in mim1.py or mim2.py for specific calculaion submit one of these two python commands depending on which method desired (MIM1 or MIM2):
 
 `python mim1.py` or `python mim2.py`
 
