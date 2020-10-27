@@ -1,5 +1,6 @@
 # Molecules-in-Molecules
 Fresh implementation of fragmetation code MIM in python using PySCF.  
+
 Need to make sure all the requried packages are installed.  Can be run on both a cluster system or local laptop.  Can be computed in parallel for both instances. Locally there is the option of using Ray or sow/reap method, on a cluster there is only the sow/reap method.
 
 Need to make sure the input file of desried molecule has bonding order and is in the inputs directory.
@@ -10,6 +11,7 @@ Code is able to do the following:
 
 # Getting the MIM code
 git clone https://github.com/nbraunsc/Fragments
+
 pip install -e .
 
 # Running on cluster
@@ -25,12 +27,14 @@ After pbs_1.sh is complete run the following bash script:
 Sow/reap method:
 
 `<python mim1.py>` or `<python mim2.py>`
+
 `<python submit_mult.sh>`
 
 Ray method:
+
 Need to specify parameters at the bottom of MIM.py script in nicolefragment directory then:
 
-`<python MIM.py>`
+`python MIM.py`
 
 
 
