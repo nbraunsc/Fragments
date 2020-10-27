@@ -24,12 +24,22 @@ After pbs_1.sh is complete run the following bash script:
 
 `./submit_mult.sh`
 
+This will submit all individual fragment jobs to the cluster and queue the python script that recombines all subcalculations for global properties.
+
 ## Running on local machine
 ### Sow/Reap method:
 
+In the command line submit one of these two python commands depending on which method desired (MIM1 or MIM2):
+
 `python mim1.py` or `python mim2.py`
 
+This will start the fragmetation and create all input files for the subcalculations in "to_run" directory.
+
+To submit subcalculations run the following python command:
+
 `python submit_mult.py`
+
+Finally, once all subcalculations are done, run following python command to recombine all the subcalculations:
 
 `python global.py`
 
