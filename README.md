@@ -10,7 +10,12 @@ Code is able to do the following:
 - Normal modes and IR intensities
 
 ## Getting the MIM code
+### Using GitHub
+Clone the public repository:
+
 'git clone https://github.com/nbraunsc/Fragments'
+
+Then use pip install to install the python package:
 
 'pip install -e .'
 
