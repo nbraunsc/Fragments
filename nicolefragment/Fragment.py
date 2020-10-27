@@ -219,7 +219,6 @@ class Fragment():
         """
         np.set_printoptions(suppress=True, precision=5)
         self.energy = 0
-        #hess_py = np.zeros(((len(self.prims)+len(self.notes))*3, (len(self.prims)+len(self.notes))*3))
         hess_py = 0
         self.grad = np.zeros((self.molecule.natoms, 3))
         self.inputxyz = self.build_xyz()
@@ -254,17 +253,53 @@ class Fragment():
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
-        self.apt = self.build_apt()
-        self.apt()
+        self.apt_grad()
+        #self.apt = self.build_apt()
         return self.energy, self.grad, self.hessian, self.apt
 
-    def apt(self):
-        N = 50 # 50 samples in one period of the oscillated field
-        fields = numpy.sin((2*numpy.pi)/N * numpy.arange(N))*.2
-        gradient = [self.qc_class.apply_field((i+1e-5,0,0)) for i in fields]
-        print("apt first one", gradient[0], gradient.shape)
-""" pretty much want to have this apply_field as a dummie function in Pyscf. Then compute gradient with mol then do it again in other direciton """
-    
+    def apt_grad(self):
+        """ Working on implementing this.
+        Function to create the apts by applying an electric field in a certain direciton to 
+        molecule then centeral difference with gradient after E field is applied.
+
+        !!! need to make sure h_core is getting changed for grad calc !!!
+        """
+        e_field = 0.001
+        E = [0, 0, 0]
+        apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
+        for i in range(0, 3):
+            E[i] = e_field
+            g1 = self.qc_class.apply_field(E, self.inputxyz)
+            E[i] = -1*e_field
+            g2 = self.qc_class.apply_field(E, self.inputxyz)
+            E[i] = 0
+            gradient = (g1-g2)/(2*e_field)
+            print("component xyz (012):", i)
+            print("Numerical gradient:", gradient)
+            flat_g = gradient.flatten()
+            print("flatten gradient:", flat_g)
+            apt[i] = flat_g
+        
+        #build M^-1/2 mass matrix and mass weight apt
+        labels = []
+        mass_matrix = np.zeros((apt.shape[1], apt.shape[1]))
+        for i in range(0, len(self.prims)):
+            labels.append(self.molecule.atomtable[self.prims[i]][0])
+            labels.append(self.molecule.atomtable[self.prims[i]][0])
+            labels.append(self.molecule.atomtable[self.prims[i]][0])
+        for pair in range(0, len(self.attached)):
+            labels.append('H')
+            labels.append('H')
+            labels.append('H')
+        for atom in range(0, len(labels)):
+            y = element(labels[atom])
+            value = 1/(np.sqrt(y.atomic_weight))
+            mass_matrix[atom][atom] = value
+        apt_mass = np.dot(mass_matrix, apt.T)
+        reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
+        jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
+        self.apt = self.coeff*np.dot(jac_apt, apt_mass)
+            
     def build_apt(self):
         """
             Builds the atomic polar tensor with numerical derivative of dipole moment w.r.t atomic Cartesian
@@ -308,16 +343,11 @@ class Fragment():
             a = storing_vec.T*value    ##mass weighting
             apt.append(a)
         px = np.vstack(apt)
-        print("shape of px", px.shape)
-        print("Link atoms", len(self.notes), "atoms in prim", len(self.prims))
-        print(self.jacobian_hess.shape, "shape before")
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
-        print("shape after", reshape_mass_hess.shape)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        print("shape of jac_apt", jac_apt.shape)
-        self.apt = self.coeff*np.dot(jac_apt, px)
-        print("old apt", self.apt[0], self.apt.shape)
-        return self.apt
+        oldapt = self.coeff*np.dot(jac_apt, px)
+        #self.apt = self.coeff*np.dot(jac_apt, px)
+        return oldapt
         
     def get_IR(self):
         """ Atempt at getting IR spectra to compare to with different software

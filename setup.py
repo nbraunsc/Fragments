@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 # Read in requirements.txt
 requirements = open('requirements.txt').readlines()
 requirements = [r.strip() for r in requirements]
-
+print(type(requirements))
 
 setup(name='nicolefragment',
         version=0,

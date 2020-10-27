@@ -113,13 +113,17 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     pq = np.dot(apt.T, modes)   #shape 3x3N
     pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
     intense = np.diagonal(pq_pq)
-    intense_kmmol = intense*42.2561
-    #intense_kmmol = intense*42.2561*0.529177
+    intense_kmmol = intense
+    #intense_kmmol = intense*(22.3577)
     #print("Normal Modes: ", modes)
     print("Final converged energy = ", etot, "Hartree")
     print("Final gradient = ", '\n', gtot)
     #print("Final hessian = ", '\n', htot)
     print("Hessian shape = ", htot.shape)
+    print(len(freq))
+    freq = freq.append([0], freq)
+    intense_kmmol = intense_kmmol.append([0], intense_kmmol)
+    print(len(freq))
     for i in range(0, len(freq)):
         print("Freq:", freq[i], "int :", intense_kmmol[i])
     

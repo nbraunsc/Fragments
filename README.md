@@ -29,7 +29,9 @@ After pbs_1.sh is complete run the following bash script:
 
 `python mim1.py` or `python mim2.py`
 
-`python submit_mult.sh`
+`python submit_mult.py`
+
+`python global.py`
 
 ### Ray method:
 

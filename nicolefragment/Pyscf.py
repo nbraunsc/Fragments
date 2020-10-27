@@ -29,51 +29,64 @@ class Pyscf():
         mol.atom = input_xyz
         mol.basis = self.basis
         mol.build()
-        if self.theory == 'full':
-            hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
-            e, g = hf_scanner(mol)
-            opt = optimize(scf.RHF(mol).kernel())
-            return e, g
     
         if self.theory == 'RHF': #Restricted HF calc
-            hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
-            e, g = hf_scanner(mol)
-            mf = mol.RHF().run()
+            #hf_scanner = scf.RHF(mol).apply(grad.RHF).as_scanner()
+            #e, g = hf_scanner(mol)
+            #mf = mol.RHF().run()
+            mf = scf.RHF(mol)
+            e = mf.kernel()
+            g = mf.nuc_grad_method().kernel()
             h = mf.Hessian().kernel()
             return e, g, h
     
         if self.theory == 'MP2': #Perturbation second order calc
-            mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
-            e, g = mp2_scanner(mol) 
+            #mp2_scanner = mp.MP2(scf.RHF(mol)).nuc_grad_method().as_scanner()
+            #e, g = mp2_scanner(mol) 
             h = 0
+            mf = scf.RHF(mol).run()
+            postmf = mp.MP2(mf).run()
+            e = postmf.kernel()
+            g = postmf.nuc_grad_method().kernel()
             return e, g, h
     
         if self.theory == 'CISD':    #CI for singles and double excitations
-            ci_scanner = ci.CISD(scf.RHF(mol)).nuc_grad_method().as_scanner()
-            e, g = ci_scanner(mol)
+            #ci_scanner = ci.CISD(scf.RHF(mol)).nuc_grad_method().as_scanner()
+            #e, g = ci_scanner(mol)
             h = 0
+            mf = scf.RHF(mol).run()
+            postmf = ci.CISD(mf).run()
+            e = postmf.kernel()
+            g = postmf.nuc_grad_method().kernel()
             return e, g, h
     
         if self.theory == 'CCSD':    #Couple Cluster for singles and doubles
-            cc_scanner = cc.CCSD(scf.RHF(mol)).nuc_grad_method().as_scanner()
-            e, g = cc_scanner(mol)
+            #cc_scanner = cc.CCSD(scf.RHF(mol)).nuc_grad_method().as_scanner()
+            #e, g = cc_scanner(mol)
             h = 0
+            mf = scf.RHF(mol).run()
+            postmf = cc.CCSD(mf).run()
+            e = postmf.kernel()
+            grad = postmf.nuc_grad_method().kernel()
             return e, g, h
 
         if self.theory == 'CASSCF':
-            
-            mc_grad_scanner = mcscf.CASSCF(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
-            e, g = mc_grad_scanner(mol, spin=self.spin)
+            #mc_grad_scanner = mcscf.CASSCF(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
+            #e, g = mc_grad_scanner(mol, spin=self.spin)
             h = 0
+            mf = scf.RHF(mol).run()
+            postmf = mcscf.CASSCF(mf, self.active_space, self.nelec).run()
+            e = postmf.kernel()
+            grad = postmf.nuc_grad_method().kernel()
             return e, g, h
 
         if self.theory == 'CASCI':
-            mc_grad_scanner = mcscf.CASCI(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
-            e, g = mc_grad_scanner(mol, spin=self.spin)
+            #mc_grad_scanner = mcscf.CASCI(scf.RHF(mol), self.active_space, self.nelec).nuc_grad_method().as_scanner()
+            #e, g = mc_grad_scanner(mol, spin=self.spin)
             h = 0
             return e, g, h
     
-    def apply_field(self, E):
+    def apply_field(self, E, input_xyz):
         """ This will apply an electric field in a specific direction for pyscf. gives E vector
         to make a new hcore.
     
@@ -82,7 +95,8 @@ class Pyscf():
         E : np array
             This is a 1D array of an x, y, z.  Put magintude of wanted E field in the position of the
             direction wanted.
-    
+        input_xyz : list
+            Coordinates for molecule
         Returns
         -------
         mos : ndarray?
@@ -90,14 +104,19 @@ class Pyscf():
             Dont really need these
     
         """
-    
-        mol.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
-        h =(mol.intor('cint1e_kin_sph') + mol.intor('cint1e_nuc_sph')
-          + np.einsum('x,xij->ij', E, mol.intor('cint1e_r_sph', comp=3)))
-        mf = scf.RHF(mol)
+        mol1 = gto.Mole()
+        mol1.atom = input_xyz
+        mol1.basis = self.basis
+        mol1.build()
+        mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
+        h =(mol1.intor('cint1e_kin_sph') + mol1.intor('cint1e_nuc_sph')
+          + np.einsum('x,xij->ij', E, mol1.intor('cint1e_r_sph', comp=3)))
+        mf = scf.RHF(mol1)
         mf.get_hcore = lambda *args: h
-        g = mf.nuc_grad_method()    #only gradient for RHF right now
-        return g
+        mol1.incore_anyway = True    #needed for post HF calculations to make sure custom H is used
+        e = mf.kernel()
+        g2 = mf.nuc_grad_method().kernel()    #only gradient for RHF right now
+        return g2
 
     
     def get_dipole(self, coords_new):

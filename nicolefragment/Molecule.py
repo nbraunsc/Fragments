@@ -47,13 +47,8 @@ class Molecule():
         self.prim_dist = []
         
     def initalize_molecule(self, file_name):
-        #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         x = "../inputs/" + file_name + ".cml"
-        #current_dir = os.getcwd()
-        #x = current_dir + "/" + self.mol_class + "/" + file_name + ".cml"
-        #x = "../inputs/" + self.mol_class + "/" + file_name + ".cml"
         self.parse_cml(x)
-
         #self.build_molmatrix(2)
 
     def parse_cml(self, filename):
@@ -174,7 +169,7 @@ class Molecule():
     def build_prim_dist(self):
         """ Builds a matrix with prim to prims distances.
 
-        Distance is determined by the minimum distance between each pair of atoms in their respective prims.
+        Distance is determined by the minimum interatomic distances between pairs of atoms in their respective prims.
         """
         atom_dist = self.build_atom_dist()
         self.prim_dist = np.zeros((len(self.prims), len(self.prims)))
@@ -195,6 +190,7 @@ class Molecule():
         
         Ndarray contains only single-linkage connectivity.  Thus if one primative is 
         connected to another primitave there will be a 1 in the row/column index of the array.
+        This is used in the covalent network fragmentation scheme and not spheric scheme.
        
        Parameters
         ----------
@@ -225,6 +221,7 @@ class Molecule():
         
         Ndarray contains all connectivity between primiatives. Thus row index and column index entry
         correspond to number of primiatives away column prim is from row prim. 
+        This is used in the covalent network fragmentation scheme and not spheric scheme.
         
         Built through a series of matrix manipulations using self.primchart and self.molchart
         
