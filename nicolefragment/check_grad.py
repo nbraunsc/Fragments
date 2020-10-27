@@ -1,3 +1,5 @@
+### Don't need this python script for MIM code ###
+
 from Molecule import *
 from Fragment import *
 from fragmentation import *

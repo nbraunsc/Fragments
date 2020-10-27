@@ -1,3 +1,5 @@
+### Don't need this code for MIM code ###
+
 from ase import Atoms
 from ase.io import read
 from ase.visualize import view

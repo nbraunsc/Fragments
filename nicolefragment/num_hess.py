@@ -1,3 +1,5 @@
+### Don't need this python script for MIM code ###
+
 import numpy as np
 from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf
 from pyscf.prop.freq import rhf
