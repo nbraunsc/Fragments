@@ -10,25 +10,25 @@ Code is able to do the following:
 - Normal modes and IR intensities
 
 # Getting the MIM code
-git clone https://github.com/nbraunsc/Fragments
+'git clone https://github.com/nbraunsc/Fragments'
 
-pip install -e .
+'pip install -e .'
 
 # Running on cluster
 Need to specify parameters in mim1.py or mim2.py for specific calculaion. Then:
 
-`<qsub -N mim1 pbs_1.sh>` or `<qsub -N mim2 pbs_1.sh>`
+`qsub -N mim1 pbs_1.sh` or `qsub -N mim2 pbs_1.sh`
 
 After pbs_1.sh is complete run the following bash script:
 
-`<./submit_mult.sh>`
+`./submit_mult.sh`
 
 # Running on local machine
 Sow/reap method:
 
-`<python mim1.py>` or `<python mim2.py>`
+`python mim1.py` or `python mim2.py`
 
-`<python submit_mult.sh>`
+`python submit_mult.sh`
 
 Ray method:
 
