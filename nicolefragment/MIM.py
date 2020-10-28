@@ -38,14 +38,11 @@ def global_props(frag_obj, step_size=0.001):
     
     result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag_obj.frags)) ]
     out = ray.get(result_ids)
-    print("out type:", type(out))
-    print("##################################################")
     etot_ray = 0
     gtot_ray = 0
     htot_ray = 0
     apt_ray = 0
     for o in out:
-        print("energy in ray part", type(o[0]))
         etot_ray += o[0]
         gtot_ray += o[1]
         htot_ray += o[2]
@@ -116,9 +113,7 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     pq = np.dot(apt.T, modes)   #shape 3x3N
     pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
     intense = np.diagonal(pq_pq)
-    intense_kmmol = intense
-    #intense_kmmol = intense*(22.3577)
-    #print("Normal Modes: ", modes)
+    intense_kmmol = intense*42.2561
     print("Final converged energy = ", etot, "Hartree")
     print("Final gradient = ", '\n', gtot)
     #print("Final hessian = ", '\n', htot)
@@ -126,8 +121,6 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
     for i in range(0, len(freq)):
         print("Freq:", freq[i], "int :", intense_kmmol[i])
     
-    #def model(position, width, height):
-    #    return  height * np.sqrt(2*np.pi) * width * scipy.stats.norm.pdf(x, position, width) 
     def model(position, width, height):
         return  (height / scipy.stats.norm.pdf(position,position,width)) * scipy.stats.norm.pdf(x, position, width)
 
@@ -413,10 +406,10 @@ if __name__ == "__main__":
     largermol.initalize_molecule('largermol')
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    #do_MIM1(1.6, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
+    do_MIM1(1.6, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol, opt=False) #uncomment to run MIM2
+    #do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
     #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
