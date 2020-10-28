@@ -46,7 +46,10 @@ class Pyscf():
             h = 0
             mf = scf.RHF(mol).run()
             postmf = mp.MP2(mf).run()
-            e = postmf.kernel()
+            e = mf.kernel() + postmf.kernel()[0]
+            print("HF energy = ", mf.kernel())
+            print("MP2 energy corr =", postmf.kernel()[0])
+            print("HF + MP2 energy = ", e, type(e))
             g = postmf.nuc_grad_method().kernel()
             return e, g, h
     

@@ -241,8 +241,8 @@ class Fragment():
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
-        self.apt_grad()
-        #self.apt = self.build_apt()
+        ##self.apt_grad()
+        self.apt = self.build_apt()
         return self.energy, self.grad, self.hessian, self.apt
 
     def apt_grad(self):
