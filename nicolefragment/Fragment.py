@@ -43,17 +43,6 @@ class Fragment():
         self.qc_class = qc_class
         self.step_size = step_size
         
-
-    #def __str__(self):
-    #    out = "Frag:"
-    #    out += str(self.prims)
-    #    out += str(self.coeff)
-    #    out += str(self.attached)
-    #    return out 
-
-    #def __repr__(self):
-    #    return str(self)
-
     def add_linkatoms(self, atom1, attached_atom, molecule):
         """ Adds H as a link atom
         
@@ -91,11 +80,10 @@ class Fragment():
         coord = []
         coord.append('H')
         coord.append(new_xyz)
-        #new_xyz.insert(0, 'H')
         return coord, factor
         #return new_xyz, factor, coord
     
-    def build_xyz(self):    #builds input with atom label, xyz coords, and link atoms as a string
+    def build_xyz(self):
         """ Builds the xyz input with the atom labels, xyz coords, and link atoms as a string or list 
         
         Parameters
@@ -351,16 +339,16 @@ class Fragment():
         
     def get_IR(self):
         """ Atempt at getting IR spectra to compare to with different software
+
+       !!!  Don't need for MIM code !!!
+
         """
-        print("start of ir funciton")
         symbols = str()
         positions = []
         for i in self.inputxyz:
             symbols += i[0]
             coord = tuple(i[1])
             positions.append(coord)
-        print("sybmols", symbols)
-        print("positions", positions)
         molecule = Atoms(str(symbols), positions)
         calc = Vasp(prec='Accurate',
                     ediff=1E-8,

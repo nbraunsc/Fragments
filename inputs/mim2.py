@@ -3,22 +3,22 @@ from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import numpy as np
 import os
 
-############## things user defines ###############
-frag_type = 'distance'
-frag_deg = 1.8  #smaller fragments
-infinite_deg = 3        #larger fragments
+############## User defined paramters ###############
+frag_type = 'distance'  #can be 'distance' or 'graphical'
+frag_deg = 1.8  #smaller fragmentation level
+infinite_deg = 3        #larger fragmentation level or infinity
 basis = 'sto-3g'
 low_theory = 'RHF'
 high_theory = 'MP2'
 software = Pyscf.Pyscf
-stepsize = 0.001        #for numerial difference for hessians
+stepsize = 0.001        #for second derivative by finite difference
 
 largermol = Molecule.Molecule()         #largermol is what is replaced
 largermol.initalize_molecule('largermol')
 frag1 = fragmentation.Fragmentation(largermol)
 frag2 = fragmentation.Fragmentation(largermol)
 frag3 = fragmentation.Fragmentation(largermol)
-##################################################
+#####################################################
 
 """ MIM high theory, small fragments"""
 frag1.do_fragmentation(frag_type=str(frag_type), value=frag_deg)

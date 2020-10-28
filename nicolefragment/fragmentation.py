@@ -302,7 +302,6 @@ class Fragmentation():
         for j in range(0, len(molecule)):
             atomlabels.append(molecule[j][0])
         coords = molecule[:, [1,2,3]]
-        print("coords thing", coords, coords.shape)
         self.moleculexyz = []
         for i in coords:
             #x = [i[1], i[2], i[3]]
@@ -390,7 +389,6 @@ class Fragmentation():
         relaxed = geom
         print("\n", "##########################", '\n', "#       Converged!       #", '\n', "##########################") 
         print('\n', "Energy = ", self.etot_opt)
-        #print('\n', "Converged_Gradient:", "\n", self.grad_opt)
         self.molecule.optxyz = relaxed.coords
         os.chdir('../')
         return self.etot_opt#, self.grad_opt
