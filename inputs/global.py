@@ -19,7 +19,6 @@ global_h = 0
 for level in range(0, len(files)):
     os.chdir(files[level])
     mim_coeff = np.load('mim_co.npy')
-    print("coefficient", mim_coeff)
     numpy_list = [x[0] for x in os.walk('.')]
     numpy_list.pop(0)
     energy = 0
@@ -41,7 +40,6 @@ for level in range(0, len(files)):
         grad += coeff*j_grad.dot(g)
         hess += np.einsum('ijkl, jmln -> imkn', y, j_hess_t)*coeff
         os.chdir('../')
-    print("level", level, "mim coeff = ", mim_coeff)
     global_e += energy*mim_coeff
     global_g += grad*mim_coeff
     global_h += hess*mim_coeff
@@ -49,6 +47,6 @@ for level in range(0, len(files)):
 
 print("Global energy :", global_e)
 print("Global gradient: \n", global_g)
-print("Global hessian: \n", global_h)
+print("Global hessian shpae: \n", global_h.shape)
 
         
