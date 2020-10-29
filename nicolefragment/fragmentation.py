@@ -455,55 +455,53 @@ class Fragmentation():
         return global_apt
 
 
-        
-
-
 if __name__ == "__main__":
-    #carbonylavo = Molecule()
-    #carbonylavo.initalize_molecule('carbonylavo')
-    #frag = Fragmentation(carbonylavo)
+    #largermol = Molecule()
+    #largermol.initalize_molecule('largermol')
+    #frag = Fragmentation(largermol)
     #frag.do_fragmentation(frag_type='graphical', value=2)
     #frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
     #frag.energy_gradient(frag.moleculexyz)
     np.set_printoptions(suppress=True, precision=5)
-    carbonylavo = Molecule.Molecule()
-    carbonylavo.initalize_molecule('carbonylavo')
-    frag = fragmentation.Fragmentation(carbonylavo)
+    
+    largermol = Molecule.Molecule()
+    largermol.initalize_molecule('largermol')
+    frag = fragmentation.Fragmentation(largermol)
     frag.do_fragmentation(frag_type='distance', value=1.8)
-    frag.initalize_Frag_objects(theory='MP2', basis='sto-3g', qc_backend=Pyscf.Pyscf)
-    #frag.energy_gradient(frag.moleculexyz)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
+    frag.energy_gradient(frag.moleculexyz)
    
-    import ray
-    start_time = time.time()
-    ray.init()
+    #import ray
+    #start_time = time.time()
+    #ray.init()
 
-    frags_id = ray.put(frag)    #future for Fragmentation instance, putting in object store
+    #frags_id = ray.put(frag)    #future for Fragmentation instance, putting in object store
 
-    @ray.remote
-    def get_frag_stuff(f,_frags):
-        f_current = _frags.frags[f]
-        return f_current.qc_backend()
-    result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag.frags)) ]
-    out = ray.get(result_ids)
-    etot = 0
-    gtot = 0
-    htot = 0
-    for o in out:
-        etot += o[0]
-        gtot += o[1]
-        htot += o[2]
-    total_time = time.time() - start_time 
-    ray.shutdown()
-    e, v = frag.mw_hessian(htot)
-    print("e", e)
-    print("modes", v)
+    #@ray.remote
+    #def get_frag_stuff(f,_frags):
+    #    f_current = _frags.frags[f]
+    #    return f_current.qc_backend()
+    #result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag.frags)) ]
+    #out = ray.get(result_ids)
+    #etot = 0
+    #gtot = 0
+    #htot = 0
+    #for o in out:
+    #    etot += o[0]
+    #    gtot += o[1]
+    #    htot += o[2]
+    #total_time = time.time() - start_time 
+    #ray.shutdown()
+    #e, v = frag.mw_hessian(htot)
+    #print("e", e)
+    #print("modes", v)
 
     #start_fragtime = time.time()
     #frag.write_xyz('carbonylavo')
     #frag.energy_gradient(frag.moleculexyz)
     #end_time = time.time() - start_fragtime
-    print("Final converged energy = ", etot)
-    print("Final gradient = ", '\n', gtot)
+    #print("Final converged energy = ", etot)
+    #print("Final gradient = ", '\n', gtot)
     #print("Final hessian = ", '\n', htot)
     print("Hessian shape = ", htot.shape)
     #print(htot[0][1])

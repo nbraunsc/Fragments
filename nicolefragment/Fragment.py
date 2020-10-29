@@ -213,7 +213,7 @@ class Fragment():
         energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
         hess = hess_py
 
-        #If not analytical hess, not do numerical below
+        #If not analytical hess, do numerical below
         if type(hess_py) is int:
             hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
             i = -1
@@ -241,8 +241,8 @@ class Fragment():
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
-        ##self.apt_grad()
-        self.apt = self.build_apt()
+        self.apt_grad()     #one i am trying to get to work
+        #self.apt = self.build_apt()    #one that words
         return self.energy, self.grad, self.hessian, self.apt
 
     def apt_grad(self):
@@ -252,22 +252,29 @@ class Fragment():
 
         !!! need to make sure h_core is getting changed for grad calc !!!
         """
-        e_field = 0.001
+        e_field = 0.000000001
         E = [0, 0, 0]
+        energy_vec = np.zeros((3))
         apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
+        dip = 0
         for i in range(0, 3):
+            e1, g1, dip = self.qc_class.apply_field(E, self.inputxyz)   #no field
             E[i] = e_field
-            g1 = self.qc_class.apply_field(E, self.inputxyz)
+            e2, g2, dipole2 = self.qc_class.apply_field(E, self.inputxyz) #positive direction
             E[i] = -1*e_field
-            g2 = self.qc_class.apply_field(E, self.inputxyz)
+            e3, g3, dipole3 = self.qc_class.apply_field(E, self.inputxyz)   #neg direction
             E[i] = 0
-            gradient = (g1-g2)/(2*e_field)
-            print("component xyz (012):", i)
-            print("Numerical gradient:", gradient)
+            print("Energy difference:", e2-e1)
+            gradient = (g3-g2)/(2*e_field)
+            energy2 = (e3-e2)/(2*e_field)
+            energy_vec[i] = energy2
+            #dip = (dipole-dipole2)/(2*e_field)
             flat_g = gradient.flatten()
-            print("flatten gradient:", flat_g)
             apt[i] = flat_g
-        
+        print("fragment:", self.prims)
+        print("Enery deriv:\n", energy_vec)
+        print("Dipole moment:\n", dip)
+
         #build M^-1/2 mass matrix and mass weight apt
         labels = []
         mass_matrix = np.zeros((apt.shape[1], apt.shape[1]))
