@@ -1,0 +1,26 @@
+$molecule
+   0 3
+   C     0.0000000    0.0000000    0.0000000
+   H    -0.8611113    0.0000000    0.6986839
+   H     0.8611113    0.0000000    0.6986839
+$end
+
+$rem
+  jobtype           sp
+  method            rasci
+  basis             cc-pvdz
+  max_scf_cycles    200
+  scf_algorithm     gdm
+  unrestricted      false
+  set_iter      100
+  RAS_ROOTS         4             ! Compute 4 states
+  RAS_ELEC          2             ! Active electrons    (RAS2)
+  RAS_ACT           2             ! Active orbitals     (RAS2)
+  RAS_SPIN_MULT     0             ! Compute any spin multiplicity
+  RAS_OCC           3
+  N_FROZEN_CORE     3
+  N_FROZEN_VIRTUAL  19
+  RAS_DO_HOLE       0
+  RAS_DO_PART       0
+  RAS_NATORB        false          ! Compute natural orbital occupancies
+$end

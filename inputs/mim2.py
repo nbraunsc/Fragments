@@ -82,34 +82,35 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
         f.writelines(info)
         build = [
         "mol = gto.Mole()\n"
-        "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n"]
+        "mol.atom = ", str(inputxyz), "\n", "mol.basis = '", basis_set, "'\n", "mol.build()\n", "mf = scf.RHF(mol)\n"]
         f.writelines(build) 
         pyscf = open('../../../nicolefragment/Pyscf.py', 'r')
         lines = pyscf.readlines()
         
         #writes scf info depending on theory given
-        emp = []
         grad_line = str()
         if i.qc_class.theory == 'RHF': 
-            indices = [38, 39, 40, 41]
-            grad_line = str('hf_scanner = scf.RHF(mol2).apply(grad.RHF).as_scanner()\n'+ '            e, g = hf_scanner(mol2)\n')
-            for index in indices:
-                emp.append(lines[index].lstrip())
+            egh = ["""e = mf.kernel()
+g = mf.nuc_grad_method().kernel()
+h = mf.Hessian().kernel()"""]
+            grad_line = str('e = mf2.kernel()\n' + '            g = mf2.nuc_grad_method().kernel()')
         if i.qc_class.theory == 'MP2':
-            indices = [45, 46, 47]
-            grad_line = str("mp2_scanner = mp.MP2(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = mp2_scanner(mol2)\n")
-            for index in indices:
-                emp.append(lines[index].lstrip())
+            egh = ["postmf = mp.MP2(mf).run()\n", 
+            "e = mf.kernel() + postmf.kernel()[0]\n",
+            "g = postmf.nuc_grad_method().kernel()\n",
+            "h = 0\n"]
+            grad_line = str('postmf2 = mp.MP2(mf2).run()\n' + '            e = mf2.kernel() + postmf2.kernel()[0]\n' + '            g = postmf2.nuc_grad_method().kernel()')
         if i.qc_class.theory == 'CISD':
-            indices = [51, 52, 53]
-            grad_line = str("ci_scanner = ci.CISD(scf.RHF(mol2)).nuc_grad_method().as_scanner()\n"+ "            e, g = ci_scanner(mol2)\n")
-            for index in indices:
-                emp.append(lines[index].lstrip())
+            egh =  ["""postmf = ci.CISD(mf).run()
+e = postmf.kernel()
+g = postmf.nuc_grad_method().kernel()
+h = 0"""]
+            grad_line = str()
         #dipole = ["mfx = scf.RHF(mol).run()\n, dipole = mfx.dip_moment(mol)\n"]
-        f.writelines(x for x in emp)
+        f.writelines(egh)
         #f.writelines(dipole)
         pyscf.close()
-        num_hess = ["#If not analytical hess, not do numerical below\n",
+        num_hess = ["\n#If not analytical hess, not do numerical below\n",
 "if type(h) is int:\n",
 "    hess = np.zeros(((len(mol.atom))*3, (len(mol.atom))*3))\n",
 "    i = -1\n",
@@ -121,14 +122,15 @@ np.set_printoptions(suppress=True, precision=5)\n"""]
 "            mol2.atom = mol.atom\n",
 "            mol2.basis = mol.basis\n",
 "            mol2.build()\n",
-"            ", grad_line,
+"            mf2 = scf.RHF(mol2)\n",
+"            ", grad_line, "\n",
 "            grad1 = g.flatten()\n",
 "            mol.atom[atom][1][xyz] = mol.atom[atom][1][xyz]-2*step_size\n",
 "            mol2 = gto.Mole()\n",
 "            mol2.atom = mol.atom\n",
 "            mol2.basis = mol.basis\n",
 "            mol2.build()\n",
-"            ", grad_line,
+"            ", grad_line, "\n",
 "            grad2 = g.flatten()\n",
 "            mol.atom[atom][1][xyz] = mol.atom[atom][1][xyz]+step_size\n",
 "            vec = (grad1 - grad2)/(4*step_size)\n",

@@ -6,7 +6,6 @@ import os
 ############## User defined paramters ###############
 frag_type = 'distance'  #can be 'distance' or 'graphical'
 frag_deg = 1.8  #smaller fragmentation level
-infinite_deg = 3        #larger fragmentation level or infinity
 basis = 'sto-3g'
 theory = 'RHF'
 software = Pyscf.Pyscf
@@ -85,7 +84,7 @@ h = mf.Hessian().kernel()"""]
             "e = mf.kernel() + postmf.kernel()[0]\n",
             "g = postmf.nuc_grad_method().kernel()\n",
             "h = 0\n"]
-            grad_line = str('postmf2 = mp.MP2(mf2).run()\n' + '            e = mf2.kernel() + postmf.kernel()[0]\n' + '            g = postmf2.nuc_grad_method().kernel()')
+            grad_line = str('postmf2 = mp.MP2(mf2).run()\n' + '            e = mf2.kernel() + postmf2.kernel()[0]\n' + '            g = postmf2.nuc_grad_method().kernel()')
         if i.qc_class.theory == 'CISD':
             egh =  ["""postmf = ci.CISD(mf).run()
 e = postmf.kernel()
