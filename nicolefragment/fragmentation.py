@@ -276,8 +276,8 @@ class Fragmentation():
             e, grad, i_hess, i_hess2 = i.qc_backend()
             print(e, e.shape)
             print(grad, grad.shape)
-            print(e-grad)
-            print("hessian diff = ", i_hess-i_hess2)
+            #print(e-grad)
+            #print("hessian diff = ", i_hess-i_hess2)
             self.etot += i.energy
             self.gradient += i.grad
             self.hessian += i.hessian
@@ -503,7 +503,7 @@ if __name__ == "__main__":
     #print("Final converged energy = ", etot)
     #print("Final gradient = ", '\n', gtot)
     #print("Final hessian = ", '\n', htot)
-    print("Hessian shape = ", htot.shape)
+    #print("Hessian shape = ", htot.shape)
     #print(htot[0][1])
     #print(htot[1][0])
 

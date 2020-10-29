@@ -252,7 +252,7 @@ class Fragment():
 
         !!! need to make sure h_core is getting changed for grad calc !!!
         """
-        e_field = 0.000000001
+        e_field = 0.000001
         E = [0, 0, 0]
         energy_vec = np.zeros((3))
         apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
@@ -267,6 +267,8 @@ class Fragment():
             print("Energy difference:", e2-e1)
             gradient = (g3-g2)/(2*e_field)
             energy2 = (e3-e2)/(2*e_field)
+            print("energy after finite diff:", energy2)
+            print("dipole moment comp:", dip[i])
             energy_vec[i] = energy2
             #dip = (dipole-dipole2)/(2*e_field)
             flat_g = gradient.flatten()
