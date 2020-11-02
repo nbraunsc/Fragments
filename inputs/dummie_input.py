@@ -49,12 +49,23 @@ $molecule
 $end
 
 molecule_name = 'largermol'
-mim_type = mim2            #mim1 or mim2
-frag_type = 'distance'  #can be 'distance' or 'graphical'
-frag_deg = 1.8  #smaller fragmentation level
-frag_deg2 = 5  #larger fragmentation level
-basis = 'sto-3g'
-low_theory = 'RHF'
+#mim1 or mim2
+mim_type = 'mim1'            
+
+#can be 'distance' or 'graphical'
+fragtype = 'distance' 
+
+#smaller fragmentation level
+frag_deg = 1.8 
+
+#larger fragmentation level
+large_deg2 = 5
+basis_set = 'sto-3g'
+#low_theory = 'RHF'
 high_theory = 'MP2'
-software = Pyscf.Pyscf          #could be Molcas.Molcas or Qchem.Qchem
-stepsize = 0.001        #for second derivative by finite difference
+
+#could be Molcas.Molcas or Qchem.Qchem
+software = Pyscf.Pyscf   
+
+#for second derivative by finite difference
+stepsize = 0.001        
