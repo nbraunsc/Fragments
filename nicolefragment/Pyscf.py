@@ -38,7 +38,9 @@ class Pyscf():
             return e, g, h
     
         if self.theory == 'MP2': #Perturbation second order calc
-            postmf = mp.MP2(mf).run()
+            postmf = mp.MP2(mf)
+            print("postmf kernel")
+            print(postmf.kernel())
             e = mf.kernel() + postmf.kernel()[0]
             g = postmf.nuc_grad_method().kernel()
             h = 0

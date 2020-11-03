@@ -25,7 +25,7 @@ class Fragment():
     
     """
     
-    def __init__(self, qc_class, molecule, prims, attached=[], coeff=1, step_size=0.001):
+    def __init__(self, qc_class, molecule, prims, attached=[], coeff=1, step_size=0.001, local_coeff=1):
         self.prims = prims 
         self.molecule = molecule 
         self.coeff = coeff 
@@ -42,6 +42,7 @@ class Fragment():
         self.jacobian_hess = []  #ndarray shape of full system*3 x fragment(with LA)*3
         self.qc_class = qc_class
         self.step_size = step_size
+        self.local_coeff = local_coeff
         
     def add_linkatoms(self, atom1, attached_atom, molecule):
         """ Adds H as a link atom
@@ -193,7 +194,7 @@ class Fragment():
         self.jacobian_hess = full_array
         return self.jacobian_hess
 
-    def qc_backend(self, step_size=0.001):
+    def qc_backend(self):
         """ Runs the quantum chemistry backend.
         
         Returns
@@ -220,27 +221,27 @@ class Fragment():
             for atom in range(0, len(self.inputxyz)):
                 for xyz in range(0, 3):
                     i = i+1
-                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+step_size
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+self.step_size
                     grad1 = self.qc_class.energy_gradient(self.inputxyz)[1].flatten()
-                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]-2*step_size
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]-2*self.step_size
                     grad2 = self.qc_class.energy_gradient(self.inputxyz)[1].flatten()
-                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+step_size
-                    vec = (grad1 - grad2)/(4*step_size)
+                    self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+self.step_size
+                    vec = (grad1 - grad2)/(4*self.step_size)
                     hess[i] = vec
                     hess[:,i] = vec
        
             hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
             hess = hess.transpose(0, 2, 1, 3)
         
-        self.energy = self.coeff*energy
+        self.energy = self.local_coeff*self.coeff*energy
         jacob = self.build_jacobian_Grad()
-        self.grad = self.coeff*jacob.dot(grad)
+        self.grad = self.local_coeff*self.coeff*jacob.dot(grad)
         
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
-        self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff
+        self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
         self.apt_grad()     #one i am trying to get to work
         #self.apt = self.build_apt()    #one that words
         return self.energy, self.grad, self.hessian, self.apt
@@ -295,7 +296,7 @@ class Fragment():
         apt_mass = np.dot(mass_matrix, apt.T)
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        self.apt = self.coeff*np.dot(jac_apt, apt_mass)
+        self.apt = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
             
     def build_apt(self):
         """
@@ -342,7 +343,7 @@ class Fragment():
         px = np.vstack(apt)
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        oldapt = self.coeff*np.dot(jac_apt, px)
+        oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
         #self.apt = self.coeff*np.dot(jac_apt, px)
         return oldapt
         
