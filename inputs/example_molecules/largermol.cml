@@ -1,6 +1,3 @@
-#Input for MIM
-
-$molecule
 <molecule>
  <atomArray>
   <atom id="a1" elementType="C" x3="1.533710" y3="-0.422080" z3="0.007950"/>
@@ -46,15 +43,3 @@ $molecule
   <bond atomRefs2="a15 a18" order="1"/>
  </bondArray>
 </molecule>
-$end
-
-molecule_name = 'largermol'
-mim_type = mim2            #mim1 or mim2
-frag_type = 'distance'  #can be 'distance' or 'graphical'
-frag_deg = 1.8  #smaller fragmentation level
-frag_deg2 = 5  #larger fragmentation level
-basis = 'sto-3g'
-low_theory = 'RHF'
-high_theory = 'MP2'
-software = Pyscf.Pyscf          #could be Molcas.Molcas or Qchem.Qchem
-stepsize = 0.001        #for second derivative by finite difference

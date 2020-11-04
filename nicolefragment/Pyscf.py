@@ -29,7 +29,7 @@ class Pyscf():
         mol.atom = input_xyz
         mol.basis = self.basis
         mol.build()
-        mf = scf.RHF(mol)
+        mf = scf.RHF(mol).run()
     
         if self.theory == 'RHF': #Restricted HF calc
             e = mf.kernel()
@@ -40,28 +40,32 @@ class Pyscf():
         if self.theory == 'MP2': #Perturbation second order calc
             postmf = mp.MP2(mf).run()
             e = mf.kernel() + postmf.kernel()[0]
-            g = postmf.nuc_grad_method().kernel()
+            g2 = postmf.nuc_grad_method()
+            g = g2.kernel()
             h = 0
             return e, g, h
     
         if self.theory == 'CISD':    #CI for singles and double excitations
             postmf = ci.CISD(mf).run()
             e = postmf.kernel()
-            g = postmf.nuc_grad_method().kernel()
+            g2 = postmf.nuc_grad_method()
+            g = g2.kernel()
             h = 0
             return e, g, h
     
         if self.theory == 'CCSD':    #Couple Cluster for singles and doubles
             postmf = cc.CCSD(mf).run()
             e = postmf.kernel()
-            grad = postmf.nuc_grad_method().kernel()
+            g2 = postmf.nuc_grad_method()
+            g = g2.kernel()
             h = 0
             return e, g, h
 
         if self.theory == 'CASSCF':
             postmf = mcscf.CASSCF(mf, self.active_space, self.nelec).run()
             e = postmf.kernel()
-            grad = postmf.nuc_grad_method().kernel()
+            g2 = postmf.nuc_grad_method()
+            g = g2.kernel()
             h = 0
             return e, g, h
 
@@ -90,13 +94,16 @@ class Pyscf():
         mol1 = gto.Mole()
         mol1.atom = input_xyz
         mol1.basis = self.basis
+        mol1.symmetry = True
         #mol1.unit = 'Angstrom'
         mol1.build()
-        mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
+        print("Molecule symmetry =", mol1.topgroup)
+        #mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
         h =(mol1.intor('cint1e_kin_sph') + mol1.intor('cint1e_nuc_sph')
           + np.einsum('x,xij->ij', E, mol1.intor('cint1e_r_sph', comp=3)))
         mf = scf.RHF(mol1).run()
         mf.get_hcore = lambda *args: h
+        print("Molecule symmetry after hcore =", mol1.topgroup)
         mol1.incore_anyway = True    #needed for post HF calculations to make sure custom H is used
         e = mf.kernel()
         g2 = mf.nuc_grad_method().kernel()    #only gradient for RHF right now

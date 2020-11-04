@@ -34,7 +34,7 @@ def global_props(frag_obj, step_size=0.001):
     @ray.remote
     def get_frag_stuff(f,_frags):
         f_current = _frags.frags[f]
-        return f_current.qc_backend(step_size=0.001)
+        return f_current.qc_backend()
     
     result_ids = [get_frag_stuff.remote(fi, frags_id) for fi in range(len(frag_obj.frags)) ]
     out = ray.get(result_ids)
@@ -73,8 +73,8 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
         Normal modes for the full molecule
     """
     frag = fragmentation.Fragmentation(Molecule)
-    frag.do_fragmentation(frag_type=str(frag_type), value=deg)
-    frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf, step_size=0.001)
+    frag.do_fragmentation(fragtype=str(frag_type), value=deg)
+    frag.initalize_Frag_objects(theory=str(theory), basis=str(basis), qc_backend=Pyscf.Pyscf, step_size=0.001, local_coeff=1)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
 
     if opt == True:
@@ -108,16 +108,16 @@ def do_MIM1(deg, frag_type, theory, basis, Molecule, opt=False, step_size=0.001)
         print('\n', "Converged_Gradient:", "\n", grad_opt)
     
     etot, gtot, htot, apt = global_props(frag, step_size=0.001)
+    print("Final converged energy = ", etot, "Hartree")
+    print("Final gradient = ", '\n', gtot)
+    print("Hessian shape = ", htot.shape)
     freq, modes = frag.mw_hessian(htot)
     #freq = freq*0.817  #IR freq correction for HF/sto3g
     pq = np.dot(apt.T, modes)   #shape 3x3N
     pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
     intense = np.diagonal(pq_pq)
     intense_kmmol = intense*42.2561
-    print("Final converged energy = ", etot, "Hartree")
-    print("Final gradient = ", '\n', gtot)
     #print("Final hessian = ", '\n', htot)
-    print("Hessian shape = ", htot.shape)
     for i in range(0, len(freq)):
         print("Freq:", freq[i], "int :", intense_kmmol[i])
     
@@ -211,23 +211,23 @@ def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theo
     MIM2_hess : ndarray
         Global MIM2 hessian
     """
-
+    
     """ MIM high theory, small fragments"""
     frag1 = fragmentation.Fragmentation(Molecule)
-    frag1.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
-    frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001)
+    frag1.do_fragmentation(fragtype=str(frag_type), value=frag_deg)
+    frag1.initalize_Frag_objects(theory=str(high_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001, local_coeff=1)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
     
     """ MIM low theory, small fragments"""
     frag2 = fragmentation.Fragmentation(Molecule)
-    frag2.do_fragmentation(frag_type=str(frag_type), value=frag_deg)
-    frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001)
+    frag2.do_fragmentation(fragtype=str(frag_type), value=frag_deg)
+    frag2.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001, local_coeff=-1)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
     
     """ MIM low theory, large fragments (inifinte system)"""
     frag3 = fragmentation.Fragmentation(Molecule)
-    frag3.do_fragmentation(frag_type=str(frag_type), value=infinite_deg)
-    frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001)
+    frag3.do_fragmentation(fragtype=str(frag_type), value=infinite_deg)
+    frag3.initalize_Frag_objects(theory=str(low_theory), basis=str(high_basis), qc_backend=Pyscf.Pyscf, step_size=0.001, local_coeff=1)
     #frag.qc_params(frag_index=[], qc_backend, theory, basis, spin=0, tol=0, active_space=0, nelec_alpha=0 nelec_beta=0, max_memory=0)
     
     if opt == True:
@@ -277,10 +277,10 @@ def do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theo
     etot1, gtot1, htot1, apt1 = global_props(frag1, step_size=0.001)
     etot2, gtot2, htot2, apt2 = global_props(frag2, step_size=0.001)
     etot3, gtot3, htot3, apt3 = global_props(frag3, step_size=0.001)
-    etot = etot1 - etot2 + etot3
-    gtot = gtot1 - gtot2 + gtot3
-    htot = htot1 - htot2 + htot3
-    apt = apt1 - apt2 + apt3
+    etot = etot1 + etot2 + etot3
+    gtot = gtot1 + gtot2 + gtot3
+    htot = htot1 + htot2 + htot3
+    apt = apt1 + apt2 + apt3
     print('MIM2 energy =', etot)
     print('MIM2 grad =', gtot)
     #print('MIM2 hess =', htot)
@@ -402,14 +402,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule.Molecule()
-    largermol.initalize_molecule('largermol')
+    largermol_z = Molecule.Molecule('/Users/nicole/Documents/research/Fragments/inputs/largermol_z.cml')
+    largermol_z.initalize_molecule()
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
+    #do_MIM1(1.6, 'distance', 'MP2', 'sto-3g', largermol_z, opt=False, step_size=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    #do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol, opt=False) #uncomment to run MIM2
+    do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol_z, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
+    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol_z, 'ethanol')     #uncomment to run MIM3

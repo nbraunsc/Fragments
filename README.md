@@ -10,47 +10,43 @@ Code is able to do the following:
 - Normal modes and IR intensities
 
 ## Getting the MIM code
-### Using GitHub
+#### Using GitHub
 Clone the public repository:
 
-'git clone https://github.com/nbraunsc/Fragments'
+`git clone https://github.com/nbraunsc/Fragments`
 
-Then use pip install to install the python package:
+#### Using as a python module
+The MIM code can be imported as a python package:
 
-'pip install -e .'
+`import nicolefragment`
 
-## Running on cluster
-### Sow/Reap method:
-Need to specify parameters in mim1.py or mim2.py for specific calculaion. Then:
+## How to run MIM code (using Sow/Reap formalism)
+#### Sow
+An input file will need to be edited or created with calculation parameters. Then the "sow" set will be initated as follows:
 
-`qsub -N mim1 pbs_1.sh` or `qsub -N mim2 pbs_1.sh`
+`python sow.py <input_file> <coords_file>`
 
-After pbs_1.sh is complete run the following bash script:
+An example with an input file named `dummie_input.py` and a coordinates file named `largermol.cml` is as follows:
 
-`./submit_mult.sh`
+`python sow.py dummie_input.py largermol.cml`
 
-This will submit all individual fragment jobs to the cluster and queue the python script that recombines all subcalculations for global properties.
+#### Run
+User has the ability to run batches of calculations using the following command:
 
-## Running on local machine
-### Sow/Reap method:
+`python run.py <batch list>`
 
-Need to specify parameters in mim1.py or mim2.py for specific calculaion submit one of these two python commands depending on which method desired (MIM1 or MIM2):
+The `<batch list>` is user defined to determine how many fragment calculations would like to be run at a time. The `<batch list>` may also be empty if all jobs want to be submitted at once.
 
-`python mim1.py` or `python mim2.py`
+#### Reap
+The final step is the "reap" set and is run once all the fragment calculations are complete using the following command:
 
-This will start the fragmetation and create all input files for the subcalculations in "to_run" directory.
+`python reap.py >> <outfile>`
 
-To submit subcalculations run the following python command:
+Where `<outfile>` is the file where the output from the MIM calculation will be written.
 
-`python submit_mult.py`
+## How to run MIM code (using Ray formalism)
 
-Finally, once all subcalculations are done, run following python command to recombine all the subcalculations:
-
-`python global.py`
-
-### Ray method:
-
-Need to specify parameters at the bottom of MIM.py script in nicolefragment directory then:
+Need to specify parameters at the bottom of MIM.py script in the source directory "nicolefragment", then:
 
 `python MIM.py`
 

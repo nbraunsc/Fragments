@@ -21,7 +21,8 @@ class Molecule():
     code.
     """
     
-    def __init__(self):
+    def __init__(self, coord_path):
+        self.coord_path = coord_path
     #def __init__(self, mol_class=str()):
         #number of atoms
         self.natoms = int() 
@@ -46,9 +47,11 @@ class Molecule():
         #self.mol_class = mol_class
         self.prim_dist = []
         
-    def initalize_molecule(self, file_name):
-        x = "../inputs/" + file_name + ".cml"
-        self.parse_cml(x)
+    def initalize_molecule(self):
+        #filename = self.name.replace("'", "")
+        #y = filename.strip()
+        #x = "../inputs/" + y + ".cml"
+        self.parse_cml(self.coord_path)
         #self.build_molmatrix(2)
 
     def parse_cml(self, filename):
