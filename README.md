@@ -26,7 +26,7 @@ An input file will need to be edited or created with calculation parameters. The
 
 `python sow.py <input_file> <coords_file>`
 
-An example would look like this with an input file named `dummie_input.py` and a cml file with the coordinates and bonding order of the molecule called `largermol.cml`:
+An example with an input file named `dummie_input.py` and a coordinates file named `largermol.cml` is as follows:
 
 `python sow.py dummie_input.py largermol.cml`
 
@@ -41,6 +41,8 @@ The `<batch list>` is user defined to determine how many fragment calculations w
 The final step is the "reap" set and is run once all the fragment calculations are complete using the following command:
 
 `python reap.py >> <outfile>`
+
+Where `<outfile>` is the file where the output from the MIM calculation will be written.
 
 ## How to run MIM code (using Ray formalism)
 
