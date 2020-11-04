@@ -10,17 +10,18 @@ Code is able to do the following:
 - Normal modes and IR intensities
 
 ## Getting the MIM code
-### Using GitHub
+#### Using GitHub
 Clone the public repository:
 
 `git clone https://github.com/nbraunsc/Fragments`
 
-Or the MIM code can be imported as a python package:
+#### Using as a python module
+The MIM code can be imported as a python package:
 
 `import nicolefragment`
 
 ## How to run MIM code (using Sow/Reap formalism)
-####Sow
+#### Sow
 An input file will need to be edited or created with calculation parameters. Then the "sow" set will be initated as follows:
 
 `python <input_file> <coords_file>`
@@ -29,14 +30,14 @@ An example would look like this with an input file named `dummie_input.py` and a
 
 `python sow.py dummie_input.py largermol.cml`
 
-####Run
+#### Run
 User has the ability to run batches of calculations using the following command:
 
 `python run.py <batch list>`
 
 The `<batch list>` is user defined to determine how many fragment calculations would like to be run at a time. The `<batch list>` may also be empty if all jobs want to be submitted at once.
 
-####Reap
+#### Reap
 The final step is the "reap" set and is run once all the fragment calculations are complete using the following command:
 
 `python reap.py >> <outfile>`
