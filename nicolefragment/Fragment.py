@@ -266,8 +266,8 @@ class Fragment():
             e3, g3, dipole3 = self.qc_class.apply_field(E, self.inputxyz)   #neg direction
             E[i] = 0
             print("Energy difference:", e2-e1)
-            gradient = (g3-g2)/(2*e_field)
-            energy2 = (e3-e2)/(2*e_field)
+            gradient = (g2-g3)/(2*e_field)
+            energy2 = (e2-e3)/(2*e_field)
             print("energy after finite diff:", energy2)
             print("dipole moment comp:", dip[i])
             energy_vec[i] = energy2

@@ -1,6 +1,6 @@
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
-from dummie_input import *
+#from dummie_input import *
 
 import numpy as np
 import os
@@ -8,6 +8,9 @@ import sys
 import pickle
 
 input_file = sys.argv[1]
+
+from input_file import *
+
 coords = sys.argv[2]
 path = os.getcwd() + "/" + coords
 

@@ -402,14 +402,14 @@ def do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_
 
 
 if __name__ == "__main__":
-    largermol = Molecule.Molecule('/Users/nicole/Documents/research/Fragments/inputs/largermol.cml')
-    largermol.initalize_molecule()
+    largermol_z = Molecule.Molecule('/Users/nicole/Documents/research/Fragments/inputs/largermol_z.cml')
+    largermol_z.initalize_molecule()
         
     """do_MIM1(deg, frag_type,  theory, basis, Molecule, opt=False, step=0.001)"""
-    #do_MIM1(1.8, 'distance', 'RHF', 'sto-3g', largermol, opt=False, step_size=0.001)        #uncomment to run MIM1
+    #do_MIM1(1.6, 'distance', 'MP2', 'sto-3g', largermol_z, opt=False, step_size=0.001)        #uncomment to run MIM1
     
     """do_MIM2(frag_type, frag_deg, high_theory, high_basis, infinite_deg, low_theory, low_basis, Molecule, opt=False)"""
-    do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol, opt=False) #uncomment to run MIM2
+    do_MIM2('distance', 1.6, 'MP2', 'sto-3g', 3, 'RHF', 'sto-3g', largermol_z, opt=False) #uncomment to run MIM2
     
     """do_MIM3(frag_highdeg, high_theory, high_basis, frag_meddeg, med_theory, med_basis, infinite_deg, low_theory, low_basis, Molecule)"""
-    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol, 'ethanol')     #uncomment to run MIM3
+    #do_MIM3(1, 'MP2', 'sto-3g', 1, 'RHF', 'sto-3g', 1, 'RHF', 'sto-3g', largermol_z, 'ethanol')     #uncomment to run MIM3
