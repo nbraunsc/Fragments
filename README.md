@@ -24,7 +24,7 @@ The MIM code can be imported as a python package:
 #### Sow
 An input file will need to be edited or created with calculation parameters. Then the "sow" set will be initated as follows:
 
-`python <input_file> <coords_file>`
+`python sow.py <input_file> <coords_file>`
 
 An example would look like this with an input file named `dummie_input.py` and a cml file with the coordinates and bonding order of the molecule called `largermol.cml`:
 
