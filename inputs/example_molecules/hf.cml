@@ -1,7 +1,7 @@
 <molecule>
  <atomArray>
-  <atom id="a1" elementType="Cl" x3="0.000000" y3="0.000000" z3="0.000000"/>
-  <atom id="a2" elementType="H" x3="0.000000" y3="0.000000" z3="1.000000"/>
+  <atom id="a1" elementType="F" x3="0" y3="0.000000" z3="0"/>
+  <atom id="a2" elementType="H" x3="0.000000" y3="0.000000" z3="1.0"/>
  </atomArray>
  <bondArray>
   <bond atomRefs2="a1 a2" order="1"/>

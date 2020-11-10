@@ -20,12 +20,12 @@ python -m pip install -e .
 cd $PBS_O_WORKDIR
 cd to_run/
 
-for i in *; do
-    cd $i
-    BATCH_LIST= `ls ./*`
-    echo $BATCH_LIST
-    python run.py $BATCH_LIST
-done
+echo $1
+echo $2
+echo $3
+echo $4
+
+python run.py $3 $4
 
 exit;
 

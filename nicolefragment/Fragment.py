@@ -253,7 +253,7 @@ class Fragment():
 
         !!! need to make sure h_core is getting changed for grad calc !!!
         """
-        e_field = 0.000001
+        e_field = 1e-3
         E = [0, 0, 0]
         energy_vec = np.zeros((3))
         apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
@@ -261,22 +261,33 @@ class Fragment():
         for i in range(0, 3):
             e1, g1, dip = self.qc_class.apply_field(E, self.inputxyz)   #no field
             E[i] = e_field
+            print("energy with no field:", e1)
+            print("############ Field applied in the ", i, "direction ###############")
+            print("electric field positive:", E)
             e2, g2, dipole2 = self.qc_class.apply_field(E, self.inputxyz) #positive direction
+            print("energy with + field:", e2)
             E[i] = -1*e_field
+            print("electric field negative:", E)
             e3, g3, dipole3 = self.qc_class.apply_field(E, self.inputxyz)   #neg direction
+            print("energy with - field:", e3)
             E[i] = 0
-            print("Energy difference:", e2-e1)
+            print("should be back to 0:", E)
+    
+            print("energy differnce between + and -:", e2-e3, "for direction:", i)
+            #print("Energy difference:", e2-e1)
             gradient = (g2-g3)/(2*e_field)
             energy2 = (e2-e3)/(2*e_field)
-            print("energy after finite diff:", energy2)
-            print("dipole moment comp:", dip[i])
+            print("derv energy comp:", energy2)
             energy_vec[i] = energy2
-            #dip = (dipole-dipole2)/(2*e_field)
+            print("energy vec:", energy_vec)
             flat_g = gradient.flatten()
             apt[i] = flat_g
+            
         print("fragment:", self.prims)
         print("Enery deriv:\n", energy_vec)
         print("Dipole moment:\n", dip)
+        print("norm of E\n", np.linalg.norm(energy_vec))
+        print("norm of dip\n", np.linalg.norm(dip))
 
         #build M^-1/2 mass matrix and mass weight apt
         labels = []
