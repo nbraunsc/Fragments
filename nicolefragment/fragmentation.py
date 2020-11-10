@@ -242,7 +242,8 @@ class Fragmentation():
             qc_fi = qc_backend(theory=theory, basis=basis, spin=spin, tol=tol, active_space=active_space, nelec_alpha=nelec_alpha, nelec_beta=nelec_beta, max_memory=max_memory)
             
     
-    def energy_gradient(self, newcoords):
+    def energy_gradient(self):
+    #def energy_gradient(self, newcoords):
         """ Function returns total energy and gradient of global molecule.
         
         This function holds virtual functions for different chemical software.  A software
@@ -270,18 +271,15 @@ class Fragmentation():
         self.gradient = np.zeros((self.molecule.natoms,3)) #setting them back to zero
         self.etot = 0
         self.hessian = np.zeros((self.molecule.natoms, self.molecule.natoms, 3, 3)) 
-
+        apt=0
         for i in self.frags:
             #i.molecule.atomtable = self.molecule.atomtable  #setting newcoords
-            e, grad, i_hess, i_hess2 = i.qc_backend()
-            print(e, e.shape)
-            print(grad, grad.shape)
-            #print(e-grad)
-            #print("hessian diff = ", i_hess-i_hess2)
+            e, grad, i_hess, i_apt = i.qc_backend()
             self.etot += i.energy
             self.gradient += i.grad
             self.hessian += i.hessian
-        return self.etot, self.gradient, self.hessian
+            apt += i_apt
+        return self.etot, self.gradient, self.hessian, apt
            
     def write_xyz(self, name):
         """ Writes an xyz file with the atom labels, number of atoms, and respective Cartesian coords for geom_opt().
@@ -456,20 +454,20 @@ class Fragmentation():
 
 
 if __name__ == "__main__":
-    #largermol = Molecule()
-    #largermol.initalize_molecule('largermol')
-    #frag = Fragmentation(largermol)
+    #hf = Molecule()
+    #hf.initalize_molecule('hf')
+    #frag = Fragmentation(hf)
     #frag.do_fragmentation(frag_type='graphical', value=2)
     #frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf)
     #frag.energy_gradient(frag.moleculexyz)
-    np.set_printoptions(suppress=True, precision=5)
+    np.set_printoptions(suppress=True, precision=6)
     
-    largermol = Molecule.Molecule()
-    largermol.initalize_molecule('largermol')
-    frag = fragmentation.Fragmentation(largermol)
-    frag.do_fragmentation(frag_type='distance', value=1.8)
-    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001)
-    frag.energy_gradient(frag.moleculexyz)
+    hf = Molecule.Molecule('/Users/nicole/Documents/research/Fragments/inputs/example_molecules/hf.cml')
+    hf.initalize_molecule()
+    frag = fragmentation.Fragmentation(hf)
+    frag.do_fragmentation(fragtype='distance', value=22)
+    frag.initalize_Frag_objects(theory='RHF', basis='sto-3g', qc_backend=Pyscf.Pyscf, step_size=0.001, local_coeff=1)
+    frag.energy_gradient()
    
     #import ray
     #start_time = time.time()

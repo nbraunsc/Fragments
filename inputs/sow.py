@@ -63,6 +63,10 @@ if mim_levels == 1:
         filename = "fragment" + str(i)
         outfile = open(filename, "wb")
         pickle.dump(frag.frags[i], outfile)
+        status_name = filename + '.status'
+        status = open(status_name, "wb")
+        pickle.dump(int(0), status)
+        status.close()
         outfile.close()
     
 if mim_levels == 2:
@@ -75,9 +79,13 @@ if mim_levels == 2:
     os.mkdir('frag1')
     os.chdir('frag1')
     for i in range(0, len(frag1.frags)):
-        filename = "fragment" + str(i)
+        filename = "fragment" + str(i) + ".pickle"
         outfile = open(filename, "wb")
         pickle.dump(frag1.frags[i], outfile)
+        status_name = filename.replace('.pickle', '.status')
+        status = open(status_name, "wb")
+        pickle.dump(int(0), status)
+        status.close()
         outfile.close()
     os.chdir('../')
     
@@ -88,9 +96,13 @@ if mim_levels == 2:
     os.mkdir('frag2')
     os.chdir('frag2')
     for i in range(0, len(frag2.frags)):
-        filename = "fragment" + str(i)
+        filename = "fragment" + str(i) + ".pickle"
         outfile = open(filename, "wb")
         pickle.dump(frag2.frags[i], outfile)
+        status_name = filename.replace('.pickle', '.status')
+        status = open(status_name, "wb")
+        pickle.dump(int(0), status)
+        status.close()
         outfile.close()
     os.chdir('../')
     
@@ -101,8 +113,12 @@ if mim_levels == 2:
     os.mkdir('frag3')
     os.chdir('frag3')
     for i in range(0, len(frag3.frags)):
-        filename = "fragment" + str(i)
+        filename = "fragment" + str(i) + ".pickle"
         outfile = open(filename, "wb")
         pickle.dump(frag3.frags[i], outfile)
+        status_name = filename.replace('.pickle', '.status')
+        status = open(status_name, "wb")
+        pickle.dump(int(0), status)
+        status.close()
         outfile.close()
     os.chdir('../')

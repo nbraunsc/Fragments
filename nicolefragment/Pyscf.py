@@ -1,5 +1,5 @@
 import numpy as np
-from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf
+from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf, ao2mo
 from pyscf.prop.freq import rhf
 from pyscf.prop.polarizability import rhf
 from pyscf.grad.rhf import GradientsBasics
@@ -91,27 +91,39 @@ class Pyscf():
             Dont really need these
     
         """
+        e=0
+        g2=0
+        dipole1=0
+        #dm_init_guess = [None]
         mol1 = gto.Mole()
         mol1.atom = input_xyz
+        mol1.charge = 1
+        mol1.spin = 1
         mol1.basis = self.basis
-        mol1.symmetry = True
+        #mol1.symmetry = True
         #mol1.unit = 'Angstrom'
         mol1.build()
-        print("Molecule symmetry =", mol1.topgroup)
-        #mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
+        mfx = scf.RHF(mol1).run()
+        dip_unit = 'DEBYE'
+        dip_unit2 = 'A.U.'
+        dipole1 = mfx.dip_moment(mol1, unit=dip_unit)
+        dipole2 = mfx.dip_moment(mol1, unit=dip_unit2)
+        
+        mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
         h =(mol1.intor('cint1e_kin_sph') + mol1.intor('cint1e_nuc_sph')
           + np.einsum('x,xij->ij', E, mol1.intor('cint1e_r_sph', comp=3)))
-        mf = scf.RHF(mol1).run()
-        mf.get_hcore = lambda *args: h
-        print("Molecule symmetry after hcore =", mol1.topgroup)
+        
+        mfx.get_hcore = lambda *args: h
         mol1.incore_anyway = True    #needed for post HF calculations to make sure custom H is used
-        e = mf.kernel()
-        g2 = mf.nuc_grad_method().kernel()    #only gradient for RHF right now
-        dipole1 = mf.dip_moment(mol1)
-        print("input:\n")
-        print(input_xyz)
-        print("coordinates")
-        print(mol1.atom_coords(unit='Angstrom'))
+        e = mfx.kernel()
+        g2 = mfx.nuc_grad_method().kernel()    #only gradient for RHF right now
+        print("######### PYSCF PRINTS ##########")
+        print(mol1.atom_coords())
+        print(E)
+        print("energy:", e)
+        print("dipole moment:", dipole1, dip_unit)
+        print("dipole moment:", dipole2, dip_unit2)
+        print("################\n")
         return e, g2, dipole1
 
     
