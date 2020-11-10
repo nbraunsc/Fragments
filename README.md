@@ -33,9 +33,9 @@ An example with an input file named `dummie_input.py` and a coordinates file nam
 #### Run
 User has the ability to run batches of calculations using the following command:
 
-`python run.py <batch list>`
+`python batch.py <batch size>`
 
-The `<batch list>` is user defined to determine how many fragment calculations would like to be run at a time. The `<batch list>` may also be empty if all jobs want to be submitted at once.
+The `<batch size>` is an integer that the user defines to determine the batch size for how  many fragment calculations would like to be run at a time. The `<batch size>` may also be empty if all jobs want to be submitted at once.
 
 #### Reap
 The final step is the "reap" set and is run once all the fragment calculations are complete using the following command:
