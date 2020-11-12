@@ -1,26 +1,22 @@
 import pickle
-import dill
+#import dill
 import numpy as np
 import os
 import sys
 
 directory = sys.argv[1] #should be the directory of mim level
-batch = sys.argv[2:] #should be a list of filenames as an argument i.e. python run.py [fragment0.pickle, fragment1.pickle, ...]
+batch = sys.argv[2].split("_")
 batch_list = []
-for file_name in batch:
-    filename = file_name
-    if '[' in file_name:
-        print('[')
-        filename = filename.replace('[', "")
-    if ']' in file_name:
-        filename = filename.replace(']', "")
-        print(']')
-    if ',' in file_name:
-        filename = filename.replace(',', "")
-        print(',')
-    batch_list.append(filename)
+for i in batch:
+    if not i:
+        continue
+    else:
+        entry = "fragment" + i + ".pickle"
+        batch_list.append(entry)
 
-os.chdir('to_run/' + directory)
+print("Batch list:", batch_list)
+os.chdir('to_run/')
+os.chdir(directory)
 for i in batch_list:
     #unpickle and run e, g, hess, apt etc
     infile = open(i, 'rb')
@@ -29,7 +25,7 @@ for i in batch_list:
     new_class.qc_backend()
     
     #update status of calculation
-    status_name = i + ".status"
+    status_name = i.replace(".pickle", ".status")
     stat_file = open(status_name, "rb") 
     status = pickle.load(stat_file)
     stat_file.close()
@@ -43,6 +39,7 @@ for i in batch_list:
     stat_file.close()
 
     #repickle with updated fragment e, g, hess, apt, etc
-    outfile = open(i, "wb")
+    file_name = i.replace(".status", ".pickle")
+    outfile = open(file_name, "wb")
     pickle.dump(new_class, outfile)
     outfile.close()

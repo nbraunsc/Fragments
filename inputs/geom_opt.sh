@@ -1,3 +1,4 @@
+
 #PBS -l walltime=00:1:00:00
 #PBS -l nodes=2:ppn=4
 #PBS -l mem=20GB
@@ -18,12 +19,15 @@ cd ../
 python -m pip install -e .
 
 cd $PBS_O_WORKDIR
+cd to_run/
 
-echo $LEVEL
-echo $BATCH
+python geom_opt.py >> opt_status.out
 
-python run.py $LEVEL $BATCH
+touch ./opt_status.out
+while true
+do
+   cp ./opt_status.out $PBS_O_WORKDIR/$opt_status.running.out
+   sleep 30
+done&
 
 exit;
-
-

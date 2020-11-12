@@ -6,6 +6,7 @@ import numpy as np
 import os
 import sys
 import pickle
+#import dill
 
 input_file = sys.argv[1]
 
