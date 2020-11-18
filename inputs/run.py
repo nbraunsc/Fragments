@@ -3,6 +3,8 @@ import pickle
 import numpy as np
 import os
 import sys
+import nicolefragment
+from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 directory = sys.argv[1] #should be the directory of mim level
 batch = sys.argv[2].split("_")
@@ -21,6 +23,7 @@ for i in batch_list:
     #unpickle and run e, g, hess, apt etc
     infile = open(i, 'rb')
     new_class = pickle.load(infile)
+    print("hello")
     infile.close()
     new_class.qc_backend()
     

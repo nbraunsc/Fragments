@@ -1,10 +1,12 @@
 import string
 import numpy as np
-from .Pyscf import *
+#from .Pyscf import *
 from ase import Atoms
 from ase.calculators.vasp import Vasp
 from ase.vibrations import Infrared  
 from mendeleev import element
+import nicolefragment
+from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 class Fragment():
     """
