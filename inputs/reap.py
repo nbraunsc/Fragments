@@ -13,21 +13,17 @@ apt = 0
 for level in os.listdir():
     os.chdir(level)
     frags = glob.glob('*.pickle')
-    print(frags)
     for i in frags:
         #unpickle and run e, g, hess, apt etc
         infile = open(i, 'rb')
         new_class = pickle.load(infile)
-        print("energy:", new_class.energy)
-        print("grad:", new_class.grad)
-        print("hess type and shape:", type(new_class.hessian), new_class.hessian.shape)
         e += new_class.energy
         g += new_class.grad
         h += new_class.hessian
         apt += new_class.apt 
     os.chdir('../')
 
-print(e)
-print(g)
-print(h.shape)
-print(apt.shape)
+print("MIM Energy:", e, "Hartree")
+print("MIM Gradient:\n", g)
+print("MIM Hessian shape:", h.shape)
+print("MIM mass-weighted APT's shape:", apt.shape)

@@ -19,11 +19,9 @@ for i in os.listdir():
     #print("Path at level:", os.getcwd(), "should be in frag1 or frag2..")
     files_pickle = glob.glob('*.pickle')
     if batch_size == None:
-        #print("no batch_size")
         #bash_command = "qsub pbs.sh"
         bash_command = "python run.py" + str(list(files_pickle))
         os.chdir('../../')
-        #print("Path to do command:", os.getcwd(), "should be inputs directory")
         os.system(bash_command)
     else:
         for x in batch(files_pickle, 3):
@@ -34,14 +32,15 @@ for i in os.listdir():
                 string_num+=y+"_"
             submit_name = i + "_" + string_num
             os.chdir('../../')
-            #cmd = 'python run.py %s %s'%(i, x)
-            cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" pbs.sh'%(submit_name, path, string_num)
+            cmd = 'python run.py %s %s'%(path, string_num)
+            #cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" pbs.sh'%(submit_name, path, string_num)
             print(cmd)
+            print(os.getcwd())
             os.system(cmd)
             os.chdir('to_run/')
             os.chdir(i)
             #print("Path to after command:", os.getcwd(), "should be frag1 or frag2...")
     os.chdir('../')
     #print("Path for level for loop:", os.getcwd(), "should be next level frag2..")
-os.chdir('../')
+#os.chdir('../')
 #print("Path at end of loop:", os.getcwd(), "should be inputs")

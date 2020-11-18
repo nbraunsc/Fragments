@@ -1,12 +1,13 @@
 import string
 import numpy as np
 #from .Pyscf import *
-from ase import Atoms
-from ase.calculators.vasp import Vasp
-from ase.vibrations import Infrared  
+#from ase import Atoms
+#from ase.calculators.vasp import Vasp
+#from ase.vibrations import Infrared  
 from mendeleev import element
-import nicolefragment
-from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
+
+#import nicolefragment
+#from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 class Fragment():
     """
@@ -277,13 +278,13 @@ class Fragment():
     
             print("energy differnce between + and -:", e2-e3, "for direction:", i)
             #print("Energy difference:", e2-e1)
-            gradient = (g2-g3)/(2*e_field)
+            gradient = (g2.flatten()-g3.flatten())/(2*e_field)
             energy2 = (e2-e3)/(2*e_field)
             print("derv energy comp:", energy2)
             energy_vec[i] = energy2
             print("energy vec:", energy_vec)
-            flat_g = gradient.flatten()
-            apt[i] = flat_g
+            print("gradient shape:", gradient.shape)
+            apt[i] = gradient
             
         print("fragment:", self.prims)
         print("Enery deriv:\n", energy_vec)

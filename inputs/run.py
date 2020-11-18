@@ -32,10 +32,10 @@ for i in batch_list:
     stat_file = open(status_name, "rb") 
     status = pickle.load(stat_file)
     stat_file.close()
-    if new_class.energy == None or new_class.grad == None or new_class.hessian == None:
-        status = -1
-    else:
-        status = 1
+    #if new_class.energy == None or new_class.grad == None or new_class.hessian == None:
+    #    status = -1
+    #else:
+    #    status = 1
     
     stat_file = open(status_name, "wb") 
     pickle.dump(status, stat_file)
