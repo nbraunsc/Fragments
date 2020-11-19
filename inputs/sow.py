@@ -1,12 +1,11 @@
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
-#from dummie_input import *
 
 import numpy as np
 import os
 import sys
 import pickle
-#import dill
+import dill
 
 input_file = sys.argv[1]
 
@@ -63,10 +62,10 @@ if mim_levels == 1:
     for i in range(0, len(frag.frags)):
         filename = "fragment" + str(i)
         outfile = open(filename, "wb")
-        pickle.dump(frag.frags[i], outfile)
+        dill.dump(frag.frags[i], outfile)
         status_name = filename + '.status'
         status = open(status_name, "wb")
-        pickle.dump(int(0), status)
+        dill.dump(int(0), status)
         status.close()
         outfile.close()
     
@@ -80,12 +79,12 @@ if mim_levels == 2:
     os.mkdir('frag1')
     os.chdir('frag1')
     for i in range(0, len(frag1.frags)):
-        filename = "fragment" + str(i) + ".pickle"
+        filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
-        pickle.dump(frag1.frags[i], outfile)
-        status_name = filename.replace('.pickle', '.status')
+        dill.dump(frag1.frags[i], outfile)
+        status_name = filename.replace('.dill', '.status')
         status = open(status_name, "wb")
-        pickle.dump(int(0), status)
+        dill.dump(int(0), status)
         status.close()
         outfile.close()
     os.chdir('../')
@@ -97,12 +96,12 @@ if mim_levels == 2:
     os.mkdir('frag2')
     os.chdir('frag2')
     for i in range(0, len(frag2.frags)):
-        filename = "fragment" + str(i) + ".pickle"
+        filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
-        pickle.dump(frag2.frags[i], outfile)
-        status_name = filename.replace('.pickle', '.status')
+        dill.dump(frag2.frags[i], outfile)
+        status_name = filename.replace('.dill', '.status')
         status = open(status_name, "wb")
-        pickle.dump(int(0), status)
+        dill.dump(int(0), status)
         status.close()
         outfile.close()
     os.chdir('../')
@@ -114,12 +113,12 @@ if mim_levels == 2:
     os.mkdir('frag3')
     os.chdir('frag3')
     for i in range(0, len(frag3.frags)):
-        filename = "fragment" + str(i) + ".pickle"
+        filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
-        pickle.dump(frag3.frags[i], outfile)
-        status_name = filename.replace('.pickle', '.status')
+        dill.dump(frag3.frags[i], outfile)
+        status_name = filename.replace('.dill', '.status')
         status = open(status_name, "wb")
-        pickle.dump(int(0), status)
+        dill.dump(int(0), status)
         status.close()
         outfile.close()
     os.chdir('../')

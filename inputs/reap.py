@@ -1,6 +1,7 @@
 import pickle
 import os
 import glob
+import dill
 
 os.chdir('to_run')
 #levels = os.listdir()
@@ -12,11 +13,11 @@ apt = 0
 
 for level in os.listdir():
     os.chdir(level)
-    frags = glob.glob('*.pickle')
+    frags = glob.glob('*.dill')
     for i in frags:
-        #unpickle and run e, g, hess, apt etc
+        #undill and run e, g, hess, apt etc
         infile = open(i, 'rb')
-        new_class = pickle.load(infile)
+        new_class = dill.load(infile)
         e += new_class.energy
         g += new_class.grad
         h += new_class.hessian
