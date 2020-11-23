@@ -27,3 +27,9 @@ software = 'Pyscf'
 
 #for second derivative by finite difference
 stepsize = 0.001        
+
+#batch_size for running calculations
+batch_size = 3
+
+#geometry optimization set to True or False
+opt = False

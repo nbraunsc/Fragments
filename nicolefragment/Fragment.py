@@ -36,9 +36,11 @@ class Fragment():
         self.inputxyz = []
         self.apt = []
         self.step = step_size
-        self.energy = 1
-        self.grad = []
-        self.hessian = []
+        self.energy = 0
+        #self.grad = []
+        self.grad = 0
+        self.hessian = 0
+        #self.hessian = []
         self.hess = []
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
         self.jacobian_grad = [] #array for gradient link atom projections
@@ -212,7 +214,8 @@ class Fragment():
         np.set_printoptions(suppress=True, precision=5)
         self.energy = 0
         hess_py = 0
-        self.grad = np.zeros((self.molecule.natoms, 3))
+        #self.grad = np.zeros((self.molecule.natoms, 3))
+        self.grad = 0
         self.inputxyz = self.build_xyz()
         energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
         hess = hess_py
@@ -245,9 +248,10 @@ class Fragment():
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
-        self.apt_grad()     #one i am trying to get to work
+        #self.apt_grad()     #one i am trying to get to work
         #self.apt = self.build_apt()    #one that words
-        return self.energy, self.grad, self.hessian, self.apt
+        print("Done!")
+        return self.energy, self.grad, self.hessian#, self.apt
 
     def apt_grad(self):
         """ Working on implementing this.

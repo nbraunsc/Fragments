@@ -9,7 +9,7 @@ os.chdir('to_run')
 e = 0
 g = 0
 h = 0
-apt = 0
+#apt = 0
 
 for level in os.listdir():
     os.chdir(level)
@@ -18,13 +18,14 @@ for level in os.listdir():
         #undill and run e, g, hess, apt etc
         infile = open(i, 'rb')
         new_class = dill.load(infile)
+        print("Fragment ID:", level, i)
         e += new_class.energy
         g += new_class.grad
         h += new_class.hessian
-        apt += new_class.apt 
+        #apt += new_class.apt 
     os.chdir('../')
 
 print("MIM Energy:", e, "Hartree")
 print("MIM Gradient:\n", g)
 print("MIM Hessian shape:", h.shape)
-print("MIM mass-weighted APT's shape:", apt.shape)
+#print("MIM mass-weighted APT's shape:", apt.shape)

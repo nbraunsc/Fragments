@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 #from pandas.io.json import json_normalize
 #import json
 
-import nicolefragment
+#import nicolefragment
 from nicolefragment import cov_rad
 
 class Molecule():

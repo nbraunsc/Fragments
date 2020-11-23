@@ -46,7 +46,7 @@ def global_props(frag_obj, step_size=0.001):
         etot_ray += o[0]
         gtot_ray += o[1]
         htot_ray += o[2]
-        apt_ray += o[3]
+        #apt_ray += o[3]
     ray.shutdown()
     return etot_ray, gtot_ray, htot_ray, apt_ray
 

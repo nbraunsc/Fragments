@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from itertools import cycle
 from mendeleev import element
 
-import nicolefragment
+#import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 class Fragmentation():

@@ -50,24 +50,26 @@ if stepsize == None:
 
 input_molecule = Molecule.Molecule(path)
 input_molecule.initalize_molecule()
+obj_list = []
 
 if mim_levels == 1:
-    frag = fragmentation.Fragmentation(input_molecule)
-    frag.do_fragmentation(fragtype=frag_type, value=frag_deg)
-    frag.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+    frag1 = fragmentation.Fragmentation(input_molecule)
+    frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
+    frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
     os.path.abspath(os.curdir)
     os.chdir('to_run/')
     os.mkdir('frag1')
     os.chdir('frag1')
-    for i in range(0, len(frag.frags)):
+    for i in range(0, len(frag1.frags)):
         filename = "fragment" + str(i)
         outfile = open(filename, "wb")
-        dill.dump(frag.frags[i], outfile)
-        status_name = filename + '.status'
-        status = open(status_name, "wb")
-        dill.dump(int(0), status)
-        status.close()
+        dill.dump(frag1.frags[i], outfile)
+        #status_name = filename + '.status'
+        #status = open(status_name, "wb")
+        #dill.dump(int(0), status)
+        #status.close()
         outfile.close()
+    obj_list.append(frag1)
     
 if mim_levels == 2:
     #""" MIM high theory, small fragments"""
@@ -82,11 +84,12 @@ if mim_levels == 2:
         filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
         dill.dump(frag1.frags[i], outfile)
-        status_name = filename.replace('.dill', '.status')
-        status = open(status_name, "wb")
-        dill.dump(int(0), status)
-        status.close()
+        #status_name = filename.replace('.dill', '.status')
+        #status = open(status_name, "wb")
+        #dill.dump(int(0), status)
+        #status.close()
         outfile.close()
+    obj_list.append(frag1)
     os.chdir('../')
     
     #""" MIM low theory, small fragments"""
@@ -99,11 +102,12 @@ if mim_levels == 2:
         filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
         dill.dump(frag2.frags[i], outfile)
-        status_name = filename.replace('.dill', '.status')
-        status = open(status_name, "wb")
-        dill.dump(int(0), status)
-        status.close()
+        #status_name = filename.replace('.dill', '.status')
+        #status = open(status_name, "wb")
+        #dill.dump(int(0), status)
+        #status.close()
         outfile.close()
+    obj_list.append(frag2)
     os.chdir('../')
     
     #""" MIM low theory, large fragments (iniffloate system)"""
@@ -116,9 +120,19 @@ if mim_levels == 2:
         filename = "fragment" + str(i) + ".dill"
         outfile = open(filename, "wb")
         dill.dump(frag3.frags[i], outfile)
-        status_name = filename.replace('.dill', '.status')
-        status = open(status_name, "wb")
-        dill.dump(int(0), status)
-        status.close()
+        #status_name = filename.replace('.dill', '.status')
+        #status = open(status_name, "wb")
+        #dill.dump(int(0), status)
+        #status.close()
         outfile.close()
+    obj_list.append(frag3)
     os.chdir('../')
+
+os.chdir('../')
+if opt == False:
+    cmd = "python batch.py %s"%(str(batch_size))
+    print(cmd)
+    os.system(cmd)
+
+if opt == True:
+    cmd = "python opt.py %s"%(obj_list)
