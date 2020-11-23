@@ -2,16 +2,17 @@ import pickle
 import os
 import glob
 import dill
+import numpy as np
 
 os.chdir('to_run')
-#levels = os.listdir()
+levels = os.listdir()
 
 e = 0
 g = 0
 h = 0
 #apt = 0
 
-for level in os.listdir():
+for level in levels:
     os.chdir(level)
     frags = glob.glob('*.dill')
     for i in frags:
@@ -24,6 +25,10 @@ for level in os.listdir():
         h += new_class.hessian
         #apt += new_class.apt 
     os.chdir('../')
+
+np.save('energy.npy', e)
+np.save('gradient.npy', g)
+np.save('hessian.npy', h)
 
 print("MIM Energy:", e, "Hartree")
 print("MIM Gradient:\n", g)

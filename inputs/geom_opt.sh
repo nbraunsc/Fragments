@@ -25,13 +25,13 @@ do
 done
 
 echo $finished
-echo "Optimizer is done!"
+echo "Calculations are done!"
 
-while [ "$finished" == "true" ]
-do
-    python reap.py >> reap.out
-done
+#while [ "$finished" == "true" ]
+#do
+#    python reap.py >> reap.out
+#done
 
-echo "Reap is done!"
+#echo "Reap is done!"
 
 exit;

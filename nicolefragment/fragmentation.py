@@ -308,7 +308,8 @@ class Fragmentation():
             self.moleculexyz.append(z)
         self.moleculexyz = np.array(self.moleculexyz)   #formatting full molecule coords
         
-        f = open("../inputs/" + name + ".xyz", "w+")
+        #f = open("../inputs/" + name + ".xyz", "w+")
+        f = open(name, "w+")
         title = ""
         f.write("%d\n%s\n" % (self.moleculexyz.size / 3, title))
         for x, atomtype in zip(self.moleculexyz.reshape(-1, 3), cycle(atomlabels)): 

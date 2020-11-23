@@ -32,4 +32,5 @@ stepsize = 0.001
 batch_size = 3
 
 #geometry optimization set to True or False
-opt = False
+#opt = False
+opt = True

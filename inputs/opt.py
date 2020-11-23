@@ -4,36 +4,95 @@ import numpy as np
 from pyscf.geomopt.berny_solver import optimize
 from berny import Berny, geomlib
 from input_file import *
-from sow import *
+#from sow import *
+import shutil
+import nicolefragment
+from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
+import dill
 
-objs = sys.argv[1]
+path = sys.argv[1]
+coords_name = sys.argv[2]
+
+input_molecule = Molecule.Molecule(path)
+input_molecule.initalize_molecule()
+obj_list = []
+
+if software == 'Pyscf':
+    software = Pyscf.Pyscf
+    
+if mim_levels == 1:
+    frag1 = fragmentation.Fragmentation(input_molecule)
+    frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
+    frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+    os.path.abspath(os.curdir)
+    os.chdir('to_run/')
+    os.mkdir('frag1')
+    obj_list.append(frag1)
+    
+if mim_levels == 2:
+    #""" MIM high theory, small fragments"""
+    frag1 = fragmentation.Fragmentation(input_molecule)
+    print(type(frag1))
+    print(frag1)
+    frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
+    frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+    os.path.abspath(os.curdir)
+    os.chdir('to_run/')
+    os.mkdir('frag1')
+    obj_list.append(frag1)
+    
+    #""" MIM low theory, small fragments"""
+    frag2 = fragmentation.Fragmentation(input_molecule)
+    frag2.do_fragmentation(fragtype=frag_type, value=frag_deg)
+    frag2.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=-1)
+    os.mkdir('frag2')
+    obj_list.append(frag2)
+    
+    #""" MIM low theory, large fragments (iniffloate system)"""
+    frag3 = fragmentation.Fragmentation(input_molecule)
+    frag3.do_fragmentation(fragtype=frag_type, value=frag_deg_large)
+    frag3.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+    os.mkdir('frag3')
+    obj_list.append(frag3)
+
+levels = os.listdir()
 
 def opt_fnc(newcoords):
     for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
         x = list(newcoords[atom])
-        objs[0].molecule.atomtable[atom][1:] = x
+        obj_list[0].molecule.atomtable[atom][1:] = x
     
-    for i in range(0, len(objs)):       #update the other frag instances if MIM2 or higher level
-        objs[i].molecule.atomtable = objs[0].molecule.atomtable
-        objs[i].initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
-    frag2.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=-1)
-    frag3.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+    for j in range(0, len(obj_list)):       #update the other frag instances if MIM2 or higher level
+        obj_list[j].molecule.atomtable = obj_list[0].molecule.atomtable
+        os.chdir(levels[j])
 
+        #remove old pickled objects and status
+        frag_inst = os.listdir()
+        for frag in frag_inst:
+            shutil.rmtree(frag)
+        
+        #repickle fragment instances with new coords
+        for i in range(0, len(obj_list[j].frags)):
+            filename = "fragment" + str(i) + ".dill"
+            outfile = open(filename, "wb")
+            dill.dump(obj_list[j].frags[i], outfile)
+            outfile.close()
+        os.chdir('../')
     
-    MIM2_energy = 0
-    MIM2_grad = np.zeros((frag1.molecule.natoms, 3))
-    
-    etot1, gtot1, htot1, apt1 = global_props(frag1, step=0.001)
-    etot2, gtot2, htot2, apt2 = global_props(frag2, step=0.001)
-    etot3, gtot3, htot3, apt3 = global_props(frag3, step=0.001)
-    MIM2_energy = etot1 - etot2 + etot3
-    MIM2_grad = gtot1 - gtot2 + gtot3
-    return MIM2_energy, MIM2_grad
+    os.chdir('../')
+    cmd = 'python batch.py %s'%(str(batch_size))
+    print(cmd)
+    os.system(cmd)
+    etot = 0
+    gtot = 0
+    exit()
+    etot = np.load(energy.npy)
+    gtot = np.load(gradient.npy)
+    return etot, gtot
 
-objs[0].write_xyz(input_molecule)
+obj_list[0].write_xyz(coords_name)
 os.path.abspath(os.curdir)
-#os.chdir('../inputs/')
-optimizer = Berny(geomlib.readfile(os.path.abspath(os.curdir) + '/' + str(Molecule) + '.xyz'), debug=True)
+optimizer = Berny(geomlib.readfile(os.path.abspath(coords_name)), debug=True)
 x = 0
 etot_opt = 0
 grad_opt = 0
@@ -49,4 +108,3 @@ print("\n", "##########################", '\n', "#       Converged!       #", '\
 print('\n', "Energy = ", etot_opt)
 print('\n', "Converged_Gradient:", "\n", grad_opt)
 
-cmd = 'python batch.py %s'%(batch_size)

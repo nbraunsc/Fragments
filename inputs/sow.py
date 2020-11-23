@@ -6,6 +6,7 @@ import os
 import sys
 import pickle
 import dill
+import shutil
 
 input_file = sys.argv[1]
 
@@ -48,91 +49,94 @@ if stepsize == None:
     raise Exception('Step size for finite difference not defined')
 
 
-input_molecule = Molecule.Molecule(path)
-input_molecule.initalize_molecule()
-obj_list = []
-
-if mim_levels == 1:
-    frag1 = fragmentation.Fragmentation(input_molecule)
-    frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
-    frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
-    os.path.abspath(os.curdir)
-    os.chdir('to_run/')
-    os.mkdir('frag1')
-    os.chdir('frag1')
-    for i in range(0, len(frag1.frags)):
-        filename = "fragment" + str(i)
-        outfile = open(filename, "wb")
-        dill.dump(frag1.frags[i], outfile)
-        #status_name = filename + '.status'
-        #status = open(status_name, "wb")
-        #dill.dump(int(0), status)
-        #status.close()
-        outfile.close()
-    obj_list.append(frag1)
-    
-if mim_levels == 2:
-    #""" MIM high theory, small fragments"""
-    frag1 = fragmentation.Fragmentation(input_molecule)
-    frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
-    frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
-    os.path.abspath(os.curdir)
-    os.chdir('to_run/')
-    os.mkdir('frag1')
-    os.chdir('frag1')
-    for i in range(0, len(frag1.frags)):
-        filename = "fragment" + str(i) + ".dill"
-        outfile = open(filename, "wb")
-        dill.dump(frag1.frags[i], outfile)
-        #status_name = filename.replace('.dill', '.status')
-        #status = open(status_name, "wb")
-        #dill.dump(int(0), status)
-        #status.close()
-        outfile.close()
-    obj_list.append(frag1)
-    os.chdir('../')
-    
-    #""" MIM low theory, small fragments"""
-    frag2 = fragmentation.Fragmentation(input_molecule)
-    frag2.do_fragmentation(fragtype=frag_type, value=frag_deg)
-    frag2.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=-1)
-    os.mkdir('frag2')
-    os.chdir('frag2')
-    for i in range(0, len(frag2.frags)):
-        filename = "fragment" + str(i) + ".dill"
-        outfile = open(filename, "wb")
-        dill.dump(frag2.frags[i], outfile)
-        #status_name = filename.replace('.dill', '.status')
-        #status = open(status_name, "wb")
-        #dill.dump(int(0), status)
-        #status.close()
-        outfile.close()
-    obj_list.append(frag2)
-    os.chdir('../')
-    
-    #""" MIM low theory, large fragments (iniffloate system)"""
-    frag3 = fragmentation.Fragmentation(input_molecule)
-    frag3.do_fragmentation(fragtype=frag_type, value=frag_deg_large)
-    frag3.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
-    os.mkdir('frag3')
-    os.chdir('frag3')
-    for i in range(0, len(frag3.frags)):
-        filename = "fragment" + str(i) + ".dill"
-        outfile = open(filename, "wb")
-        dill.dump(frag3.frags[i], outfile)
-        #status_name = filename.replace('.dill', '.status')
-        #status = open(status_name, "wb")
-        #dill.dump(int(0), status)
-        #status.close()
-        outfile.close()
-    obj_list.append(frag3)
-    os.chdir('../')
-
-os.chdir('../')
 if opt == False:
+    input_molecule = Molecule.Molecule(path)
+    input_molecule.initalize_molecule()
+    obj_list = []
+    
+    if mim_levels == 1:
+        frag1 = fragmentation.Fragmentation(input_molecule)
+        frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
+        frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+        os.path.abspath(os.curdir)
+        os.chdir('to_run/')
+        shutil.rmtree(i for i in os.listdir())
+        os.mkdir('frag1')
+        os.chdir('frag1')
+        for i in range(0, len(frag1.frags)):
+            filename = "fragment" + str(i)
+            outfile = open(filename, "wb")
+            dill.dump(frag1.frags[i], outfile)
+            #status_name = filename + '.status'
+            #status = open(status_name, "wb")
+            #dill.dump(int(0), status)
+            #status.close()
+            outfile.close()
+        obj_list.append(frag1)
+        
+    if mim_levels == 2:
+        #""" MIM high theory, small fragments"""
+        frag1 = fragmentation.Fragmentation(input_molecule)
+        frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
+        frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+        os.path.abspath(os.curdir)
+        os.chdir('to_run/')
+        level_list = os.listdir()
+        for level in level_list:
+            shutil.rmtree(level)
+        os.mkdir('frag1')
+        os.chdir('frag1')
+        for i in range(0, len(frag1.frags)):
+            filename = "fragment" + str(i) + ".dill"
+            outfile = open(filename, "wb")
+            dill.dump(frag1.frags[i], outfile)
+            #status_name = filename.replace('.dill', '.status')
+            #status = open(status_name, "wb")
+            #dill.dump(int(0), status)
+            #status.close()
+            outfile.close()
+        obj_list.append(frag1)
+        os.chdir('../')
+        
+        #""" MIM low theory, small fragments"""
+        frag2 = fragmentation.Fragmentation(input_molecule)
+        frag2.do_fragmentation(fragtype=frag_type, value=frag_deg)
+        frag2.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=-1)
+        os.mkdir('frag2')
+        os.chdir('frag2')
+        for i in range(0, len(frag2.frags)):
+            filename = "fragment" + str(i) + ".dill"
+            outfile = open(filename, "wb")
+            dill.dump(frag2.frags[i], outfile)
+            #status_name = filename.replace('.dill', '.status')
+            #status = open(status_name, "wb")
+            #dill.dump(int(0), status)
+            #status.close()
+            outfile.close()
+        obj_list.append(frag2)
+        os.chdir('../')
+        
+        #""" MIM low theory, large fragments (iniffloate system)"""
+        frag3 = fragmentation.Fragmentation(input_molecule)
+        frag3.do_fragmentation(fragtype=frag_type, value=frag_deg_large)
+        frag3.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
+        os.mkdir('frag3')
+        os.chdir('frag3')
+        for i in range(0, len(frag3.frags)):
+            filename = "fragment" + str(i) + ".dill"
+            outfile = open(filename, "wb")
+            dill.dump(frag3.frags[i], outfile)
+            outfile.close()
+        obj_list.append(frag3)
+        os.chdir('../')
+    
+    os.chdir('../')
     cmd = "python batch.py %s"%(str(batch_size))
     print(cmd)
     os.system(cmd)
 
 if opt == True:
-    cmd = "python opt.py %s"%(obj_list)
+    coords_name = path.replace(".cml", ".xyz")
+    cmd = 'python opt.py %s %s'%(path, coords_name)
+    print(cmd)
+    os.system(cmd)
