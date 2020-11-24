@@ -9,9 +9,11 @@ import shutil
 import nicolefragment
 from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import dill
+import glob
+import threading
 
 path = sys.argv[1]
-coords_name = sys.argv[2]
+coords_name = path.replace(".cml", ".xyz")
 
 input_molecule = Molecule.Molecule(path)
 input_molecule.initalize_molecule()
@@ -26,18 +28,22 @@ if mim_levels == 1:
     frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
     os.path.abspath(os.curdir)
     os.chdir('to_run/')
+    level_list = os.listdir()
+    for level in level_list:
+        shutil.rmtree(level)
     os.mkdir('frag1')
     obj_list.append(frag1)
     
 if mim_levels == 2:
     #""" MIM high theory, small fragments"""
     frag1 = fragmentation.Fragmentation(input_molecule)
-    print(type(frag1))
-    print(frag1)
     frag1.do_fragmentation(fragtype=frag_type, value=frag_deg)
     frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
     os.path.abspath(os.curdir)
     os.chdir('to_run/')
+    level_list = os.listdir()
+    for level in level_list:
+        shutil.rmtree(level)
     os.mkdir('frag1')
     obj_list.append(frag1)
     
@@ -80,15 +86,30 @@ def opt_fnc(newcoords):
         os.chdir('../')
     
     os.chdir('../')
+    
+    #deleting old energy and gradient numpy objects between itertions
+    npy_list = glob.glob('*.npy')
+    for thing in npy_list:
+        os.remove(thing)
+
     cmd = 'python batch.py %s'%(str(batch_size))
+    opt_cmd = 'qsub -N checker geom_opt.sh'
     print(cmd)
+    print(opt_cmd)
     os.system(cmd)
+    os.system(opt_cmd)
     etot = 0
     gtot = 0
-    exit()
+
+    #pauses python function until all batches are done running and global etot and gtot calculated
+    while len(glob.glob("*.npy")) < 2:
+        pass
+
+    #load in the etot and gtot
     etot = np.load(energy.npy)
     gtot = np.load(gradient.npy)
     return etot, gtot
+
 
 obj_list[0].write_xyz(coords_name)
 os.path.abspath(os.curdir)

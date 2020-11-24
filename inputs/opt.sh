@@ -1,4 +1,4 @@
-#PBS -l walltime=00:1:00:00
+
 #PBS -l nodes=2:ppn=4
 #PBS -l mem=20GB
 #PBS -q nmayhall_lab
@@ -16,18 +16,8 @@ source activate pyconda
 
 cd $PBS_O_WORKDIR
 
-finished=0
+python opt.py $PATH
 
-while [ "$finished" != "1" ]
-do
-    finished=$(python checker.py)
-    sleep 10
-done
-
-echo "Calculations are done!, end status:"
-echo $finished
-
-python reap.py
-echo "Reap is done!"
+echo "submitted optimizer"
 
 exit;

@@ -60,7 +60,9 @@ if opt == False:
         frag1.initalize_Frag_objects(theory=high_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
         os.path.abspath(os.curdir)
         os.chdir('to_run/')
-        shutil.rmtree(i for i in os.listdir())
+        level_list = os.listdir()
+        for level in level_list:
+            shutil.rmtree(level)
         os.mkdir('frag1')
         os.chdir('frag1')
         for i in range(0, len(frag1.frags)):
@@ -131,12 +133,15 @@ if opt == False:
         os.chdir('../')
     
     os.chdir('../')
-    cmd = "python batch.py %s"%(str(batch_size))
+    cmd = "python batch.py %s "%(str(batch_size))
     print(cmd)
     os.system(cmd)
-
+    
 if opt == True:
-    coords_name = path.replace(".cml", ".xyz")
-    cmd = 'python opt.py %s %s'%(path, coords_name)
+    #coords_name = path.replace(".cml", ".xyz")
+    cmd = 'python opt.py %s'%(path)
+
+    #cmd = 'qsub -v PATH=%s opt.sh'%(path)
+
     print(cmd)
     os.system(cmd)

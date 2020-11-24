@@ -46,7 +46,4 @@ for command in command_list:
     os.system(command)
     print("submitting job:", command)
 
-opt_cmd = 'qsub -N checker geom_opt.sh'
-print(opt_cmd)
-os.system(opt_cmd)
 

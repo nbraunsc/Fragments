@@ -29,8 +29,8 @@ for i in batch_list:
         status = -1
     if type(new_class.grad) is int:
         status = -1
-    if type(new_class.hessian) is int:
-        status = -1
+    #if type(new_class.hessian) is int:
+    #    status = -1
     else:
         status = 1
 

@@ -5,7 +5,7 @@ import glob
 os.path.abspath(os.curdir)
 os.chdir('to_run/')
 status_list = []
-status = 'false'
+status = 0
 
 #def opt_fnc():
 for i in os.listdir():
@@ -20,19 +20,17 @@ for i in os.listdir():
         for j in stat_files:
             infile = open(j, 'rb')
             var = dill.load(infile)
+            if var == -1 or 0:
+                infile.close()
+                print(status)
+                exit()
             status_list.append(var)
             infile.close()
-        if -1 in status_list:
-            print(status)
-            exit()
-        else:
-            os.chdir('../')
-
+        os.chdir('../')
 
 #if len(status_list) != 0 and -1 not in status_list:
-status = 'true'
-
-print("Status at checker.py level:", status)
-
+status = 1
+print(str(status))
+exit()
 
 

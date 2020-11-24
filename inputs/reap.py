@@ -22,15 +22,16 @@ for level in levels:
         print("Fragment ID:", level, i)
         e += new_class.energy
         g += new_class.grad
-        h += new_class.hessian
+        #h += new_class.hessian
         #apt += new_class.apt 
     os.chdir('../')
 
+os.chdir('../')
 np.save('energy.npy', e)
 np.save('gradient.npy', g)
-np.save('hessian.npy', h)
+#np.save('hessian.npy', h)
 
 print("MIM Energy:", e, "Hartree")
 print("MIM Gradient:\n", g)
-print("MIM Hessian shape:", h.shape)
+#print("MIM Hessian shape:", h.shape)
 #print("MIM mass-weighted APT's shape:", apt.shape)

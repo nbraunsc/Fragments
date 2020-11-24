@@ -220,6 +220,14 @@ class Fragment():
         energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
         hess = hess_py
 
+        self.energy = self.local_coeff*self.coeff*energy
+        jacob = self.build_jacobian_Grad()
+        self.grad = self.local_coeff*self.coeff*jacob.dot(grad)
+        print("Done!")
+        return self.energy, self.grad, hess_py  #, self.hessian#, self.apt
+
+    def hess_apt(self, hess_py):
+
         #If not analytical hess, do numerical below
         if type(hess_py) is int:
             hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
@@ -239,20 +247,15 @@ class Fragment():
             hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
             hess = hess.transpose(0, 2, 1, 3)
         
-        self.energy = self.local_coeff*self.coeff*energy
-        jacob = self.build_jacobian_Grad()
-        self.grad = self.local_coeff*self.coeff*jacob.dot(grad)
-        
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
         #self.apt_grad()     #one i am trying to get to work
-        #self.apt = self.build_apt()    #one that words
-        print("Done!")
-        return self.energy, self.grad, self.hessian#, self.apt
-
+        self.apt = self.build_apt()    #one that words
+        return self.hessian, self.apt
+        
     def apt_grad(self):
         """ Working on implementing this.
         Function to create the apts by applying an electric field in a certain direciton to 
