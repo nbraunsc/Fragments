@@ -22,7 +22,7 @@ high_theory = 'MP2'
 #Only define low_theory if mim_levels = 2
 low_theory = 'RHF'
 
-#could be Molcas.Molcas or Qchem.Qchem
+#could be Pyscf, Qchem, or Molcas
 software = 'Pyscf'  
 
 #for second derivative by finite difference

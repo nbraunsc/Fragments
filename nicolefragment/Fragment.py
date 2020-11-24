@@ -218,8 +218,7 @@ class Fragment():
         self.grad = 0
         self.inputxyz = self.build_xyz()
         energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
-        hess = hess_py
-
+        
         self.energy = self.local_coeff*self.coeff*energy
         jacob = self.build_jacobian_Grad()
         self.grad = self.local_coeff*self.coeff*jacob.dot(grad)
@@ -229,6 +228,7 @@ class Fragment():
     def hess_apt(self, hess_py):
         print("Started hess_apt()")
         #If not analytical hess, do numerical below
+        hess = hess_py
         if type(hess_py) is int:
             print("Numerical hessian needed, Theory=", self.qc_class.theory)
             hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
@@ -245,9 +245,8 @@ class Fragment():
                     hess[i] = vec
                     hess[:,i] = vec
        
-            hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
-            hess = hess.transpose(0, 2, 1, 3)
-        
+        hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
+        hess = hess.transpose(0, 2, 1, 3)
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
@@ -255,6 +254,8 @@ class Fragment():
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
         #self.apt_grad()     #one i am trying to get to work
         self.apt = self.build_apt()    #one that words
+        print("Portion of APT:\n")
+        print(self.apt[0])
         return self.hessian, self.apt
         
     def apt_grad(self):
