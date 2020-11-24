@@ -6,6 +6,7 @@ from nicolefragment import *
 #from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 batch_size = int(sys.argv[1])
+script = sys.argv[2]
 
 def batch(iterable, n=1):
     l = len(iterable)
@@ -33,7 +34,7 @@ for i in os.listdir():
             submit_name = i + "_" + string_num
             os.chdir('../../')
             #cmd = 'python run.py %s %s'%(path, string_num)
-            cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" pbs.sh'%(submit_name, path, string_num)
+            cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)
             command_list.append(cmd)
             #os.system(cmd)
             os.chdir('to_run/')

@@ -227,9 +227,10 @@ class Fragment():
         return self.energy, self.grad, hess_py  #, self.hessian#, self.apt
 
     def hess_apt(self, hess_py):
-
+        print("Started hess_apt()")
         #If not analytical hess, do numerical below
         if type(hess_py) is int:
+            print("Numerical hessian needed, Theory=", self.qc_class.theory)
             hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
             i = -1
             for atom in range(0, len(self.inputxyz)):

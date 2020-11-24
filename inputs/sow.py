@@ -133,7 +133,7 @@ if opt == False:
         os.chdir('../')
     
     os.chdir('../')
-    cmd = "python batch.py %s "%(str(batch_size))
+    cmd = "python batch.py %s hess_apt.sh"%(str(batch_size))
     print(cmd)
     os.system(cmd)
     

@@ -92,7 +92,7 @@ def opt_fnc(newcoords):
     for thing in npy_list:
         os.remove(thing)
 
-    cmd = 'python batch.py %s'%(str(batch_size))
+    cmd = 'python batch.py %s pbs.sh'%(str(batch_size))
     opt_cmd = 'qsub -N checker geom_opt.sh'
     print(cmd)
     print(opt_cmd)
@@ -125,7 +125,38 @@ for geom in optimizer:
     etot_opt = solver[0]
     grad_opt = solver[1]
 relaxed = geom
+
 print("\n", "##########################", '\n', "#       Converged!       #", '\n', "##########################") 
 print('\n', "Energy = ", etot_opt)
 print('\n', "Converged_Gradient:", "\n", grad_opt)
+
+#updating pickled objects with final geometry for hessiand and apt calculation
+for atom in range(0, len(relaxed.coords)): #makes relaxed.coords = self.molecule.atomtable
+    x = list(relaxed.coords[atom])
+    obj_list[0].molecule.atomtable[atom][1:] = x
+
+for j in range(0, len(obj_list)):       #update the other frag instances if MIM2 or higher level
+    obj_list[j].molecule.atomtable = obj_list[0].molecule.atomtable
+    os.chdir(levels[j])
+
+    #remove old pickled objects and status
+    frag_inst = os.listdir()
+    for frag in frag_inst:
+        shutil.rmtree(frag)
+    
+    #repickle fragment instances with new coords
+    for i in range(0, len(obj_list[j].frags)):
+        filename = "fragment" + str(i) + ".dill"
+        outfile = open(filename, "wb")
+        dill.dump(obj_list[j].frags[i], outfile)
+        outfile.close()
+    os.chdir('../')
+os.chdir('../')
+    
+#Running hessian and apt at optimized geometry
+cmd = 'python batch.py %s hess_apt.sh'%(str(batch_size))
+print(cmd)
+os.system(cmd)
+
+
 

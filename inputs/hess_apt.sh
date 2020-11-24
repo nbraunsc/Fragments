@@ -16,18 +16,10 @@ source activate pyconda
 
 cd $PBS_O_WORKDIR
 
-finished=0
+echo $LEVEL
+echo $BATCH
 
-while [ "$finished" != "1" ]
-do
-    finished=$(python checker.py)
-    sleep 10
-done
-
-echo "Calculations are done!, end status:"
-echo $finished
-
-python eg_reap.py
-echo "Reap is done!"
+python run_opt.py $LEVEL $BATCH
 
 exit;
+
