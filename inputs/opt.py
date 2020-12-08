@@ -11,6 +11,7 @@ from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 import dill
 import glob
 import threading
+import time
 
 path = sys.argv[1]
 coords_name = path.replace(".cml", ".xyz")
@@ -18,6 +19,7 @@ coords_name = path.replace(".cml", ".xyz")
 input_molecule = Molecule.Molecule(path)
 input_molecule.initalize_molecule()
 obj_list = []
+name_list = []
 
 if software == 'Pyscf':
     software = Pyscf.Pyscf
@@ -33,6 +35,7 @@ if mim_levels == 1:
         shutil.rmtree(level)
     os.mkdir('frag1')
     obj_list.append(frag1)
+    name_list.append('frag1')
     
 if mim_levels == 2:
     #""" MIM high theory, small fragments"""
@@ -46,6 +49,7 @@ if mim_levels == 2:
         shutil.rmtree(level)
     os.mkdir('frag1')
     obj_list.append(frag1)
+    name_list.append('frag1')
     
     #""" MIM low theory, small fragments"""
     frag2 = fragmentation.Fragmentation(input_molecule)
@@ -53,6 +57,7 @@ if mim_levels == 2:
     frag2.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=-1)
     os.mkdir('frag2')
     obj_list.append(frag2)
+    name_list.append('frag2')
     
     #""" MIM low theory, large fragments (iniffloate system)"""
     frag3 = fragmentation.Fragmentation(input_molecule)
@@ -60,23 +65,27 @@ if mim_levels == 2:
     frag3.initalize_Frag_objects(theory=low_theory, basis=basis_set, qc_backend=software, step_size=stepsize, local_coeff=1)
     os.mkdir('frag3')
     obj_list.append(frag3)
+    name_list.append('frag3')
 
-levels = os.listdir()
+os.chdir('../')
 
 def opt_fnc(newcoords):
+    os.chdir('to_run/')
     for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
         x = list(newcoords[atom])
         obj_list[0].molecule.atomtable[atom][1:] = x
     
     for j in range(0, len(obj_list)):       #update the other frag instances if MIM2 or higher level
         obj_list[j].molecule.atomtable = obj_list[0].molecule.atomtable
-        os.chdir(levels[j])
+        os.chdir(name_list[j])
+        files = os.listdir()
+        print("files in", name_list[j], files)
 
         #remove old pickled objects and status
-        frag_inst = os.listdir()
-        for frag in frag_inst:
-            shutil.rmtree(frag)
-        
+        for filename in files:
+            os.remove(filename)
+        print("empty dir:", os.listdir())
+
         #repickle fragment instances with new coords
         for i in range(0, len(obj_list[j].frags)):
             filename = "fragment" + str(i) + ".dill"
@@ -84,10 +93,10 @@ def opt_fnc(newcoords):
             dill.dump(obj_list[j].frags[i], outfile)
             outfile.close()
         os.chdir('../')
-    
     os.chdir('../')
     
     #deleting old energy and gradient numpy objects between itertions
+    print("removing energy.npy and grad.npy")
     npy_list = glob.glob('*.npy')
     for thing in npy_list:
         os.remove(thing)
@@ -103,11 +112,15 @@ def opt_fnc(newcoords):
 
     #pauses python function until all batches are done running and global etot and gtot calculated
     while len(glob.glob("*.npy")) < 2:
+        print("sleeping in while loop")
+        time.sleep(30)
+        print("done sleeping")
         pass
 
     #load in the etot and gtot
-    etot = np.load(energy.npy)
-    gtot = np.load(gradient.npy)
+    etot = np.load('energy.npy')
+    gtot = np.load('gradient.npy')
+    print("energy from .npy = ", etot)
     return etot, gtot
 
 
@@ -130,20 +143,19 @@ print("\n", "##########################", '\n', "#       Converged!       #", '\
 print('\n', "Energy = ", etot_opt)
 print('\n', "Converged_Gradient:", "\n", grad_opt)
 
-#updating pickled objects with final geometry for hessiand and apt calculation
-for atom in range(0, len(relaxed.coords)): #makes relaxed.coords = self.molecule.atomtable
-    x = list(relaxed.coords[atom])
+#updating coords with optimized geometry for hessian
+for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
+    x = list(newcoords[atom])
     obj_list[0].molecule.atomtable[atom][1:] = x
 
 for j in range(0, len(obj_list)):       #update the other frag instances if MIM2 or higher level
     obj_list[j].molecule.atomtable = obj_list[0].molecule.atomtable
-    os.chdir(levels[j])
+    os.chdir(name_list[j])
 
     #remove old pickled objects and status
-    frag_inst = os.listdir()
-    for frag in frag_inst:
-        shutil.rmtree(frag)
-    
+    for filename in os.listdir():
+        os.remove(filename)
+
     #repickle fragment instances with new coords
     for i in range(0, len(obj_list[j].frags)):
         filename = "fragment" + str(i) + ".dill"
@@ -152,7 +164,7 @@ for j in range(0, len(obj_list)):       #update the other frag instances if MIM2
         outfile.close()
     os.chdir('../')
 os.chdir('../')
-    
+
 #Running hessian and apt at optimized geometry
 cmd = 'python batch.py %s hess_apt.sh'%(str(batch_size))
 print(cmd)
