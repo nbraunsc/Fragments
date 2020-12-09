@@ -4,6 +4,8 @@
 #PBS -q nmayhall_lab
 #PBS -A qcvt_doe
 #PBS -W group_list=nmayhall_lab
+#PBS -M nbraunsc@vt.edu
+#PBS -m ae
 
 module purge
 module load gcc/5.2.0

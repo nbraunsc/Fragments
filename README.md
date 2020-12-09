@@ -22,34 +22,18 @@ The MIM code can be imported as a python package:
 
 ## How to run MIM code (using Sow/Reap formalism)
 #### Sow
-An input file will need to be edited or created with calculation parameters. Then the "sow" set will be initated as follows:
+An input file will need to be edited with calculation parameters. Then "sow" step takes in two arguments, the input file and coordinate file:
 
 `python sow.py <input_file> <coords_file>`
 
-An example with an input file named `dummie_input.py` and a coordinates file named `largermol.cml` is as follows:
+An example with an input file named `input_file.py` and a coordinates file named `water.cml` is as follows:
 
-`python sow.py dummie_input.py largermol.cml`
-
-#### Run
-User has the ability to run batches of calculations using the following command:
-
-`python batch.py <batch size>`
-
-The `<batch size>` is an integer that the user defines to determine the batch size for how  many fragment calculations would like to be run at a time. The `<batch size>` may also be empty if all jobs want to be submitted at once.
+`python sow.py input_file.py water.cml`
 
 #### Reap
-The final step is the "reap" set and is run once all the fragment calculations are complete using the following command:
+The final step is the "reap" step and is run once all the fragment calculations are complete using the following command:
 
 `python reap.py >> <outfile>`
 
 Where `<outfile>` is the file where the output from the MIM calculation will be written.
-
-## How to run MIM code (using Ray formalism)
-
-Need to specify parameters at the bottom of MIM.py script in the source directory "nicolefragment", then:
-
-`python MIM.py`
-
-
-
 

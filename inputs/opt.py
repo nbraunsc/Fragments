@@ -132,7 +132,7 @@ etot_opt = 0
 grad_opt = 0
 for geom in optimizer:
     x = x+1
-    print("opt cycle:", x)
+    print("\n opt cycle:", x, "\n")
     solver = opt_fnc(geom.coords)
     optimizer.send(solver)
     etot_opt = solver[0]
@@ -143,9 +143,12 @@ print("\n", "##########################", '\n', "#       Converged!       #", '\
 print('\n', "Energy = ", etot_opt)
 print('\n', "Converged_Gradient:", "\n", grad_opt)
 
+print("\n", relaxed.coords, "\n")
+os.chdir('to_run/')
+
 #updating coords with optimized geometry for hessian
-for atom in range(0, len(newcoords)): #makes newcoords = self.molecule.atomtable
-    x = list(newcoords[atom])
+for atom in range(0, len(relaxed.coords)): #makes newcoords = self.molecule.atomtable
+    x = list(relaxed.coords[atom])
     obj_list[0].molecule.atomtable[atom][1:] = x
 
 for j in range(0, len(obj_list)):       #update the other frag instances if MIM2 or higher level
@@ -169,6 +172,7 @@ os.chdir('../')
 cmd = 'python batch.py %s hess_apt.sh'%(str(batch_size))
 print(cmd)
 os.system(cmd)
+
 
 
 
