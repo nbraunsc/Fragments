@@ -1,6 +1,6 @@
 <molecule>
  <atomArray>
-  <atom id="a1" elementType="H" x3="0" y3="0.76181100" z3="-0.9"/>
+  <atom id="a1" elementType="H" x3="0" y3="0.76181100" z3="-0.598710"/>
   <atom id="a2" elementType="O" x3="0.0" y3="0.0" z3="0.0"/>
   <atom id="a3" elementType="H" x3="0" y3="-0.76181100" z3="-0.59871000"/>
  </atomArray>
