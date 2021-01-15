@@ -2,13 +2,13 @@
 import sys
 
 #number of mim levels
-mim_levels = 2            
+mim_levels = 1            
 
 #can be 'distance' or 'graphical'
 frag_type = 'distance' 
 
 #smaller fragmentation level
-frag_deg = 1.6
+frag_deg = 10
 
 #larger fragmentation level
 frag_deg_large = 3
@@ -17,7 +17,8 @@ frag_deg_large = 3
 basis_set = 'sto-3g'
 
 #Always need to define high_theory
-high_theory = 'MP2'
+high_theory = 'RHF'
+#high_theory = 'MP2'
 
 #Only define low_theory if mim_levels = 2
 low_theory = 'RHF'
@@ -32,5 +33,5 @@ stepsize = 0.001
 batch_size = 3
 
 #geometry optimization set to True or False
-#opt = False
-opt = True
+opt = False
+#opt = True

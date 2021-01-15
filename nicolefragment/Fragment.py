@@ -4,6 +4,7 @@ import numpy as np
 #from ase import Atoms
 #from ase.calculators.vasp import Vasp
 #from ase.vibrations import Infrared  
+from numpy import linalg as LA 
 from mendeleev import element
 
 #import nicolefragment
@@ -35,6 +36,7 @@ class Fragment():
         self.attached = attached    #[(supporting, host), (supporting, host), ...]
         self.inputxyz = []
         self.apt = []
+        self.aptgrad = np.array([])
         self.step = step_size
         self.energy = 0
         #self.grad = []
@@ -211,7 +213,7 @@ class Fragment():
         self.hessian : ndarray (4D tensor)
             This is the hessian for the fragement*its coeff
         """
-        np.set_printoptions(suppress=True, precision=5)
+        np.set_printoptions(suppress=True, precision=7)
         self.energy = 0
         hess_py = 0
         #self.grad = np.zeros((self.molecule.natoms, 3))
@@ -249,13 +251,17 @@ class Fragment():
         hess = hess.transpose(0, 2, 1, 3)
         #build frag_hess, do link atom projection for hessian
         self.jacobian_hess = self.build_jacobian_Hess()
+        #j_reshape = self.jacobian_hess.transpose(0,2,1,3)
         j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
+        #y = np.einsum('ijkl, klmn -> ijmn', j_reshape, hess) 
         y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
+        #self.hessian = np.einsum('ijkl, klmn -> ijmn', y, j_reshape.transpose(2,3,0,1))*self.coeff*self.local_coeff
         self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
-        #self.apt_grad()     #one i am trying to get to work
-        self.apt = self.build_apt()    #one that words
-        print("Portion of APT:\n")
-        print(self.apt[0])
+        
+
+        self.apt = self.build_apt()    #one that words sorta
+        #self.aptgrad = self.apt_grad()     #one i am trying to get to work
+        
         return self.hessian, self.apt
         
     def apt_grad(self):
@@ -269,37 +275,47 @@ class Fragment():
         E = [0, 0, 0]
         energy_vec = np.zeros((3))
         apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
-        dip = 0
+        grad_list = []
+        extra_dip = self.qc_class.get_dipole(self.inputxyz)
+        print(extra_dip)
         for i in range(0, 3):
-            e1, g1, dip = self.qc_class.apply_field(E, self.inputxyz)   #no field
+            #e1, g1, dip = self.qc_class.apply_field(E, self.inputxyz)   #no field
             E[i] = e_field
-            print("energy with no field:", e1)
-            print("############ Field applied in the ", i, "direction ###############")
-            print("electric field positive:", E)
+            #print("energy with no field:", e1)
+            print("\n############ Field applied in the ", i, "direction ###############\n")
+            #print("electric field positive:", E)
             e2, g2, dipole2 = self.qc_class.apply_field(E, self.inputxyz) #positive direction
-            print("energy with + field:", e2)
+            print("gradient positive:", g2)
+            #print("energy with + field:", e2)
             E[i] = -1*e_field
-            print("electric field negative:", E)
+            #print("electric field negative:", E)
             e3, g3, dipole3 = self.qc_class.apply_field(E, self.inputxyz)   #neg direction
-            print("energy with - field:", e3)
+            print("gradient neg:", g3)
+            #print("energy with - field:", e3)
             E[i] = 0
-            print("should be back to 0:", E)
+            #print("should be back to 0:", E)
     
-            print("energy differnce between + and -:", e2-e3, "for direction:", i)
+            #print("energy differnce between + and -:", e2-e3, "for direction:", i)
             #print("Energy difference:", e2-e1)
-            gradient = (g2.flatten()-g3.flatten())/(2*e_field)
+            #gradient = (g2.flatten()-g3.flatten())/(2*e_field)
+            gradient1 = (g2-g3)/(2*e_field)
+            gradient = gradient1.flatten()
             energy2 = (e2-e3)/(2*e_field)
-            print("derv energy comp:", energy2)
+            #print("derv energy comp:", energy2)
             energy_vec[i] = energy2
             print("energy vec:", energy_vec)
-            print("gradient shape:", gradient.shape)
+            print("Dipole moment:\n", extra_dip)
+            print("gradient shape:", gradient, gradient.shape)
             apt[i] = gradient
-            
+        
+        print(apt, apt.shape)
         print("fragment:", self.prims)
-        print("Enery deriv:\n", energy_vec)
-        print("Dipole moment:\n", dip)
-        print("norm of E\n", np.linalg.norm(energy_vec))
-        print("norm of dip\n", np.linalg.norm(dip))
+        #print("norm of E\n", np.linalg.norm(energy_vec))
+        #print("norm of dip\n", np.linalg.norm(dip))
+        for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
+            y = element(self.inputxyz[atom][0])
+            value = 1/(np.sqrt(y.atomic_weight))
+
 
         #build M^-1/2 mass matrix and mass weight apt
         labels = []
@@ -317,59 +333,115 @@ class Fragment():
             value = 1/(np.sqrt(y.atomic_weight))
             mass_matrix[atom][atom] = value
         apt_mass = np.dot(mass_matrix, apt.T)
+        print(apt_mass)
+        print("\n")
+        print(self.apt)
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        self.apt = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
+        apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
+        return apt_grad
             
     def build_apt(self):
         """
             Builds the atomic polar tensor with numerical derivative of dipole moment w.r.t atomic Cartesian
             coordinates. Function builds xyz input with link atoms in ndarray format, not string type or list like previous functions.
         """
-        x = np.zeros((len(self.prims)+len(self.notes), 3))
-        labels = []
-        for i in range(0, len(self.prims)):
-            x[i] = (self.molecule.atomtable[self.prims[i]][1:])
-            labels.append(self.molecule.atomtable[self.prims[i]][0])
-        
-        for pair in range(0, len(self.attached)):
-            linkatom_xyz = self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[0]
-            x[self.notes[pair][0]] = linkatom_xyz[1]
-            labels.append(linkatom_xyz[0])
-        
-        ##adding 1/np.sqrt(amu) units to xyz coords
-        #mass_xyz = np.zeros(x.shape)
-        #for atom in range(0, len(self.prims)+len(self.notes)):
-        #    y = element(labels[atom])
-        #    value = np.sqrt(y.atomic_weight)
-        #    mass_xyz[atom] = x[atom]*(1/value)   #mass weighted coordinates
-        
-        #formatting xyz for pyscf coords input
-        coords_xyz = []
-        for atom in range(0, len(labels)):
-            coords_xyz.append([labels[atom], x[atom]])
-        
+        print("input coords", self.inputxyz)
         apt = []
         for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
             storing_vec = np.zeros((3,3))
-            y = element(labels[atom])
+            y = element(self.inputxyz[atom][0])
             value = 1/(np.sqrt(y.atomic_weight))
             for comp in range(0,3):   #xyz interation
-                dip1 = self.qc_class.get_dipole(coords_xyz)
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]+self.step_size
-                dip2 = self.qc_class.get_dipole(coords_xyz)
-                vec = (dip1 - dip2)/self.step_size
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+                dip1 = self.qc_class.get_dipole(self.inputxyz)
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
+                dip2 = self.qc_class.get_dipole(self.inputxyz)
+                vec = (dip1 - dip2)/(2*self.step_size)
                 storing_vec[comp] = vec
-                coords_xyz[atom][1][comp] = coords_xyz[atom][1][comp]-self.step_size
-            a = storing_vec.T*value    ##mass weighting
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+            a = storing_vec*value    ##mass weighting
             apt.append(a)
         px = np.vstack(apt)
+        print(px)
+        print("\n")
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
         oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
         #self.apt = self.coeff*np.dot(jac_apt, px)
         return oldapt
         
+    def mw_hessian(self, full_hessian):
+        """
+        Will compute the mass-weighted hessian, frequencies, and 
+        normal modes for the full system.
+        
+        Parameters
+        ----------
+        full_hessian : ndarray
+            This is the full hessian for the full molecule.
+
+        Returns
+        -------
+        freq : ndarray
+            1D np array holding the frequencies
+        modes : ndarray
+            2D ndarray holding normal modes in the columns
+        """
+        np.set_printoptions(suppress=True)
+        M = np.zeros((self.molecule.natoms*3, self.molecule.natoms*3))
+        counter = np.array([0, 1, 2])
+        for i in range(0, self.molecule.natoms):
+            x = element(self.molecule.atomtable[i][0])
+            value = 1/(np.sqrt(x.atomic_weight))
+            for j in counter:
+                M[j][j] = value
+            counter = counter + 3
+        x = full_hessian.reshape(self.molecule.natoms*3, self.molecule.natoms*3, order='C')
+        first = np.dot(x, M)
+        second = np.dot(M, first)
+        e_values, modes = LA.eigh(second)
+
+        #unit conversion of freq from H/B**2 amu -> 1/s**2
+        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
+        factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
+        freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
+        return freq, modes
+
+#everything following works perfectly but only for water but freq and intensities match
+       # full_hessian = full_hessian.transpose(0, 2, 1, 3)
+       # for row in range(0, self.molecule.natoms):
+       #     #adding 1/np.sqrt(amu) units to xyz coords
+       #     x = element(self.molecule.atomtable[row][0])
+       #     value = np.sqrt(x.atomic_weight)
+       #     #mass_array[row] = value
+       #     #mass_xyz[row] = np.array(self.molecule.atomtable[row][1:])*(1/value)   #mass weighted coordinates
+
+       #     for column in range(0, self.molecule.natoms):    
+       #         y = element(self.molecule.atomtable[column][0])
+       #         z = x.atomic_weight*y.atomic_weight
+       #         value = np.sqrt(z)**-1
+       #         #print(full_hessian[row][column])
+       #         #term = full_hessian[row, :, column, :]*value
+       #         #full_hessian[row, :, column, :] = term
+       #         
+       #         term = full_hessian[row][column]*value
+       #         full_hessian[row][column] = term
+       #         full_hessian[column][row] = term.T
+       # print(full_hessian) 
+       # #reshape_mass_hess = full_hessian.transpose(0, 2, 1, 3)
+       # reshape_mass_hess = full_hessian
+       # x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[2],reshape_mass_hess.shape[1]*reshape_mass_hess.shape[3])
+       # #x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[2],reshape_mass_hess.shape[1]*reshape_mass_hess.shape[3])
+       # e_values, modes = LA.eigh(x)
+
+       # #unit conversion of freq from H/B**2 amu -> 1/s**2
+       # #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
+       # factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
+       # freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
+       # return freq, modes
+
+
     def get_IR(self):
         """ Atempt at getting IR spectra to compare to with different software
 
@@ -393,4 +465,3 @@ class Fragment():
         ir = Infrared(molecule)
         ir.run()
         ir.summary()
-

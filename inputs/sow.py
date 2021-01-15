@@ -66,7 +66,7 @@ if opt == False:
         os.mkdir('frag1')
         os.chdir('frag1')
         for i in range(0, len(frag1.frags)):
-            filename = "fragment" + str(i)
+            filename = "fragment" + str(i) + ".dill"
             outfile = open(filename, "wb")
             dill.dump(frag1.frags[i], outfile)
             #status_name = filename + '.status'
@@ -75,6 +75,7 @@ if opt == False:
             #status.close()
             outfile.close()
         obj_list.append(frag1)
+        os.chdir('../')
         
     if mim_levels == 2:
         #""" MIM high theory, small fragments"""
@@ -134,8 +135,8 @@ if opt == False:
     
     os.chdir('../')
     cmd = "python batch.py %s hess_apt.sh"%(str(batch_size))
-    print(cmd)
     os.system(cmd)
+    print(cmd)
     
 if opt == True:
     #coords_name = path.replace(".cml", ".xyz")

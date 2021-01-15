@@ -6,8 +6,8 @@ from nicolefragment import *
 #from nicolefragment import runpie, Molecule, fragmentation, Fragment, Pyscf
 
 batch_size = int(sys.argv[1])
+print(batch_size)
 script = sys.argv[2]
-
 def batch(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
@@ -21,11 +21,12 @@ for i in os.listdir():
     files_dill = glob.glob('*.dill')
     if batch_size == None:
         #bash_command = "qsub pbs.sh"
-        bash_command = "python run.py" + str(list(files_dill))
+        cmd = 'python run_opt.py %s %s'%(path, string_num)
         os.chdir('../../')
-        os.system(bash_command)
+        os.system(cmd)
     else:
         for x in batch(files_dill, batch_size):
+            print("hello")
             path = os.getcwd()
             string_num = str()
             for frag in x:
@@ -33,8 +34,8 @@ for i in os.listdir():
                 string_num+=y+"_"
             submit_name = i + "_" + string_num
             os.chdir('../../')
-            #cmd = 'python run.py %s %s'%(path, string_num)
-            cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)
+            cmd = 'python run_opt.py %s %s'%(path, string_num)
+            #cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)
             command_list.append(cmd)
             #os.system(cmd)
             os.chdir('to_run/')

@@ -102,20 +102,20 @@ def opt_fnc(newcoords):
         os.remove(thing)
 
     cmd = 'python batch.py %s pbs.sh'%(str(batch_size))
-    opt_cmd = 'qsub -N checker geom_opt.sh'
+    #opt_cmd = 'qsub -N checker geom_opt.sh'
     print(cmd)
-    print(opt_cmd)
+    #print(opt_cmd)
     os.system(cmd)
-    os.system(opt_cmd)
+    #os.system(opt_cmd)
     etot = 0
     gtot = 0
 
     #pauses python function until all batches are done running and global etot and gtot calculated
-    while len(glob.glob("*.npy")) < 2:
-        print("sleeping in while loop")
-        time.sleep(30)
-        print("done sleeping")
-        pass
+    #while len(glob.glob("*.npy")) < 2:
+    #    print("sleeping in while loop")
+    #    time.sleep(30)
+    #    print("done sleeping")
+    #    pass
 
     #load in the etot and gtot
     etot = np.load('energy.npy')
