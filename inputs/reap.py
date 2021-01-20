@@ -3,6 +3,7 @@ import os
 import glob
 import dill
 import numpy as np
+from mendeleev import element
 
 os.chdir('to_run')
 levels = os.listdir()
@@ -33,57 +34,68 @@ for level in levels:
 os.chdir('frag1')
 infile = open('fragment0.dill', 'rb')
 new_class = dill.load(infile)
-freq, modes = new_class.mw_hessian(h)
+freq, modes_unweight, M = new_class.mw_hessian(h)
+
+################### All Normal mode testing for IR intensites ##########################
+
+modes = np.dot(M, modes_unweight)   #mass-weighted normal modes
 mole_coords = new_class.molecule.atomtable
 labels = []
 for i in range(0, len(mole_coords)):
     label = mole_coords[i][0]
     mole_coords[i].remove(label)
     labels.append(label)
-
 atoms = np.array(labels)
-print(atoms)
 coords = np.array(mole_coords).flatten()
-print(coords, coords.shape, "\n")
+
 x = np.indices(modes.shape)[1]
-apt_norm = np.zeros((3*new_class.molecule.natoms, 3))
+apt_norm = np.zeros((modes.shape[0], 3))
 
 def normal_disp(modes_list):
     for i in modes_list:
         print("mode:", i)
+        pos_list = []
+        neg_list = []
         positive_coords = coords + step*modes[i] #getting new global coords for displacement along normal mode
-        pos = positive_coords.reshape((3,3))
+        pos = positive_coords.reshape((new_class.molecule.natoms,3))
         neg_coords = coords - step*modes[i] #getting new global coords for displacement along normal mode
-        neg = neg_coords.reshape((3,3))
+        neg = neg_coords.reshape((new_class.molecule.natoms,3))
         
-        all_data_pos = np.vstack((atoms, pos.T)).T
-        all_data_neg = np.vstack((atoms, neg.T)).T
-        
-        new_class.molecule.atomtable = all_data_pos #setting positive disp global coords 
+        for row in range(0, new_class.molecule.natoms):
+            pos_list.append(list(pos[row]))
+            neg_list.append(list(neg[row]))
+            pos_list[row].insert(0, labels[row])
+            neg_list[row].insert(0, labels[row])
+        new_class.molecule.atomtable = pos_list #setting positive disp global coords 
         inputxyz = new_class.build_xyz()    #getting pyscf xyz input format
         dip = new_class.qc_class.get_dipole(inputxyz)   #getting dipole with new coords
-        new_class.molecule.atomtable = all_data_neg  #setting negative disp  global coords 
+        new_class.molecule.atomtable = neg_list  #setting negative disp  global coords 
         inputxyz = new_class.build_xyz()    #getting pyscf xyz input format
         dip2 = new_class.qc_class.get_dipole(inputxyz)   #getting dipole with new coords
         apt_comp = (dip-dip2)/2*step    #3x1 vector
-        print(apt_comp)
         apt_norm[i] = apt_comp
 
 normal_disp(x[0])
 print(apt_norm)
 norm_freq = np.dot(apt_norm, apt_norm.T)
-intense = np.diagonal(norm_freq)
-print(intense)
-intense_kmmol = intense*42.2561
-print(intense_kmmol)
-exit()
+test_intense = np.diagonal(norm_freq)
+print("intensity in unknown units: \n", test_intense)
+test_intense_kmmol = test_intense*42.2561
+print("intensity in kmmol: \n", test_intense_kmmol)
+
+#################################### End of Normal mode testing code #############################
+
 infile.close()
-pq = np.dot(apt.T, modes)   #shape 3x3N
+
+pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
+print(pq.T)
 pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
 intense = np.diagonal(pq_pq)
+print("intensity in unknown units: \n", intense)
 intense_kmmol = intense*42.2561
+print("intensity in kmmol: \n", intense_kmmol)
 
-np.set_printoptions(suppress=True)
+np.set_printoptions(precision=7)
 os.chdir('../../')
 np.save('energy.npy', e)
 np.save('gradient.npy', g)
@@ -98,4 +110,4 @@ for i in range(0, len(freq)):
     print("Freq:", freq[i], "int :", intense_kmmol[i])
 
 print("apt from atomic:\n", apt)
-print("\napt from grad:\n", apt_grad)
+#print("\napt from grad:\n", apt_grad)

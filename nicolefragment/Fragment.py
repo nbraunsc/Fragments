@@ -406,7 +406,7 @@ class Fragment():
         #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
         factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
         freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
-        return freq, modes
+        return freq, modes, M
 
 #everything following works perfectly but only for water but freq and intensities match
        # full_hessian = full_hessian.transpose(0, 2, 1, 3)

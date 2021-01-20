@@ -134,8 +134,8 @@ if opt == False:
         os.chdir('../')
     
     os.chdir('../')
-    cmd = "python batch.py %s slurm_hess_apt.sh"%(str(batch_size))    ##For TinkerCliffs
-    #cmd = "python batch.py %s hess_apt.sh"%(str(batch_size))   ##For Newriver
+    #cmd = "python batch.py %s slurm_hess_apt.sh"%(str(batch_size))    ##For TinkerCliffs
+    cmd = "python batch.py %s hess_apt.sh"%(str(batch_size))   ##For Newriver
     os.system(cmd)
     print(cmd)
     

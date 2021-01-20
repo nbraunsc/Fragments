@@ -36,8 +36,8 @@ for i in os.listdir():
                 string_num+=y+"_"
             submit_name = i + "_" + string_num
             os.chdir('../../')
-            #cmd = 'python run_opt.py %s %s'%(path, string_num)         ##For local machine (no cluster)
-            cmd = 'sbatch -J %s --export=LEVEL=%,BATCH="%s" %s'%(submit_name, path, string_num, script)     ##For TinkerCliffs
+            cmd = 'python run_opt.py %s %s'%(path, string_num)         ##For local machine (no cluster)
+            #cmd = 'sbatch -J %s --export=LEVEL=%,BATCH="%s" %s'%(submit_name, path, string_num, script)     ##For TinkerCliffs
             #cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)     ##For Newriver
             command_list.append(cmd)
             #os.system(cmd)
@@ -50,5 +50,4 @@ os.chdir('../')
 for command in command_list:
     os.system(command)
     print("submitting job:", command)
-
 
