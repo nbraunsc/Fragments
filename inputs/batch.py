@@ -8,6 +8,7 @@ from nicolefragment import *
 batch_size = int(sys.argv[1])
 print(batch_size)
 script = sys.argv[2]
+
 def batch(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
@@ -16,6 +17,7 @@ def batch(iterable, n=1):
 os.path.abspath(os.curdir)
 os.chdir('to_run/')
 command_list = []
+
 for i in os.listdir():
     os.chdir(i)
     files_dill = glob.glob('*.dill')
@@ -34,8 +36,9 @@ for i in os.listdir():
                 string_num+=y+"_"
             submit_name = i + "_" + string_num
             os.chdir('../../')
-            cmd = 'python run_opt.py %s %s'%(path, string_num)
-            #cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)
+            #cmd = 'python run_opt.py %s %s'%(path, string_num)         ##For local machine (no cluster)
+            cmd = 'sbatch -J %s --export=LEVEL=%,BATCH="%s" %s'%(submit_name, path, string_num, script)     ##For TinkerCliffs
+            #cmd = 'qsub -N %s -v LEVEL="%s",BATCH="%s" %s'%(submit_name, path, string_num, script)     ##For Newriver
             command_list.append(cmd)
             #os.system(cmd)
             os.chdir('to_run/')

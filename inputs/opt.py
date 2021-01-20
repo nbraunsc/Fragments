@@ -101,7 +101,8 @@ def opt_fnc(newcoords):
     for thing in npy_list:
         os.remove(thing)
 
-    cmd = 'python batch.py %s pbs.sh'%(str(batch_size))
+    cmd = 'python batch.py %s slurm_pbs.sh'%(str(batch_size))         ##For TinkerCliffs
+    ##cmd = 'python batch.py %s pbs.sh'%(str(batch_size))       ##For Newriver
     #opt_cmd = 'qsub -N checker geom_opt.sh'
     print(cmd)
     #print(opt_cmd)
@@ -169,7 +170,8 @@ for j in range(0, len(obj_list)):       #update the other frag instances if MIM2
 os.chdir('../')
 
 #Running hessian and apt at optimized geometry
-cmd = 'python batch.py %s hess_apt.sh'%(str(batch_size))
+cmd = 'python batch.py %s slurm_hess_apt.sh'%(str(batch_size))        ##For TinkerCliffs
+#cmd = 'python batch.py %s hess_apt.sh'%(str(batch_size))       ##For Newriver
 print(cmd)
 os.system(cmd)
 
