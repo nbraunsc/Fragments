@@ -260,7 +260,7 @@ class Fragment():
         
 
         self.apt = self.build_apt()    #one that words sorta
-        #self.aptgrad = self.apt_grad()     #one i am trying to get to work
+        self.aptgrad = self.apt_grad()     #one i am trying to get to work
         
         return self.hessian, self.apt
         
@@ -345,6 +345,9 @@ class Fragment():
         """
             Builds the atomic polar tensor with numerical derivative of dipole moment w.r.t atomic Cartesian
             coordinates. Function builds xyz input with link atoms in ndarray format, not string type or list like previous functions.
+
+        Units of APT: Debye**2 / (Angstrom**2 amu***1)
+
         """
         print("input coords", self.inputxyz)
         apt = []

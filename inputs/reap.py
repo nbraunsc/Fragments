@@ -27,7 +27,7 @@ for level in levels:
         g += new_class.grad
         h += new_class.hessian
         apt += new_class.apt 
-        #apt_grad += new_class.aptgrad
+        apt_grad += new_class.aptgrad
         infile.close()
     os.chdir('../')
 
@@ -86,6 +86,14 @@ print("intensity in kmmol: \n", test_intense_kmmol)
 #################################### End of Normal mode testing code #############################
 
 infile.close()
+
+pqgrad = np.dot(aptgrad.T, modes_unweight)   #shape 3x3N
+print(pqgrad.T)
+pq_pqgrad = np.dot(pqgrad.T, pqgrad)    #shape 3Nx3N
+intensegrad = np.diagonal(pq_pqgrad)
+print("intensity in unknown units: \n", intensegrad)
+intense_kmmolgrad = intensegrad*42.2561*(2.541765/0.529177)**2  #atmoic units to D**2/A**2/amu to km/mol
+print("intensity in kmmol: \n", intense_kmmolgrad)
 
 pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
 print(pq.T)
