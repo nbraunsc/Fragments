@@ -102,7 +102,7 @@ class Pyscf():
         mol1.atom = input_xyz
         mol1.basis = self.basis
         #mol1.symmetry = True   #if set to True x and y grads are zero in APT
-        #mol1.unit = 'Angstrom'
+        mol1.unit = 'Angstrom'
         mol1.build()
         #mfx = scf.RHF(mol1).run()
         #dip_unit = 'DEBYE'
@@ -141,8 +141,7 @@ class Pyscf():
         mol2.atom = coords_new
         mol2.basis = self.basis
         mol2.symmetry = True
-        #mol2.unit = 'DEBYE'
-        #mol2.unit = 'Angstrom'
+        mol2.unit = 'Angstrom'
         mol2.build()
         mfx = scf.RHF(mol2).run()
         dipole_hf = mfx.dip_moment(mol2, unit='DEBYE')

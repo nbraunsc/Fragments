@@ -312,33 +312,36 @@ class Fragment():
         print("fragment:", self.prims)
         #print("norm of E\n", np.linalg.norm(energy_vec))
         #print("norm of dip\n", np.linalg.norm(dip))
-        for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
-            y = element(self.inputxyz[atom][0])
-            value = 1/(np.sqrt(y.atomic_weight))
+        
+        #for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
+        #    y = element(self.inputxyz[atom][0])
+        #    value = 1/(np.sqrt(y.atomic_weight))
 
 
-        #build M^-1/2 mass matrix and mass weight apt
-        labels = []
-        mass_matrix = np.zeros((apt.shape[1], apt.shape[1]))
-        for i in range(0, len(self.prims)):
-            labels.append(self.molecule.atomtable[self.prims[i]][0])
-            labels.append(self.molecule.atomtable[self.prims[i]][0])
-            labels.append(self.molecule.atomtable[self.prims[i]][0])
-        for pair in range(0, len(self.attached)):
-            labels.append('H')
-            labels.append('H')
-            labels.append('H')
-        for atom in range(0, len(labels)):
-            y = element(labels[atom])
-            value = 1/(np.sqrt(y.atomic_weight))
-            mass_matrix[atom][atom] = value
-        apt_mass = np.dot(mass_matrix, apt.T)
-        print(apt_mass)
-        print("\n")
-        print(self.apt)
+        ##build M^-1/2 mass matrix and mass weight apt
+        #labels = []
+        #mass_matrix = np.zeros((apt.shape[1], apt.shape[1]))
+        #for i in range(0, len(self.prims)):
+        #    labels.append(self.molecule.atomtable[self.prims[i]][0])
+        #    labels.append(self.molecule.atomtable[self.prims[i]][0])
+        #    labels.append(self.molecule.atomtable[self.prims[i]][0])
+        #for pair in range(0, len(self.attached)):
+        #    labels.append('H')
+        #    labels.append('H')
+        #    labels.append('H')
+        #for atom in range(0, len(labels)):
+        #    y = element(labels[atom])
+        #    value = 1/(np.sqrt(y.atomic_weight))
+        #    mass_matrix[atom][atom] = value
+        #apt_mass = np.dot(mass_matrix, apt.T)
+        #print(apt_mass)
+        #print("\n")
+        #print(self.apt)
+        
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
+        apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt.T)
+        #apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
         return apt_grad
             
     def build_apt(self):
@@ -361,17 +364,22 @@ class Fragment():
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
                 dip2 = self.qc_class.get_dipole(self.inputxyz)
                 vec = (dip1 - dip2)/(2*self.step_size)
+                print(vec, vec.shape)
+                print("#######")
                 storing_vec[comp] = vec
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+            print(storing_vec, "before mass weighting")
             a = storing_vec*value    ##mass weighting
+            print(a, a.shape)
+            print("#######")
             apt.append(a)
+            print(apt)
         px = np.vstack(apt)
-        print(px)
+        print(px, px.shape)
         print("\n")
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
         oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
-        #self.apt = self.coeff*np.dot(jac_apt, px)
         return oldapt
         
     def mw_hessian(self, full_hessian):
@@ -444,27 +452,3 @@ class Fragment():
        # freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
        # return freq, modes
 
-
-    def get_IR(self):
-        """ Atempt at getting IR spectra to compare to with different software
-
-       !!!  Don't need for MIM code !!!
-
-        """
-        symbols = str()
-        positions = []
-        for i in self.inputxyz:
-            symbols += i[0]
-            coord = tuple(i[1])
-            positions.append(coord)
-        molecule = Atoms(str(symbols), positions)
-        calc = Vasp(prec='Accurate',
-                    ediff=1E-8,
-                    isym=0,
-                    idipol=4,       # calculate the total dipole moment
-                    dipol=molecule.get_center_of_mass(scaled=True),
-                    ldipol=True)
-        molecule.calc = calc
-        ir = Infrared(molecule)
-        ir.run()
-        ir.summary()
