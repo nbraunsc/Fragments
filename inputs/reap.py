@@ -13,7 +13,7 @@ g = 0
 h = 0
 apt = 0
 aptgrad = 0
-step = 0.01
+step = 0.001
 
 for level in levels:
     os.chdir(level)
@@ -111,6 +111,7 @@ intense = np.diagonal(pq_pq)
 print("intensity in unknown units: \n", intense)
 intense_kmmol = intense*42.2561
 print("intensity in kmmol: \n", intense_kmmol)
+print("modes:", modes_unweight[5])
 
 np.set_printoptions(precision=7)
 os.chdir('../../')
@@ -126,7 +127,7 @@ print("MIM mass-weighted APT's shape:", apt.shape)
 for i in range(0, len(freq)):
     print("Freq:", freq[i], "int :", intense_kmmol[i])
 
-print("Now these are the ones from teh gradient: \n")
+print("Now these are the ones from the gradient: \n")
 for i in range(0, len(freq)):
     print("Freq:", freq[i], "int :", intense_kmmolgrad[i])
 

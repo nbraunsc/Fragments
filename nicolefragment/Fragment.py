@@ -1,4 +1,5 @@
 import string
+import time
 import numpy as np
 #from .Pyscf import *
 #from ase import Atoms
@@ -50,6 +51,7 @@ class Fragment():
         self.qc_class = qc_class
         self.step_size = step_size
         self.local_coeff = local_coeff
+        self.M = [] #this is the mass matrix for massweighting shape: (3N, 3N)
         
     def add_linkatoms(self, atom1, attached_atom, molecule):
         """ Adds H as a link atom
@@ -224,6 +226,7 @@ class Fragment():
         self.energy = self.local_coeff*self.coeff*energy
         jacob = self.build_jacobian_Grad()
         self.grad = self.local_coeff*self.coeff*jacob.dot(grad)
+        self.M = self.mass_matrix()
         print("Done!")
         return self.energy, self.grad, hess_py  #, self.hessian#, self.apt
 
@@ -249,19 +252,27 @@ class Fragment():
        
         hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
         hess = hess.transpose(0, 2, 1, 3)
-        #build frag_hess, do link atom projection for hessian
-        self.jacobian_hess = self.build_jacobian_Hess()
-        #j_reshape = self.jacobian_hess.transpose(0,2,1,3)
-        j_reshape = self.jacobian_hess.transpose(1,0,2, 3)
-        #y = np.einsum('ijkl, klmn -> ijmn', j_reshape, hess) 
-        y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
-        #self.hessian = np.einsum('ijkl, klmn -> ijmn', y, j_reshape.transpose(2,3,0,1))*self.coeff*self.local_coeff
-        self.hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape)*self.coeff*self.local_coeff
+        self.jacobian_hess = self.build_jacobian_Hess() #shape: (Full, Sub, 3, 3)
         
+        hess_flat = hess.reshape(len(self.inputxyz)*3, len(self.inputxyz)*3, order='C') #shape: (Sub*3, Sub*3)
+        j_reshape = self.jacobian_hess.transpose(0,2,1,3)   
+        j_flat = j_reshape.reshape(self.molecule.natoms*3, len(self.inputxyz)*3)    #shape: (Full*3, Sub*3)
+        j_flat_tran = j_flat.T  #shape: (Sub*3, Full*3)
+        
+        first = np.dot(j_flat, hess_flat)   # (Full*3, Sub*3) x (Sub*3, Sub*3) -> (Full*3, Sub*3)
+        second = np.dot(first, j_flat_tran)     # (Full*3, Sub*3) x (Sub*3, Full*3) -> (Full*3, Full*3)
+        self.hessian = second*self.coeff*self.local_coeff
+        print(self.hessian.shape, "self.hessian.shape")
 
         self.apt = self.build_apt()    #one that words sorta
         self.aptgrad = self.apt_grad()     #one i am trying to get to work
         
+        #build frag_hess, do link atom projection for hessian
+        #j_reshape_old = self.jacobian_hess.transpose(1,0,2, 3)  #current one that works 
+        #y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
+        #old_hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape_old)*self.coeff*self.local_coeff
+        
+        #start of me trying to undo tensor stuff
         return self.hessian, self.apt
         
     def apt_grad(self):
@@ -360,17 +371,20 @@ class Fragment():
             value = 1/(np.sqrt(y.atomic_weight))
             for comp in range(0,3):   #xyz interation
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+                print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
                 dip1 = self.qc_class.get_dipole(self.inputxyz)
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
                 dip2 = self.qc_class.get_dipole(self.inputxyz)
                 vec = (dip1 - dip2)/(2*self.step_size)
-                print(vec, vec.shape)
+                print("\n Vector for derivative:", vec, vec.shape)
                 print("#######")
                 storing_vec[comp] = vec
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
             print(storing_vec, "before mass weighting")
+            print("atom:", self.inputxyz[atom][0])
             a = storing_vec*value    ##mass weighting
-            print(a, a.shape)
+            print("element and value:", y, value)
+            print(a, a.shape, "after mass weighting")
             print("#######")
             apt.append(a)
             print(apt)
@@ -381,7 +395,19 @@ class Fragment():
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
         oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
         return oldapt
-        
+
+    def mass_matrix(self):
+        M = np.zeros((self.molecule.natoms*3, self.molecule.natoms*3))
+        counter = np.array([0, 1, 2])
+        for i in range(0, self.molecule.natoms):
+            x = element(self.molecule.atomtable[i][0])
+            value = 1/(np.sqrt(x.atomic_weight))
+            for j in counter:
+                M[j][j] = value
+            counter = counter + 3
+        self.M = M
+        return self.M
+
     def mw_hessian(self, full_hessian):
         """
         Will compute the mass-weighted hessian, frequencies, and 
@@ -400,24 +426,15 @@ class Fragment():
             2D ndarray holding normal modes in the columns
         """
         np.set_printoptions(suppress=True)
-        M = np.zeros((self.molecule.natoms*3, self.molecule.natoms*3))
-        counter = np.array([0, 1, 2])
-        for i in range(0, self.molecule.natoms):
-            x = element(self.molecule.atomtable[i][0])
-            value = 1/(np.sqrt(x.atomic_weight))
-            for j in counter:
-                M[j][j] = value
-            counter = counter + 3
-        x = full_hessian.reshape(self.molecule.natoms*3, self.molecule.natoms*3, order='C')
-        first = np.dot(x, M)
-        second = np.dot(M, first)
+        first = np.dot(full_hessian, self.M) #shape (3N,3N) x (3N, 3N)
+        second = np.dot(self.M, first)   #shape (3N,3N) x (3N, 3N)
         e_values, modes = LA.eigh(second)
 
-        #unit conversion of freq from H/B**2 amu -> 1/s**2
+        #unit conversion of freq from H/A**2 amu -> 1/s**2
         #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
         factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
         freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
-        return freq, modes, M
+        return freq, modes, self.M
 
 #everything following works perfectly but only for water but freq and intensities match
        # full_hessian = full_hessian.transpose(0, 2, 1, 3)

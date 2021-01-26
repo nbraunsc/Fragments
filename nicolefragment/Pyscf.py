@@ -28,6 +28,7 @@ class Pyscf():
         mol = gto.Mole()
         mol.atom = input_xyz
         mol.basis = self.basis
+#        mol.unit = 'Angstrom'
         mol.symmetry = True
         mol.build()
         mf = scf.RHF(mol).run()
