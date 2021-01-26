@@ -363,37 +363,36 @@ class Fragment():
 
         """
         #print("input coords", self.inputxyz)
-        #apt = []
-        #for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
-        #    storing_vec = np.zeros((3,3))
-        #    y = element(self.inputxyz[atom][0])
-        #    value = 1/(np.sqrt(y.atomic_weight))
-        #    for comp in range(0,3):   #xyz interation
-        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-        #        print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
-        #        dip1 = self.qc_class.get_dipole(self.inputxyz)
-        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
-        #        dip2 = self.qc_class.get_dipole(self.inputxyz)
-        #        vec = (dip1 - dip2)/(2*self.step_size)
-        #        print("\n Vector for derivative:", vec, vec.shape)
-        #        print("#######")
-        #        storing_vec[comp] = vec
-        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-        #    print(storing_vec, "before mass weighting")
-        #    print("atom:", self.inputxyz[atom][0])
-        #    a = storing_vec*value    ##mass weighting
-        #    print("element and value:", y, value)
-        #    print(a, a.shape, "after mass weighting")
-        #    print("#######")
-        #    apt.append(a)
-        #    print(apt)
-        #px = np.vstack(apt)
-        #print(px, px.shape)
-        #print("\n")
-        #reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
-        #jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        #oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
-
+        apt = []
+        for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
+            storing_vec = np.zeros((3,3))
+            y = element(self.inputxyz[atom][0])
+            value = 1/(np.sqrt(y.atomic_weight))
+            for comp in range(0,3):   #xyz interation
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+                print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
+                dip1 = self.qc_class.get_dipole(self.inputxyz)
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
+                dip2 = self.qc_class.get_dipole(self.inputxyz)
+                vec = (dip1 - dip2)/(2*self.step_size)
+                print("\n Vector for derivative:", vec, vec.shape)
+                print("#######")
+                storing_vec[comp] = vec
+                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+            print(storing_vec, "before mass weighting")
+            print("atom:", self.inputxyz[atom][0])
+            a = storing_vec*value    ##mass weighting
+            print("element and value:", y, value)
+            print(a, a.shape, "after mass weighting")
+            print("#######")
+            apt.append(a)
+            print(apt)
+        px = np.vstack(apt)
+        print(px, px.shape)
+        print("\n")
+        reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
+        jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
+        oldapt_older = self.local_coeff*self.coeff*np.dot(jac_apt, px)
 
         empty = np.zeros(3)
         array = np.zeros((3, 3*len(self.inputxyz)))
@@ -408,9 +407,17 @@ class Fragment():
                 dip2 = self.qc_class.get_dipole(self.inputxyz)
                 self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) + empty   
                 vec = (dip1 - dip2)/(2*self.step_size)
+                print(vec)
                 comp_list.append(vec)
-            array[comp] = np.concatenate(comp_list).ravel()
-        oldapt = np.dot(array, self.M)
+            testing = np.concatenate(comp_list).ravel()
+            print(testing, "tesing flattenting")
+            array[comp] = testing
+            print(array)
+            exit()
+        oldapt = np.dot(array, self.M)*self.local_coeff*self.coeff
+        print(oldapt.T)
+        print("\n", oldapt_older)
+        exit()
         return oldapt
 
     def mass_matrix(self):

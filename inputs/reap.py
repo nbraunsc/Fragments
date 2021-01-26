@@ -105,7 +105,7 @@ intense_kmmolgrad = intensegrad*42.2561  #atmoic units to D**2/A**2/amu to km/mo
 #print("intensity in kmmol gradient: \n", intense_kmmolgrad)
 
 print("\nNow starting apt w.r.t atomic coords:\n")
-pq = np.dot(apt, modes_unweight)   #shape 3x3N
+pq = np.dot(apt, modes_unweight.T)   #shape 3x3N
 #pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
 print(pq.T)
 pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
