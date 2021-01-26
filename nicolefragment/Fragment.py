@@ -262,7 +262,6 @@ class Fragment():
         first = np.dot(j_flat, hess_flat)   # (Full*3, Sub*3) x (Sub*3, Sub*3) -> (Full*3, Sub*3)
         second = np.dot(first, j_flat_tran)     # (Full*3, Sub*3) x (Sub*3, Full*3) -> (Full*3, Full*3)
         self.hessian = second*self.coeff*self.local_coeff
-        print(self.hessian.shape, "self.hessian.shape")
 
         self.apt = self.build_apt()    #one that words sorta
         self.aptgrad = self.apt_grad()     #one i am trying to get to work
@@ -363,37 +362,55 @@ class Fragment():
         Units of APT: Debye**2 / (Angstrom**2 amu***1)
 
         """
-        print("input coords", self.inputxyz)
-        apt = []
-        for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
-            storing_vec = np.zeros((3,3))
-            y = element(self.inputxyz[atom][0])
-            value = 1/(np.sqrt(y.atomic_weight))
-            for comp in range(0,3):   #xyz interation
-                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-                print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
+        #print("input coords", self.inputxyz)
+        #apt = []
+        #for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
+        #    storing_vec = np.zeros((3,3))
+        #    y = element(self.inputxyz[atom][0])
+        #    value = 1/(np.sqrt(y.atomic_weight))
+        #    for comp in range(0,3):   #xyz interation
+        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+        #        print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
+        #        dip1 = self.qc_class.get_dipole(self.inputxyz)
+        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
+        #        dip2 = self.qc_class.get_dipole(self.inputxyz)
+        #        vec = (dip1 - dip2)/(2*self.step_size)
+        #        print("\n Vector for derivative:", vec, vec.shape)
+        #        print("#######")
+        #        storing_vec[comp] = vec
+        #        self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
+        #    print(storing_vec, "before mass weighting")
+        #    print("atom:", self.inputxyz[atom][0])
+        #    a = storing_vec*value    ##mass weighting
+        #    print("element and value:", y, value)
+        #    print(a, a.shape, "after mass weighting")
+        #    print("#######")
+        #    apt.append(a)
+        #    print(apt)
+        #px = np.vstack(apt)
+        #print(px, px.shape)
+        #print("\n")
+        #reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
+        #jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
+        #oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
+
+
+        empty = np.zeros(3)
+        array = np.zeros((3, 3*len(self.inputxyz)))
+        for comp in range(0,3):
+            empty[comp] = self.step_size
+            print(empty)
+            comp_list = []
+            for atom in range(0, len(self.inputxyz)):
+                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) + empty
                 dip1 = self.qc_class.get_dipole(self.inputxyz)
-                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
+                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) - 2*empty
                 dip2 = self.qc_class.get_dipole(self.inputxyz)
+                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) + empty   
                 vec = (dip1 - dip2)/(2*self.step_size)
-                print("\n Vector for derivative:", vec, vec.shape)
-                print("#######")
-                storing_vec[comp] = vec
-                self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-            print(storing_vec, "before mass weighting")
-            print("atom:", self.inputxyz[atom][0])
-            a = storing_vec*value    ##mass weighting
-            print("element and value:", y, value)
-            print(a, a.shape, "after mass weighting")
-            print("#######")
-            apt.append(a)
-            print(apt)
-        px = np.vstack(apt)
-        print(px, px.shape)
-        print("\n")
-        reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
-        jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
+                comp_list.append(vec)
+            array[comp] = np.concatenate(comp_list).ravel()
+        oldapt = np.dot(array, self.M)
         return oldapt
 
     def mass_matrix(self):
@@ -430,9 +447,9 @@ class Fragment():
         second = np.dot(self.M, first)   #shape (3N,3N) x (3N, 3N)
         e_values, modes = LA.eigh(second)
 
-        #unit conversion of freq from H/A**2 amu -> 1/s**2
-        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
-        factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
+        #unit conversion of freq from H/B**2 amu -> 1/s**2
+        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  
+        factor = (1.8897259886**2)*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-10)**2 #Bohr->Angstrom, Hartreee->J, amu->kg, Angstrom->m
         freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
         return freq, modes, self.M
 

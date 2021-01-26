@@ -88,7 +88,8 @@ freq, modes_unweight, M = new_class.mw_hessian(h)
 infile.close()
 
 
-pqgrad = np.dot(aptgrad.T, modes_unweight)   #shape 3x3N
+pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N
+#pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N
 #M_grad = np.linalg.inv(M**2)
 #print(M_grad)
 testing = np.dot(M, pqgrad.T)
@@ -104,12 +105,13 @@ intense_kmmolgrad = intensegrad*42.2561  #atmoic units to D**2/A**2/amu to km/mo
 #print("intensity in kmmol gradient: \n", intense_kmmolgrad)
 
 print("\nNow starting apt w.r.t atomic coords:\n")
-pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
+pq = np.dot(apt, modes_unweight)   #shape 3x3N
+#pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
 print(pq.T)
 pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
 intense = np.diagonal(pq_pq)
 print("intensity in unknown units: \n", intense)
-intense_kmmol = intense*42.2561
+intense_kmmol = intense*42.256078/1.889725988
 print("intensity in kmmol: \n", intense_kmmol)
 print("modes:", modes_unweight[5])
 
@@ -133,3 +135,4 @@ for i in range(0, len(freq)):
 
 print("apt from atomic:\n", apt)
 print("\napt from grad:\n", aptgrad)
+
