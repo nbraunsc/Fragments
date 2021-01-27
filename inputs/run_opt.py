@@ -21,11 +21,11 @@ for i in batch_list:
     #undill and run e, g, hess, apt etc
     infile = open(i, 'rb')
     new_class = dill.load(infile)
-    outfile = open(i, "wb")
     e, g, h = new_class.qc_backend()
     new_class.hess_apt(h)
-
-    ##redill with updated fragment e, g, hess, apt, etc
-    dill.dump(new_class, outfile)
     infile.close()
+    
+    ##redill with updated fragment e, g, hess, apt, etc
+    outfile = open(i, "wb")
+    dill.dump(new_class, outfile)
     outfile.close()

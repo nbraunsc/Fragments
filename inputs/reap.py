@@ -16,25 +16,25 @@ apt = 0
 aptgrad = 0
 step = 0.001
 
-#for level in levels:
-#    os.chdir(level)
-#    frags = glob.glob('*.dill')
-#    for i in frags:
-#        #undill and run e, g, hess, apt etc
-#        infile = open(i, 'rb')
-#        print(infile)
-#        new_class_loop = dill.load(infile)
-#        outfile = open(i, "wb")
-#        print("Fragment ID:", level, i)
-#        e += new_class_loop.energy
-#        g += new_class_loop.grad
-#        h += new_class_loop.hessian
-#        apt += new_class_loop.apt 
-#        aptgrad += new_class_loop.aptgrad
-#        dill.dump(new_class_loop, outfile)
-#        infile.close()
-#        outfile.close()
-#    os.chdir('../')
+for level in levels:
+    os.chdir(level)
+    frags = glob.glob('*.dill')
+    for i in frags:
+        #undill and run e, g, hess, apt etc
+        infile = open(i, 'rb')
+        print(infile)
+        new_class_loop = dill.load(infile)
+        outfile = open(i, "wb")
+        print("Fragment ID:", level, i)
+        e += new_class_loop.energy
+        g += new_class_loop.grad
+        h += new_class_loop.hessian
+        apt += new_class_loop.apt 
+        aptgrad += new_class_loop.aptgrad
+        dill.dump(new_class_loop, outfile)
+        infile.close()
+        outfile.close()
+    os.chdir('../')
 
 os.chdir('frag1')
 infile = open('fragment0.dill', 'rb')
@@ -96,32 +96,23 @@ infile.close()
 outfile.close()
 
 pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N
-#pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N
-#M_grad = np.linalg.inv(M**2)
-#print(M_grad)
-testing = np.dot(M, pqgrad.T)
-#testing = np.dot(M_grad, pqgrad.T)
-print(testing)
-print("now unweighted:")
 print(pqgrad.T)
-pq_pqgrad = np.dot(testing, testing.T)    #shape 3Nx3N
-#pq_pqgrad = np.dot(pqgrad.T, pqgrad)    #shape 3Nx3N
+pq_pqgrad = np.dot(pqgrad.T, pqgrad)    #shape 3Nx3N
 intensegrad = np.diagonal(pq_pqgrad)
+
 #print("intensity in unknown units gradient: \n", intensegrad)
-intense_kmmolgrad = intensegrad*42.2561  #atmoic units to D**2/A**2/amu to km/mol
+intense_kmmolgrad = intensegrad*42.256078  #ea->D, Bohr->Angstrom, D**2/A**2/amu to km/mol
+#intense_kmmolgrad = intensegrad/(0.393403**2)*(1.8897259886**2)*42.256078  #ea->D, Bohr->Angstrom, D**2/A**2/amu to km/mol
 #print("intensity in kmmol gradient: \n", intense_kmmolgrad)
 
 print("\nNow starting apt w.r.t atomic coords:\n")
-pq = np.dot(apt, modes_unweight.T)   #shape 3x3N
-#pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
+pq = np.dot(apt.T, modes_unweight)   #shape 3x3N
 print(pq.T)
 pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
 intense = np.diagonal(pq_pq)
 print("intensity in unknown units: \n", intense)
 intense_kmmol = intense*42.256078
-#intense_kmmol = intense*42.256078/1.889725988
 print("intensity in kmmol: \n", intense_kmmol)
-print("modes:", modes_unweight[5])
 
 np.set_printoptions(precision=7)
 os.chdir('../../')
@@ -143,4 +134,7 @@ for i in range(0, len(freq)):
 
 print("apt from atomic:\n", apt)
 print("\napt from grad:\n", aptgrad)
+
+factors = np.divide(intense_kmmol, intense_kmmolgrad)
+print(factors)
 

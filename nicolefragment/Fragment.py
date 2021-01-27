@@ -40,10 +40,8 @@ class Fragment():
         self.aptgrad = np.array([])
         self.step = step_size
         self.energy = 0
-        #self.grad = []
         self.grad = 0
         self.hessian = 0
-        #self.hessian = []
         self.hess = []
         self.notes = []     # [index of link atom, factor, supporting atom, host atom]
         self.jacobian_grad = [] #array for gradient link atom projections
@@ -91,7 +89,6 @@ class Fragment():
         coord.append('H')
         coord.append(new_xyz)
         return coord, factor
-        #return new_xyz, factor, coord
     
     def build_xyz(self):
         """ Builds the xyz input with the atom labels, xyz coords, and link atoms as a string or list 
@@ -111,23 +108,6 @@ class Fragment():
             (i.e. [index of link atom, factor, supporting atom number, host atom number])
         
         """
-
-        #atomxyz = str()   #makes sure strings are empty, unsure if I need this
-        #inputxyz = str()
-        #self.notes = []
-        #for atom in self.prims:
-        #    atom_xyz = str(self.molecule.atomtable[atom]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
-        #    atomxyz += atom_xyz
-        #    inputxyz += atom_xyz
-        #for pair in range(0, len(self.attached)):
-        #    linkatom_xyz = str(self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[0]).replace('[', '').replace(']', '\n').replace(',', '').replace("'", "")
-        #    factor = self.add_linkatoms(self.attached[pair][0], self.attached[pair][1], self.molecule)[1]
-        #    inputxyz += linkatom_xyz
-        #    position = len(self.prims) + pair
-        #    self.notes.append([position])
-        #    self.notes[-1].append(factor)
-        #    self.notes[-1].append(self.attached[pair][0])
-        #    self.notes[-1].append(self.attached[pair][1])
         self.notes = []
         input_list = []
         coord_matrix = np.empty([len(self.prims)+len(self.attached), 3])
@@ -218,7 +198,6 @@ class Fragment():
         np.set_printoptions(suppress=True, precision=7)
         self.energy = 0
         hess_py = 0
-        #self.grad = np.zeros((self.molecule.natoms, 3))
         self.grad = 0
         self.inputxyz = self.build_xyz()
         energy, grad, hess_py = self.qc_class.energy_gradient(self.inputxyz)
@@ -231,12 +210,11 @@ class Fragment():
         return self.energy, self.grad, hess_py  #, self.hessian#, self.apt
 
     def hess_apt(self, hess_py):
-        print("Started hess_apt()")
+        
         #If not analytical hess, do numerical below
-        hess = hess_py
         if type(hess_py) is int:
             print("Numerical hessian needed, Theory=", self.qc_class.theory)
-            hess = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
+            hess_flat = np.zeros(((len(self.inputxyz))*3, (len(self.inputxyz))*3))
             i = -1
             for atom in range(0, len(self.inputxyz)):
                 for xyz in range(0, 3):
@@ -247,31 +225,28 @@ class Fragment():
                     grad2 = self.qc_class.energy_gradient(self.inputxyz)[1].flatten()
                     self.inputxyz[atom][1][xyz] = self.inputxyz[atom][1][xyz]+self.step_size
                     vec = (grad1 - grad2)/(4*self.step_size)
-                    hess[i] = vec
-                    hess[:,i] = vec
-       
-        hess = hess.reshape((len(self.prims)+len(self.notes), 3, len(self.prims)+len(self.notes), 3))
-        hess = hess.transpose(0, 2, 1, 3)
-        self.jacobian_hess = self.build_jacobian_Hess() #shape: (Full, Sub, 3, 3)
+                    hess_flat[i] = vec
+                    hess_flat[:,i] = vec
         
-        hess_flat = hess.reshape(len(self.inputxyz)*3, len(self.inputxyz)*3, order='C') #shape: (Sub*3, Sub*3)
-        j_reshape = self.jacobian_hess.transpose(0,2,1,3)   
-        j_flat = j_reshape.reshape(self.molecule.natoms*3, len(self.inputxyz)*3)    #shape: (Full*3, Sub*3)
+        #Analytical hess from qc_backend gets reshaped and flatten to 3Nx3N matrix 
+        else:
+            hess_tran = hess_py.transpose(0, 2, 1, 3)
+            hess_flat = hess_tran.reshape(len(self.inputxyz)*3, len(self.inputxyz)*3, order='C') #shape: (Sub*3, Sub*3)
+        
+        #start building jacobian and reshaping
+        self.jacobian_hess = self.build_jacobian_Hess() #shape: (Full, Sub, 3, 3)
+        j_reshape = self.jacobian_hess.transpose(0,2,1,3)
+        j_flat = j_reshape.reshape(self.molecule.natoms*3, len(self.inputxyz)*3, order='C')    #shape: (Full*3, Sub*3)
         j_flat_tran = j_flat.T  #shape: (Sub*3, Full*3)
         
         first = np.dot(j_flat, hess_flat)   # (Full*3, Sub*3) x (Sub*3, Sub*3) -> (Full*3, Sub*3)
         second = np.dot(first, j_flat_tran)     # (Full*3, Sub*3) x (Sub*3, Full*3) -> (Full*3, Full*3)
         self.hessian = second*self.coeff*self.local_coeff
-
+        
+        #start building the APT's
         self.apt = self.build_apt()    #one that words sorta
         self.aptgrad = self.apt_grad()     #one i am trying to get to work
         
-        #build frag_hess, do link atom projection for hessian
-        #j_reshape_old = self.jacobian_hess.transpose(1,0,2, 3)  #current one that works 
-        #y = np.einsum('ijkl, jmln -> imkn', self.jacobian_hess, hess) 
-        #old_hessian = np.einsum('ijkl, jmln -> imkn', y, j_reshape_old)*self.coeff*self.local_coeff
-        
-        #start of me trying to undo tensor stuff
         return self.hessian, self.apt
         
     def apt_grad(self):
@@ -287,39 +262,23 @@ class Fragment():
         apt = np.zeros((3, ((len(self.prims)+len(self.notes))*3)))
         grad_list = []
         extra_dip = self.qc_class.get_dipole(self.inputxyz)
-        print(extra_dip)
         for i in range(0, 3):
             #e1, g1, dip = self.qc_class.apply_field(E, self.inputxyz)   #no field
             E[i] = e_field
-            #print("energy with no field:", e1)
             print("\n############ Field applied in the ", i, "direction ###############\n")
-            #print("electric field positive:", E)
             e2, g2, dipole2 = self.qc_class.apply_field(E, self.inputxyz) #positive direction
-            print("gradient positive:", g2)
-            #print("energy with + field:", e2)
             E[i] = -1*e_field
-            #print("electric field negative:", E)
             e3, g3, dipole3 = self.qc_class.apply_field(E, self.inputxyz)   #neg direction
-            print("gradient neg:", g3)
-            #print("energy with - field:", e3)
             E[i] = 0
-            #print("should be back to 0:", E)
     
-            #print("energy differnce between + and -:", e2-e3, "for direction:", i)
-            #print("Energy difference:", e2-e1)
-            #gradient = (g2.flatten()-g3.flatten())/(2*e_field)
             gradient1 = (g2-g3)/(2*e_field)
             gradient = gradient1.flatten()
             energy2 = (e2-e3)/(2*e_field)
-            #print("derv energy comp:", energy2)
-            energy_vec[i] = energy2
+            energy_vec[i] = energy2/-0.3934303 #atomic units -> Debye, neg sign for ?
             print("energy vec:", energy_vec)
             print("Dipole moment:\n", extra_dip)
-            print("gradient shape:", gradient, gradient.shape)
             apt[i] = gradient
         
-        print(apt, apt.shape)
-        print("fragment:", self.prims)
         #print("norm of E\n", np.linalg.norm(energy_vec))
         #print("norm of dip\n", np.linalg.norm(dip))
         
@@ -348,9 +307,10 @@ class Fragment():
         #print("\n")
         #print(self.apt)
         
+        mass_apt = np.dot(self.M, apt.T)
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt.T)
+        apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, mass_apt)
         #apt_grad = self.local_coeff*self.coeff*np.dot(jac_apt, apt_mass)
         return apt_grad
             
@@ -362,62 +322,24 @@ class Fragment():
         Units of APT: Debye**2 / (Angstrom**2 amu***1)
 
         """
-        #print("input coords", self.inputxyz)
         apt = []
         for atom in range(0, len(self.prims)+len(self.notes)):  #atom interation
             storing_vec = np.zeros((3,3))
-            y = element(self.inputxyz[atom][0])
-            value = 1/(np.sqrt(y.atomic_weight))
             for comp in range(0,3):   #xyz interation
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-                print("\n", self.inputxyz[atom][1][comp], self.inputxyz[atom], "\n")
                 dip1 = self.qc_class.get_dipole(self.inputxyz)
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]-2*self.step_size
                 dip2 = self.qc_class.get_dipole(self.inputxyz)
                 vec = (dip1 - dip2)/(2*self.step_size)
-                print("\n Vector for derivative:", vec, vec.shape)
-                print("#######")
                 storing_vec[comp] = vec
                 self.inputxyz[atom][1][comp] = self.inputxyz[atom][1][comp]+self.step_size
-            print(storing_vec, "before mass weighting")
-            print("atom:", self.inputxyz[atom][0])
-            a = storing_vec*value    ##mass weighting
-            print("element and value:", y, value)
-            print(a, a.shape, "after mass weighting")
-            print("#######")
-            apt.append(a)
-            print(apt)
-        px = np.vstack(apt)
-        print(px, px.shape)
-        print("\n")
+            apt.append(storing_vec)
+        px_first = np.vstack(apt)
+        px = np.dot(self.M, px_first)
+        
         reshape_mass_hess = self.jacobian_hess.transpose(0, 2, 1, 3)
         jac_apt = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[1],reshape_mass_hess.shape[2]*reshape_mass_hess.shape[3])
-        oldapt_older = self.local_coeff*self.coeff*np.dot(jac_apt, px)
-
-        empty = np.zeros(3)
-        array = np.zeros((3, 3*len(self.inputxyz)))
-        for comp in range(0,3):
-            empty[comp] = self.step_size
-            print(empty)
-            comp_list = []
-            for atom in range(0, len(self.inputxyz)):
-                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) + empty
-                dip1 = self.qc_class.get_dipole(self.inputxyz)
-                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) - 2*empty
-                dip2 = self.qc_class.get_dipole(self.inputxyz)
-                self.inputxyz[atom][1] = np.array(self.inputxyz[atom][1]) + empty   
-                vec = (dip1 - dip2)/(2*self.step_size)
-                print(vec)
-                comp_list.append(vec)
-            testing = np.concatenate(comp_list).ravel()
-            print(testing, "tesing flattenting")
-            array[comp] = testing
-            print(array)
-            exit()
-        oldapt = np.dot(array, self.M)*self.local_coeff*self.coeff
-        print(oldapt.T)
-        print("\n", oldapt_older)
-        exit()
+        oldapt = self.local_coeff*self.coeff*np.dot(jac_apt, px)
         return oldapt
 
     def mass_matrix(self):
@@ -459,37 +381,4 @@ class Fragment():
         factor = (1.8897259886**2)*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-10)**2 #Bohr->Angstrom, Hartreee->J, amu->kg, Angstrom->m
         freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
         return freq, modes, self.M
-
-#everything following works perfectly but only for water but freq and intensities match
-       # full_hessian = full_hessian.transpose(0, 2, 1, 3)
-       # for row in range(0, self.molecule.natoms):
-       #     #adding 1/np.sqrt(amu) units to xyz coords
-       #     x = element(self.molecule.atomtable[row][0])
-       #     value = np.sqrt(x.atomic_weight)
-       #     #mass_array[row] = value
-       #     #mass_xyz[row] = np.array(self.molecule.atomtable[row][1:])*(1/value)   #mass weighted coordinates
-
-       #     for column in range(0, self.molecule.natoms):    
-       #         y = element(self.molecule.atomtable[column][0])
-       #         z = x.atomic_weight*y.atomic_weight
-       #         value = np.sqrt(z)**-1
-       #         #print(full_hessian[row][column])
-       #         #term = full_hessian[row, :, column, :]*value
-       #         #full_hessian[row, :, column, :] = term
-       #         
-       #         term = full_hessian[row][column]*value
-       #         full_hessian[row][column] = term
-       #         full_hessian[column][row] = term.T
-       # print(full_hessian) 
-       # #reshape_mass_hess = full_hessian.transpose(0, 2, 1, 3)
-       # reshape_mass_hess = full_hessian
-       # x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[2],reshape_mass_hess.shape[1]*reshape_mass_hess.shape[3])
-       # #x = reshape_mass_hess.reshape(reshape_mass_hess.shape[0]*reshape_mass_hess.shape[2],reshape_mass_hess.shape[1]*reshape_mass_hess.shape[3])
-       # e_values, modes = LA.eigh(x)
-
-       # #unit conversion of freq from H/B**2 amu -> 1/s**2
-       # #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  #Angstrom to m
-       # factor = 1.8897259886**2*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) #Bohr to Angstrom
-       # freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
-       # return freq, modes
 

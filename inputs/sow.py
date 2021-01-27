@@ -68,6 +68,7 @@ if opt == False:
         for i in range(0, len(frag1.frags)):
             filename = "fragment" + str(i) + ".dill"
             outfile = open(filename, "wb")
+            print("writing object:", frag1.frags[i])
             dill.dump(frag1.frags[i], outfile)
             #status_name = filename + '.status'
             #status = open(status_name, "wb")

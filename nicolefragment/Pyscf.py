@@ -1,5 +1,5 @@
 import numpy as np
-from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf, ao2mo
+from pyscf import gto, scf, ci, cc, mp, hessian, lib, grad, mcscf, ao2mo, tools
 from pyscf.prop.freq import rhf
 from pyscf.prop.polarizability import rhf
 from pyscf.grad.rhf import GradientsBasics
@@ -28,8 +28,8 @@ class Pyscf():
         mol = gto.Mole()
         mol.atom = input_xyz
         mol.basis = self.basis
-        mol.unit = 'Angstrom'
-        mol.symmetry = True
+        #mol.unit = 'Angstrom'
+        #mol.symmetry = True
         mol.build()
         mf = scf.RHF(mol).run()
     
@@ -76,7 +76,7 @@ class Pyscf():
             return e, g, h
     
     def apply_field(self, E, input_xyz):
-        """ This will apply an electric field in a specific direction for pyscf. gives E vector
+        """ This will apply an e lectric field in a specific direction for pyscf. gives E vector
         to make a new hcore. Used when building the derivative of gradient w.r.t electric field to
         compute the IR intensities.
     
@@ -102,18 +102,15 @@ class Pyscf():
         mol1 = gto.Mole()
         mol1.atom = input_xyz
         mol1.basis = self.basis
-        #mol1.symmetry = True   #if set to True x and y grads are zero in APT
-        mol1.unit = 'Angstrom'
+        #mol1.symmetry = True
         mol1.build()
-        #mfx = scf.RHF(mol1).run()
-        #dip_unit = 'DEBYE'
-        #dip_unit2 = 'A.U.'
-        #dipole1 = mfx.dip_moment(mol1, unit=dip_unit)
-        #dipole1 = mfx.dip_moment(mol1, unit=dip_unit2)
+        
+        #print("coords before field:")
+        #print(mol1.atom_coords())
         
         mol1.set_common_orig([0, 0, 0])  # The gauge origin for dipole integral
-        h =(mol1.intor('cint1e_kin_sph') + mol1.intor('cint1e_nuc_sph')
-          + np.einsum('x,xij->ij', E, mol1.intor('cint1e_r_sph', comp=3)))
+        h =(mol1.intor('cint1e_kin_sph') + mol1.intor('cint1e_nuc_sph') + np.einsum('x,xij->ij', E, mol1.intor('cint1e_r_sph', comp=3))) #mol.intor builds AO integrals
+        
         mfx = scf.RHF(mol1)
         mfx.get_hcore = lambda *args: h
         mfx.scf(dm_init_guess[0])
@@ -122,14 +119,11 @@ class Pyscf():
         
         e = mfx.kernel()
         g2 = mfx.nuc_grad_method().kernel()    #only gradient for RHF right now
-        print("################\n")
-        print("######### PYSCF PRINTS ##########")
-        print(mol1.atom_coords())
-        print(E)
-        #print("energy:", e)
-        #print("dipole moment:", dipole1, dip_unit)
-        #print("dipole moment:", dipole2, dip_unit2)
-        print("################\n")
+        #print("################\n")
+        #print("######### PYSCF PRINTS ##########")
+        #print(mol1.atom_coords())
+        #print(E)
+        #print("################\n")
         return e, g2, dipole1
 
     
@@ -141,11 +135,12 @@ class Pyscf():
         mol2 = gto.Mole()
         mol2.atom = coords_new
         mol2.basis = self.basis
-        mol2.symmetry = True
-        mol2.unit = 'Angstrom'
+        #mol2.symmetry = True
+        #mol2.unit = 'Angstrom'
         mol2.build()
         mfx = scf.RHF(mol2).run()
         dipole_hf = mfx.dip_moment(mol2, unit='DEBYE')
+        #dipole_hf = mfx.dip_moment(mol2, unit='DEBYE')
         return dipole_hf
     
 
