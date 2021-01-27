@@ -111,7 +111,8 @@ print(pq.T)
 pq_pq = np.dot(pq.T, pq)    #shape 3Nx3N
 intense = np.diagonal(pq_pq)
 print("intensity in unknown units: \n", intense)
-intense_kmmol = intense*42.256078/1.889725988
+intense_kmmol = intense*42.256078
+#intense_kmmol = intense*42.256078/1.889725988
 print("intensity in kmmol: \n", intense_kmmol)
 print("modes:", modes_unweight[5])
 
