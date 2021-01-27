@@ -2,6 +2,7 @@ import pickle
 import os
 import glob
 import dill
+import pickle
 import numpy as np
 from mendeleev import element
 
@@ -15,21 +16,25 @@ apt = 0
 aptgrad = 0
 step = 0.001
 
-for level in levels:
-    os.chdir(level)
-    frags = glob.glob('*.dill')
-    for i in frags:
-        #undill and run e, g, hess, apt etc
-        infile = open(i, 'rb')
-        new_class = dill.load(infile)
-        print("Fragment ID:", level, i)
-        e += new_class.energy
-        g += new_class.grad
-        h += new_class.hessian
-        apt += new_class.apt 
-        aptgrad += new_class.aptgrad
-        infile.close()
-    os.chdir('../')
+#for level in levels:
+#    os.chdir(level)
+#    frags = glob.glob('*.dill')
+#    for i in frags:
+#        #undill and run e, g, hess, apt etc
+#        infile = open(i, 'rb')
+#        print(infile)
+#        new_class_loop = dill.load(infile)
+#        outfile = open(i, "wb")
+#        print("Fragment ID:", level, i)
+#        e += new_class_loop.energy
+#        g += new_class_loop.grad
+#        h += new_class_loop.hessian
+#        apt += new_class_loop.apt 
+#        aptgrad += new_class_loop.aptgrad
+#        dill.dump(new_class_loop, outfile)
+#        infile.close()
+#        outfile.close()
+#    os.chdir('../')
 
 os.chdir('frag1')
 infile = open('fragment0.dill', 'rb')
@@ -85,8 +90,10 @@ freq, modes_unweight, M = new_class.mw_hessian(h)
 
 #################################### End of Normal mode testing code #############################
 
+outfile = open('fragment0.dill', 'wb')
+dill.dump(new_class, outfile)
 infile.close()
-
+outfile.close()
 
 pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N
 #pqgrad = np.dot(aptgrad.T, modes_unweight.T)   #shape 3x3N

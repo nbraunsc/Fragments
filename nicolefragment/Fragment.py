@@ -455,7 +455,7 @@ class Fragment():
         e_values, modes = LA.eigh(second)
 
         #unit conversion of freq from H/B**2 amu -> 1/s**2
-        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20)  
+        #factor = (4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-20) # Hartreee->J, amu->kg, Angstrom->m  
         factor = (1.8897259886**2)*(4.3597482*10**-18)/(1.6603145*10**-27)/(1.0*10**-10)**2 #Bohr->Angstrom, Hartreee->J, amu->kg, Angstrom->m
         freq = (np.sqrt(e_values*factor))/(2*np.pi*2.9979*10**10) #1/s^2 -> cm-1
         return freq, modes, self.M
